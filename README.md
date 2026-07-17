@@ -8,7 +8,7 @@ The site is pure static: an `index.html` cover page plus one self-contained HTML
 
 | File | Topic |
 |------|-------|
-| `articles/how-llms-work.html` | The flagship: corpus preparation, tokenization, embeddings and position, a decoder-only transformer, pre-training, and generation, ending with a controllable full-system replay. Eight interactive figures. |
+| `articles/how-llms-work.html` | The flagship: a lifecycle pass from corpus and tokenizer through embeddings and position, a decoder-only transformer block, pre-training, and one-token-at-a-time generation, ending with a controllable full-system replay. Eight interactive figures. |
 | `articles/effort-levels.html` | Model reasoning effort: what it buys, where it saturates, how to pick a level. |
 | `articles/orchestration-and-subagents.html` | Why orchestration exists (context isolation), fan-out, pipelines, verification patterns. |
 | `articles/loops-and-skills.html` | The agentic loop, harness-driven recurrence, and skills as packaged procedure. |
@@ -17,14 +17,15 @@ Planned: a harness-engineering piece (more technical, lighter visuals).
 
 ## Design system
 
-The suite shares its type system and instrument pattern. The flagship overview uses a dimensional observatory treatment for its end-to-end model tour:
+The suite shares its type system and instrument pattern. The flagship renders its figures with a pixel/voxel scene engine:
 
-- Dark ground `#0f1219` / elevated `#1a1f2e`; light ground `#f5f6f9` / white. Matches danielhirt.dev.
-- Cobalt marks data and token states, coral marks learning and weight updates, and gold marks prediction targets or selected output. Violet identifies the fixed per-position MLP; residual paths stay white. Color is semantic, never decorative.
+- Dark ground `#0c1428` / elevated `#131f3a`; light ground `#f5f6f9` / white. Matches danielhirt.dev.
+- Cobalt marks data and hidden states, coral marks learning and weight updates, and gold marks prediction targets or selected output. Violet identifies the fixed per-position MLP; residual paths and annotations stay paper white. Color is semantic, never decorative.
 - Geist body, Geist Mono headings/labels/data. Self-hosted variable fonts in `fonts/` (SIL OFL, from the `geist` npm package); artifact copies inline them as data URIs since the artifact CSP blocks external and relative fetches.
 - Figures are "instruments": elevated cards with a mono scope-label header and a run/pause control.
-- The LLM overview uses dark, high-contrast canvas stages with projected 3D geometry, soft perspective grids, and smooth state transitions. The article itself retains a bright reading surface.
-- Every autonomous scene has pause or replay controls. The final lifecycle can also be scrubbed, and `prefers-reduced-motion` gets labeled static end states.
+- Every scene draws in two passes on one canvas: a blocky world layer snapped to a 4px grid (flat fills, isometric voxel forms, tiled matrices, pixel particles) and a native-resolution annotation layer (Geist Mono text, connectors, formulas) so labels stay crisp. Motion runs at full frame rate with cubic easing; object positions interpolate, so forms keep their identity between beats.
+- Figure 1 is a two-lane pixel machine (build lane: corpus, tokenizer, pre-training, checkpoint; run lane: prompt, frozen tokenizer, frozen transformer, logits, loop-back). Figure 8 mirrors it as a 12-step scrubbable complete pass that reuses the same glyphs.
+- Scenes autoplay once when meaningfully visible, then hold their final frame; IntersectionObserver only pauses rendering, never scrolls or restarts. Every autonomous scene has pause/replay controls, complex scenes add step controls or a scrubber, and `prefers-reduced-motion` gets labeled static end states.
 
 ## Prose rules
 
