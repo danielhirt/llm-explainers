@@ -1,0 +1,3152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A technical visual explanation of a decoder-only language model, covering corpus construction, tokenization, embeddings, transformers, pre-training, and generation.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%3Crect%20width=%2232%22%20height=%2232%22%20rx=%228%22%20fill=%22%230a1020%22/%3E%3Ccircle%20cx=%2210%22%20cy=%2216%22%20r=%223%22%20fill=%22%235d7cff%22/%3E%3Ccircle%20cx=%2218%22%20cy=%2210%22%20r=%223%22%20fill=%22%23ee755f%22/%3E%3Ccircle%20cx=%2222%22%20cy=%2221%22%20r=%223%22%20fill=%22%23efb44d%22/%3E%3Cpath%20d=%22M12%2015L16%2012M19%2013L21%2018M13%2018L19%2020%22%20stroke=%22%23f7f5ef%22%20stroke-width=%221.5%22/%3E%3C/svg%3E">
+<title>Inside an LLM: Corpus to Next Token</title>
+<style>
+@font-face {
+  font-family: "Geist";
+  src: url("../fonts/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("../fonts/GeistMono-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root,
+[data-theme="light"] {
+  --page: #f7f6f2;
+  --surface: #ffffff;
+  --ink: #111a31;
+  --ink-body: #2b3550;
+  --ink-soft: #4e5b76;
+  --ink-faint: #78839a;
+  --line: rgba(17, 26, 49, 0.12);
+  --line-strong: rgba(17, 26, 49, 0.24);
+  --accent: #4e6ff2;
+  --coral: #df6756;
+  --gold: #d9982d;
+  --stage: #0a101f;
+  --stage-ink: #f5f6fb;
+  --stage-muted: #9eaac3;
+  --stage-line: rgba(215, 224, 248, 0.14);
+  --panel-shadow: 0 1px 3px rgba(19, 28, 55, 0.10);
+}
+
+[data-theme="dark"] {
+  --page: #0d1322;
+  --surface: #161f34;
+  --ink: #f4f4ef;
+  --ink-body: #ced3e2;
+  --ink-soft: #b2bace;
+  --ink-faint: #8792aa;
+  --line: rgba(234, 239, 255, 0.10);
+  --line-strong: rgba(234, 239, 255, 0.20);
+  --accent: #7f98ff;
+  --coral: #ff8a74;
+  --gold: #f0b64d;
+  --stage: #080d1b;
+  --stage-ink: #f7f6f0;
+  --stage-muted: #aab5cc;
+  --stage-line: rgba(220, 228, 250, 0.14);
+  --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --page: #0d1322;
+    --surface: #161f34;
+    --ink: #f4f4ef;
+    --ink-body: #ced3e2;
+    --ink-soft: #b2bace;
+    --ink-faint: #8792aa;
+    --line: rgba(234, 239, 255, 0.10);
+    --line-strong: rgba(234, 239, 255, 0.20);
+    --accent: #7f98ff;
+    --coral: #ff8a74;
+    --gold: #f0b64d;
+    --stage: #080d1b;
+    --stage-ink: #f7f6f0;
+    --stage-muted: #aab5cc;
+    --stage-line: rgba(220, 228, 250, 0.14);
+    --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  overflow-x: hidden;
+  color: var(--ink-body);
+  background: var(--page);
+  font-family: "Geist", "Avenir Next", sans-serif;
+  font-size: 18px;
+  line-height: 1.7;
+  text-rendering: optimizeLegibility;
+  overflow-wrap: break-word;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+h1,
+h2,
+h3,
+p {
+  text-wrap: pretty;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  left: 18px;
+  top: -80px;
+  z-index: 500;
+  padding: 9px 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  transition: top 160ms ease;
+}
+
+.skip-link:focus {
+  top: 18px;
+}
+
+/* Article shell */
+
+.article-page {
+  padding-bottom: 96px;
+}
+
+.article-header,
+.chapter-copy,
+.replay-heading,
+.sources,
+.series-inner {
+  width: min(720px, calc(100% - 48px));
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.article-header {
+  padding: 50px 0 0;
+}
+
+.mast-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 50px;
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+}
+
+.mast-row .brand {
+  color: var(--ink);
+  font-family: "Geist", sans-serif;
+  font-size: 13px;
+  font-weight: 620;
+  text-decoration: none;
+}
+
+.mast-separator {
+  color: var(--line-strong);
+}
+
+.theme-toggle {
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 160ms ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+}
+
+.theme-toggle svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 12px;
+}
+
+h1 {
+  max-width: 18ch;
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(31px, 4vw, 39px);
+  font-weight: 640;
+  line-height: 1.16;
+  letter-spacing: -0.02em;
+}
+
+.article-lede {
+  max-width: 62ch;
+  margin: 22px 0 0;
+  color: var(--ink-soft);
+  font-size: 20px;
+  line-height: 1.58;
+}
+
+.article-meta {
+  margin: 20px 0 0;
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.scope-note {
+  margin: 30px 0 0;
+  padding: 14px 0;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.scope-note strong {
+  color: var(--ink);
+}
+
+.contents {
+  margin-top: 34px;
+  padding: 18px 0 20px;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.contents-label {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.contents ol {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 24px;
+  list-style: none;
+  counter-reset: contents;
+}
+
+.contents li {
+  counter-increment: contents;
+  min-width: 0;
+}
+
+.contents a {
+  display: grid;
+  grid-template-columns: 1.7em minmax(0, 1fr);
+  gap: 4px;
+  color: var(--ink-soft);
+  font-size: 14.5px;
+  text-decoration: none;
+}
+
+.contents a::before {
+  content: counter(contents) ".";
+  padding-top: 3px;
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+}
+
+.contents a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Sections */
+
+.reading-section,
+.replay-section {
+  padding: 74px 0 0;
+}
+
+.section-label {
+  margin: 0 0 10px;
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 12px;
+}
+
+h2 {
+  margin: 0 0 16px;
+  color: var(--ink);
+  font-size: clamp(24px, 3vw, 28px);
+  font-weight: 640;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+h3 {
+  margin: 32px 0 10px;
+  color: var(--ink);
+  font-size: 19px;
+  font-weight: 630;
+  line-height: 1.3;
+}
+
+.chapter-copy p,
+.replay-heading p,
+.sources p {
+  max-width: 66ch;
+  margin: 0 0 1.2em;
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.chapter-copy strong,
+.replay-heading strong {
+  color: var(--ink);
+  font-weight: 620;
+}
+
+.paper-link {
+  white-space: nowrap;
+}
+
+.formula-block {
+  margin: 26px 0;
+  padding: 4px 0 4px 18px;
+  overflow-x: auto;
+  border-left: 2px solid var(--line-strong);
+}
+
+.formula-block.compact {
+  margin: 16px 0;
+}
+
+.formula-label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+}
+
+.formula {
+  color: var(--ink);
+  font-family: "Geist Mono", monospace;
+  font-size: clamp(12.5px, 1.5vw, 14px);
+  line-height: 1.7;
+  white-space: nowrap;
+}
+
+.formula + .formula {
+  margin-top: 3px;
+}
+
+.formula-explain {
+  max-width: 62ch;
+  margin: 10px 0 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.technical-note {
+  margin: 26px 0;
+  padding: 14px 0;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.technical-note strong {
+  color: var(--ink);
+}
+
+.plain-note {
+  max-width: 66ch;
+  margin: 24px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-faint);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.shape-ledger {
+  width: 100%;
+  margin: 28px 0 6px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.shape-ledger caption {
+  margin-bottom: 8px;
+  color: var(--ink);
+  font-weight: 630;
+  text-align: left;
+}
+
+.shape-ledger th,
+.shape-ledger td {
+  padding: 9px 12px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.shape-ledger th {
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.shape-ledger td {
+  color: var(--ink-soft);
+}
+
+.shape-ledger code {
+  color: var(--ink);
+  font-family: "Geist Mono", monospace;
+  font-size: 12.5px;
+}
+
+/* Figures */
+
+.observatory,
+.visual-stage {
+  position: relative;
+  width: min(940px, calc(100% - 40px));
+  margin: 30px auto 0;
+  overflow: hidden;
+  color: var(--stage-ink);
+  background: var(--stage);
+  border: 1px solid var(--stage-line);
+  border-radius: 8px;
+  box-shadow: var(--panel-shadow);
+}
+
+.stage-head {
+  min-height: 50px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--stage-line);
+}
+
+.stage-head > * {
+  min-width: 0;
+}
+
+.stage-kicker {
+  color: var(--stage-muted);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  font-weight: 620;
+  white-space: nowrap;
+}
+
+.stage-title {
+  color: var(--stage-ink);
+  font-size: 13.5px;
+  font-weight: 560;
+}
+
+.stage-status {
+  margin-left: auto;
+  max-width: 44%;
+  color: var(--stage-muted);
+  font-family: "Geist Mono", monospace;
+  font-size: 10.5px;
+  text-align: right;
+}
+
+.canvas-wrap {
+  position: relative;
+}
+
+canvas.scene-canvas {
+  width: 100%;
+  height: 520px;
+  display: block;
+  touch-action: pan-y;
+  cursor: default;
+}
+
+#journey-canvas {
+  height: 540px;
+}
+
+#system-canvas {
+  height: 610px;
+}
+
+#embedding-canvas,
+#transformer-canvas {
+  cursor: grab;
+}
+
+canvas.scene-canvas.dragging {
+  cursor: grabbing;
+}
+
+.scene-copy {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 16px;
+  pointer-events: none;
+}
+
+.scene-copy strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--stage-ink);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.scene-copy span {
+  display: block;
+  max-width: 52ch;
+  color: var(--stage-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.stage-footer,
+.stage-toolbar {
+  padding: 11px 16px 13px;
+  border-top: 1px solid var(--stage-line);
+}
+
+.stage-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.journey-steps {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.journey-step {
+  min-height: 4px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 2px;
+  background: rgba(225, 232, 255, 0.14);
+  cursor: pointer;
+}
+
+.journey-step::after {
+  content: "";
+  display: block;
+  width: var(--fill, 0%);
+  height: 4px;
+  border-radius: inherit;
+  background: var(--step-color, #6f89ff);
+  transition: width 260ms ease;
+}
+
+.stage-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.control-button,
+.mode-button,
+.example-button {
+  min-height: 30px;
+  padding: 6px 11px;
+  border: 1px solid rgba(225, 232, 255, 0.22);
+  border-radius: 5px;
+  background: rgba(225, 232, 255, 0.05);
+  color: var(--stage-muted);
+  cursor: pointer;
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.control-button:hover,
+.mode-button:hover,
+.example-button:hover {
+  color: var(--stage-ink);
+  border-color: rgba(141, 162, 255, 0.65);
+}
+
+.control-button.primary {
+  color: #ffffff;
+  border-color: #5f7cf5;
+  background: #4e6ff2;
+}
+
+.mode-button[aria-pressed="true"],
+.example-button[aria-pressed="true"] {
+  color: #ffffff;
+  border-color: #6c86f7;
+  background: rgba(78, 111, 242, 0.72);
+}
+
+.control-spacer {
+  flex: 1;
+}
+
+.frame-readout {
+  color: var(--stage-muted);
+  font-family: "Geist Mono", monospace;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.token-output {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--stage-line);
+}
+
+.token-chip {
+  padding: 5px 8px;
+  border: 1px solid rgba(141, 162, 255, 0.35);
+  border-radius: 4px;
+  background: rgba(78, 111, 242, 0.12);
+  color: #dbe2ff;
+  font-family: "Geist Mono", monospace;
+  font-size: 10.5px;
+}
+
+.token-chip.new {
+  border-color: rgba(240, 182, 77, 0.65);
+  background: rgba(240, 182, 77, 0.14);
+  color: #ffd989;
+}
+
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  color: var(--stage-muted);
+  font-family: "Geist Mono", monospace;
+  font-size: 10.5px;
+}
+
+input[type="range"] {
+  width: min(180px, 28vw);
+  accent-color: #6f89ff;
+}
+
+.stage-caption {
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--stage-line);
+  color: var(--stage-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.stage-caption strong {
+  color: var(--stage-ink);
+  font-weight: 590;
+}
+
+.scrubber-row {
+  padding: 12px 16px 15px;
+  display: grid;
+  grid-template-columns: auto minmax(120px, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  border-top: 1px solid var(--stage-line);
+}
+
+.scrubber-row input {
+  width: 100%;
+}
+
+.system-legend {
+  display: flex;
+  gap: 16px;
+  color: var(--stage-muted);
+  font-family: "Geist Mono", monospace;
+  font-size: 10.5px;
+}
+
+/* References and footer */
+
+.sources {
+  padding: 84px 0 0;
+}
+
+.source-list {
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line-strong);
+}
+
+.source-list li {
+  position: relative;
+  padding: 15px 0 15px 36px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.source-list li::before {
+  content: attr(data-no) ".";
+  position: absolute;
+  left: 0;
+  top: 17px;
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+}
+
+.source-list strong {
+  color: var(--ink);
+}
+
+.series {
+  margin-top: 84px;
+  padding: 28px 0 42px;
+  border-top: 1px solid var(--line);
+}
+
+.series-inner {
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+}
+
+.series nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.series a {
+  color: var(--ink-soft);
+}
+
+/* Small screens */
+
+@media (max-width: 680px) {
+  body {
+    font-size: 17px;
+  }
+
+  .article-header,
+  .chapter-copy,
+  .replay-heading,
+  .sources,
+  .series-inner {
+    width: min(720px, calc(100% - 32px));
+  }
+
+  .article-header {
+    padding-top: 28px;
+  }
+
+  .mast-row {
+    margin-bottom: 36px;
+  }
+
+  h1 {
+    font-size: clamp(29px, 8.5vw, 33px);
+  }
+
+  .article-lede {
+    font-size: 18px;
+  }
+
+  .contents ol {
+    grid-template-columns: 1fr;
+  }
+
+  .reading-section,
+  .replay-section {
+    padding-top: 60px;
+  }
+
+  .sources {
+    padding-top: 68px;
+  }
+
+  .chapter-copy p,
+  .replay-heading p,
+  .sources p {
+    font-size: 17px;
+  }
+
+  .observatory,
+  .visual-stage {
+    width: calc(100% - 16px);
+    border-radius: 7px;
+  }
+
+  .stage-head {
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .stage-status {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    text-align: left;
+  }
+
+  canvas.scene-canvas,
+  #journey-canvas,
+  #embedding-canvas {
+    height: 410px;
+  }
+
+  #system-canvas {
+    height: 480px;
+  }
+
+  .scene-copy {
+    left: 14px;
+    right: 14px;
+    bottom: 12px;
+  }
+
+  .scene-copy strong {
+    font-size: 14.5px;
+  }
+
+  .scene-copy span {
+    font-size: 11px;
+  }
+
+  .stage-footer,
+  .stage-toolbar,
+  .stage-caption,
+  .token-output,
+  .scrubber-row {
+    padding-left: 13px;
+    padding-right: 13px;
+  }
+
+  .control-spacer {
+    display: none;
+  }
+
+  .range-row {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .range-row input {
+    flex: 1;
+    width: auto;
+  }
+
+  .shape-ledger {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .scrubber-row {
+    grid-template-columns: 1fr;
+  }
+
+  .system-legend {
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#start">Skip to the article</a>
+
+<main class="article-page" id="start">
+  <header class="article-header">
+    <div class="mast-row">
+      <a class="brand" href="../index.html">Model Mechanics</a>
+      <span class="mast-separator" aria-hidden="true">/</span>
+      <span class="mast-label">Explainer 1</span>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle color theme">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+      </button>
+    </div>
+    <p class="eyebrow">Decoder-only language models</p>
+    <h1>How an LLM turns text into the next token</h1>
+    <p class="article-lede">A language model has one job: given some text, predict a small piece of what comes next. Everything an LLM produces, from a chat reply to working code, is that prediction repeated. This article follows a prompt through the machinery that makes one prediction, then shows how training chose the numbers that machinery runs on.</p>
+    <p class="article-meta">Reading time: about 18 minutes · Interactive figures can be paused, replayed, and scrubbed</p>
+    <p class="scope-note"><strong>Scope.</strong> The diagrams show a modern decoder-only transformer, the family used by GPT-style language models. The 2017 transformer had an encoder and a decoder. Model widths, layer counts, token IDs, probabilities, and 3D positions here are illustrative; tensor shapes and operation order are stated where they matter.</p>
+    <nav class="contents" aria-label="Article contents">
+      <span class="contents-label">Contents</span>
+      <ol>
+        <li><a href="#overview">Lifecycle</a></li>
+        <li><a href="#corpus">Corpus</a></li>
+        <li><a href="#tokens">Tokenization</a></li>
+        <li><a href="#geometry">Embeddings and position</a></li>
+        <li><a href="#transformer">Transformer block</a></li>
+        <li><a href="#training">Pre-training</a></li>
+        <li><a href="#generation">Generation</a></li>
+        <li><a href="#replay">Complete pass</a></li>
+      </ol>
+    </nav>
+  </header>
+
+  <section class="reading-section" id="overview" aria-labelledby="overview-title">
+    <div class="chapter-copy">
+      <p class="section-label">Section 1 · Lifecycle</p>
+      <h2 id="overview-title">A model is built once, then used many times</h2>
+      <p>An LLM has two separate lives. In the build loop, a data pipeline assembles a large collection of text called the corpus, a tokenizer turns that text into token sequences, and pre-training adjusts the model's parameters, often called weights: the billions of learned numbers that determine its behavior. The finished parameters are saved as a checkpoint, one large file the model can be reloaded from.</p>
+      <p>In the use loop, a prompt passes through the frozen tokenizer and checkpoint. The model produces one token, appends it to the sequence, and runs again, once per small piece of generated text. The parameters do not change while an answer is generated.</p>
+      <p>The sections below follow the data in order: corpus, tokens, vectors, transformer, training, generation. Training appears late on purpose; the update rule is easier to picture once you have seen what the parameters compute. Jay Alammar's <a class="paper-link" href="https://jalammar.github.io/illustrated-transformer/">Illustrated Transformer</a> uses a similar progressive reveal for the original architecture.</p>
+    </div>
+
+    <figure class="observatory" id="journey-stage">
+      <figcaption class="stage-head">
+        <span class="stage-kicker">Figure 1</span>
+        <span class="stage-title">Build once, generate one token at a time</span>
+        <span class="stage-status" id="journey-status">Playing the full route</span>
+      </figcaption>
+      <div class="canvas-wrap">
+        <canvas class="scene-canvas" id="journey-canvas" role="img" aria-label="Animated overview showing a text corpus becoming a vocabulary and trained checkpoint, then a prompt passing through tokenization, transformer blocks, and next-token selection"></canvas>
+        <div class="scene-copy" aria-live="polite">
+          <strong id="journey-title">Collect and filter a corpus</strong>
+          <span id="journey-copy">Documents supply examples for tokenizer construction and model pre-training.</span>
+        </div>
+      </div>
+      <div class="stage-footer">
+        <div class="journey-steps" id="journey-steps" aria-label="Choose an overview stage"></div>
+        <div class="stage-controls">
+          <button class="control-button" type="button" data-journey-action="previous">Previous</button>
+          <button class="control-button primary" type="button" data-journey-action="toggle">Pause</button>
+          <button class="control-button" type="button" data-journey-action="next">Next</button>
+          <span class="control-spacer" aria-hidden="true">&#8203;</span>
+          <button class="control-button" type="button" data-journey-action="restart">Replay</button>
+          <span class="frame-readout" id="journey-readout">1 / 7</span>
+        </div>
+      </div>
+    </figure>
+  </section>
+
+  <div class="chapter-shell">
+    <section class="chapter reading-section" id="corpus" aria-labelledby="corpus-title">
+      <div class="chapter-copy">
+        <p class="section-label">Section 2 · Corpus</p>
+        <h2 id="corpus-title">The model's evidence starts as a selected dataset</h2>
+        <p>Training text starts as web crawls, books, code, and papers, and none of it arrives ready to use. Data pipelines extract the usable text, remove boilerplate and near-duplicates, apply quality and safety filters, choose language and domain mixtures, then split documents into training examples. Those decisions determine what patterns the model can observe and how often it observes them.</p>
+        <p>Engineers usually train the tokenizer, described in the next section, on a representative sample of the corpus, then use that frozen tokenizer to encode the much larger training set. The <a class="paper-link" href="https://arxiv.org/abs/2406.17557">FineWeb paper</a> is useful because it publishes concrete filtering and deduplication experiments. Proprietary model reports may disclose only part of the data recipe.</p>
+        <p class="technical-note"><strong>Accuracy check.</strong> Documents do not flow directly into a transformer during training. They become packed arrays of token IDs, commonly with boundaries or special tokens marking document transitions. Figure 2 compresses storage, shuffling, packing, and distributed loading into one stream.</p>
+      </div>
+
+      <figure class="visual-stage" id="corpus-stage">
+        <figcaption class="stage-head">
+          <span class="stage-kicker">Figure 2</span>
+          <span class="stage-title">Sources pass through selection and filtering</span>
+          <span class="stage-status" id="corpus-status">Collecting documents</span>
+        </figcaption>
+        <canvas class="scene-canvas" id="corpus-canvas" role="img" aria-label="Animated scene where document particles from several sources pass through filtering rings, form a corpus, and split toward tokenizer construction and model pre-training"></canvas>
+        <div class="stage-toolbar">
+          <button class="control-button primary" type="button" data-scene-toggle="corpus">Pause</button>
+          <button class="control-button" type="button" data-scene-restart="corpus">Replay</button>
+          <span class="control-spacer" aria-hidden="true">&#8203;</span>
+          <span class="frame-readout">sample → filter → corpus → encode</span>
+        </div>
+        <figcaption class="stage-caption"><strong>Schematic pipeline.</strong> Source proportions and rejection rates are illustrative. Corpus composition is a modeling decision, not background plumbing.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter reading-section" id="tokens" aria-labelledby="tokens-title">
+      <div class="chapter-copy">
+        <p class="section-label">Section 3 · Tokenization</p>
+        <h2 id="tokens-title">Text becomes a sequence of vocabulary addresses</h2>
+        <p>A neural network computes with numbers, so text has to become numbers first. A tokenizer segments a string into pieces found in a fixed vocabulary and returns the corresponding integer IDs. A common word may occupy one token. A rare name may split into several subwords or bytes. Spaces, punctuation, and code fragments can be tokens too.</p>
+        <div class="formula-block">
+          <span class="formula-label">Tokenizer output</span>
+          <div class="formula">t₁, …, t<sub>T</sub> = Tokenize(s), &nbsp; t<sub>i</sub> ∈ {0, …, |V| − 1}</div>
+          <p class="formula-explain"><strong>s</strong> is the input string, <strong>T</strong> is its token count, and <strong>|V|</strong> is the vocabulary size. A token ID is an address. Its numeric value carries no distance or meaning.</p>
+        </div>
+        <p>Byte pair encoding and Unigram tokenization use different algorithms to choose the inventory. <a class="paper-link" href="https://arxiv.org/abs/1808.06226">SentencePiece</a> describes both in a language-independent system that can train from raw sentences. Production tokenizers often add byte fallback and special control tokens.</p>
+        <p class="technical-note"><strong>Keep the artifacts separate.</strong> Tokenizer construction chooses a discrete vocabulary. Pre-training later learns continuous embedding vectors and transformer weights. Once model training begins, changing the token-to-ID map would invalidate the embedding rows tied to those IDs.</p>
+      </div>
+
+      <figure class="visual-stage" id="token-stage">
+        <figcaption class="stage-head">
+          <span class="stage-kicker">Figure 3</span>
+          <span class="stage-title">String pieces resolve to fixed IDs</span>
+          <span class="stage-status" id="token-status">Scanning a sentence</span>
+        </figcaption>
+        <canvas class="scene-canvas" id="token-canvas" role="img" aria-label="Animated tokenizer scene where a sentence separates into subword pieces with IDs and connects to entries in a fixed vocabulary archive"></canvas>
+        <div class="stage-toolbar" id="token-examples" role="group" aria-label="Choose tokenizer example"></div>
+        <div class="token-output" id="token-output" aria-live="polite"></div>
+        <figcaption class="stage-caption"><strong>Toy vocabulary.</strong> Boundaries and IDs are illustrative. The same frozen tokenizer can produce widely different sequence lengths for different strings.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter reading-section" id="geometry" aria-labelledby="geometry-title">
+      <div class="chapter-copy">
+        <p class="section-label">Section 4 · Embeddings and position</p>
+        <h2 id="geometry-title">Each token ID selects a learned vector</h2>
+        <p>A token ID by itself is only a catalog number. The embedding table attaches content to it: one learned row per vocabulary entry. Looking up token <em>t<sub>i</sub></em> returns that row, a vector of <em>d<sub>model</sub></em> numbers, and a vector can be pictured as a point in space. Tokens that appear in similar contexts tend to drift toward nearby points during training. The looked-up vector is the initial hidden state, the model's working representation, at position <em>i</em>.</p>
+        <div class="formula-block">
+          <span class="formula-label">Embedding lookup</span>
+          <div class="formula">x<sup>(0)</sup><sub>i</sub> = E[t<sub>i</sub>], &nbsp; E ∈ ℝ<sup>|V| × d<sub>model</sub></sup></div>
+          <p class="formula-explain">The bracket is a row lookup, not a semantic database query. Pre-training adjusts every used row through gradient descent.</p>
+        </div>
+        <p>The network also needs token order; "dog bites man" and "man bites dog" contain the same tokens. Many current decoders use rotary position embeddings, or RoPE. RoPE rotates query and key coordinates at each attention layer, so attention scores depend on relative offsets between positions. It is not an extra point appended to the token embedding.</p>
+        <div class="formula-block compact">
+          <span class="formula-label">RoPE, simplified</span>
+          <div class="formula">q′<sub>i</sub> = R(i)q<sub>i</sub>, &nbsp; k′<sub>j</sub> = R(j)k<sub>j</sub></div>
+          <p class="formula-explain">R(i) rotates pairs of coordinates by position-dependent angles. The dot product q′<sub>i</sub> · k′<sub>j</sub> then carries information about i − j. See <a href="https://arxiv.org/abs/2104.09864">RoFormer</a>.</p>
+        </div>
+        <p class="plain-note">Figure 4 projects a toy set of vectors into three dimensions. A real hidden width may contain thousands of coordinates. Nearby points can suggest similar usage, but this drawing is not a measurement from a trained model, and a contextual hidden state is not a static word meaning. The gold context arrow previews the scoring step of Section 7: candidates aligned with the final hidden state receive higher scores.</p>
+      </div>
+
+      <figure class="visual-stage" id="embedding-stage">
+        <figcaption class="stage-head">
+          <span class="stage-kicker">Figure 4</span>
+          <span class="stage-title">A 3D projection of higher-dimensional vectors</span>
+          <span class="stage-status">Drag to rotate</span>
+        </figcaption>
+        <canvas class="scene-canvas" id="embedding-canvas" tabindex="0" role="img" aria-label="Interactive rotating 3D projection of toy token embeddings grouped into several regions, with a context direction pointing toward likely continuations"></canvas>
+        <div class="stage-toolbar" id="embedding-contexts" role="group" aria-label="Choose a context direction"></div>
+        <figcaption class="stage-caption" id="embedding-caption"><strong>Projection, not literal storage.</strong> The output layer scores every vocabulary entry with matrix operations. It does not search a physical sphere.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter reading-section" id="transformer" aria-labelledby="transformer-title">
+      <div class="chapter-copy">
+        <p class="section-label">Section 5 · Transformer block</p>
+        <h2 id="transformer-title">Attention mixes positions; the MLP transforms each position</h2>
+        <p>A transformer is a stack of near-identical blocks, and each block makes two moves. Attention lets every position read from earlier positions, so the state for "bank" in "the river bank" can absorb "river". The MLP, a small feed-forward network applied to each position on its own, then reworks whatever attention gathered. The rest of this section states both moves precisely.</p>
+        <p>Let <em>X</em> hold the hidden states for a sequence. One attention head makes three linear projections. Queries represent what each position is looking for, keys represent what each position offers for matching, and values carry the information that will be mixed.</p>
+        <div class="formula-block">
+          <span class="formula-label">One causal attention head</span>
+          <div class="formula">Q = XW<sub>Q</sub>, &nbsp; K = XW<sub>K</sub>, &nbsp; V = XW<sub>V</sub></div>
+          <div class="formula">A = softmax(QK<sup>T</sup> / √d<sub>head</sub> + M<sub>causal</sub>)</div>
+          <div class="formula">Attention(X) = AV</div>
+          <p class="formula-explain">Row i of A contains the weights used to update token i. M<sub>causal</sub>[i,j] is −∞ when j &gt; i, so softmax assigns future positions zero probability. The division by √d<sub>head</sub> keeps dot products numerically controlled.</p>
+        </div>
+        <p>Multiple heads run in parallel, their results are combined, and an output projection returns to the model width. Grouped-query attention shares key and value heads to reduce memory traffic, but each query still obeys the causal mask.</p>
+        <p>A modern pre-normalized block commonly follows this residual pattern:</p>
+        <div class="formula-block compact">
+          <span class="formula-label">One decoder block, schematic</span>
+          <div class="formula">x ← x + Attention(RMSNorm(x))</div>
+          <div class="formula">x ← x + MLP(RMSNorm(x))</div>
+          <p class="formula-explain">The residual path preserves the current state while each sublayer writes an update. A SwiGLU-style MLP expands, gates, then projects each position back to d<sub>model</sub>. Exact normalization, gating, and bias choices vary by model.</p>
+        </div>
+        <p>The original <a class="paper-link" href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a> paper introduced the encoder-decoder transformer with post-normalization. Modern decoder-only implementations often use RMSNorm, RoPE, gated MLPs, and grouped-query attention; <a class="paper-link" href="https://arxiv.org/abs/2404.14619">OpenELM</a> documents one compact example.</p>
+
+        <table class="shape-ledger">
+          <caption>A practical shape ledger</caption>
+          <thead><tr><th>Object</th><th>Typical shape</th><th>What varies</th></tr></thead>
+          <tbody>
+            <tr><td>Token IDs</td><td><code>[T]</code></td><td>Sequence length T</td></tr>
+            <tr><td>Hidden states</td><td><code>[T, d_model]</code></td><td>One vector per position</td></tr>
+            <tr><td>Attention scores</td><td><code>[heads, T, T]</code></td><td>One causal matrix per query head</td></tr>
+            <tr><td>Output logits</td><td><code>[T, |V|]</code></td><td>One vocabulary score vector per position</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure class="visual-stage" id="transformer-stage">
+        <figcaption class="stage-head">
+          <span class="stage-kicker">Figure 5</span>
+          <span class="stage-title">One decoder block, exploded for inspection</span>
+          <span class="stage-status" id="transformer-status">Following the full block</span>
+        </figcaption>
+        <canvas class="scene-canvas" id="transformer-canvas" tabindex="0" role="img" aria-label="Interactive exploded transformer showing token states, causal attention connections, per-position MLP expansion, residual paths, and repeated blocks"></canvas>
+        <div class="stage-toolbar" id="transformer-modes" role="group" aria-label="Choose transformer view">
+          <button class="mode-button" type="button" data-transformer-mode="overview" aria-pressed="true">Full block</button>
+          <button class="mode-button" type="button" data-transformer-mode="attention" aria-pressed="false">Attention</button>
+          <button class="mode-button" type="button" data-transformer-mode="mlp" aria-pressed="false">MLP</button>
+          <button class="mode-button" type="button" data-transformer-mode="residual" aria-pressed="false">Residual</button>
+          <span class="control-spacer" aria-hidden="true">&#8203;</span>
+          <button class="control-button primary" type="button" data-scene-toggle="transformer">Pause</button>
+        </div>
+        <figcaption class="stage-caption"><strong>Exploded tensor view.</strong> The planes make data dependencies visible. Implementations store these values in tensors and fuse many operations into accelerator kernels.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter reading-section" id="training" aria-labelledby="training-title">
+      <div class="chapter-copy">
+        <p class="section-label">Section 6 · Pre-training</p>
+        <h2 id="training-title">Every position supplies a next-token training target</h2>
+        <p>Pre-training is a guessing game graded at every position. The model reads corpus text and, at each position, must assign high probability to the token that comes next. The causal mask keeps it from peeking at later tokens, yet all positions in a training sequence can be graded in parallel; this setup is often called teacher forcing.</p>
+        <div class="formula-block">
+          <span class="formula-label">Autoregressive model and cross-entropy loss</span>
+          <div class="formula">p<sub>θ</sub>(t₁:T) = ∏<sub>i=1</sub><sup>T</sup> p<sub>θ</sub>(t<sub>i</sub> | t<sub>&lt;i</sub>)</div>
+          <div class="formula">L(θ) = −(1/N) Σ<sub>i</sub> log p<sub>θ</sub>(t<sub>i</sub> | t<sub>&lt;i</sub>)</div>
+          <p class="formula-explain">If the model assigns the observed token probability 0.80, that position contributes −log(0.80) ≈ 0.223. Probability 0.05 contributes about 2.996. Confident mistakes cost more.</p>
+        </div>
+        <p>Backpropagation computes the gradient of the batch loss: for every participating parameter, a measure of how a small change would raise or lower the loss. An optimizer such as AdamW maintains running statistics and uses that signal to apply a small update. Data-parallel and tensor-parallel systems distribute the work across many accelerators.</p>
+        <div class="formula-block compact">
+          <span class="formula-label">Optimizer step, schematic</span>
+          <div class="formula">θ<sub>k+1</sub> = AdamW(θ<sub>k</sub>, ∇<sub>θ</sub>L, η)</div>
+          <p class="formula-explain">θ contains embeddings, attention projections, MLP weights, normalization scales, and the output projection. η is the learning rate. AdamW's moment estimates and weight decay are suppressed here.</p>
+        </div>
+        <p>The <a class="paper-link" href="https://arxiv.org/abs/2005.14165">GPT-3 paper</a> is a concrete decoder-only training reference. <a class="paper-link" href="https://arxiv.org/abs/2203.15556">Chinchilla</a> showed that, within its studied compute regime, better results came from balancing parameter count with more training tokens. That scaling result is an empirical recipe, not a law that fixes every model or dataset.</p>
+        <p class="technical-note"><strong>After base training.</strong> Instruction tuning and preference optimization adjust the checkpoint again using curated examples and preference signals. They shape behavior, but generation still uses the same autoregressive forward pass. See <a href="https://arxiv.org/abs/2203.02155">InstructGPT</a> for an influential pipeline.</p>
+      </div>
+
+      <figure class="visual-stage" id="training-stage">
+        <figcaption class="stage-head">
+          <span class="stage-kicker">Figure 6</span>
+          <span class="stage-title">Forward, score, backpropagate, update</span>
+          <span class="stage-status" id="training-status">Running a token batch forward</span>
+        </figcaption>
+        <canvas class="scene-canvas" id="training-canvas" role="img" aria-label="Animated pre-training scene with token sequences entering transformer layers, next-token predictions compared with targets, and an error signal traveling backward to update weights"></canvas>
+        <div class="stage-toolbar">
+          <button class="control-button primary" type="button" data-scene-toggle="training">Pause</button>
+          <button class="control-button" type="button" data-scene-restart="training">Replay batch</button>
+          <span class="control-spacer" aria-hidden="true">&#8203;</span>
+          <span class="frame-readout" id="training-phase">forward pass</span>
+        </div>
+        <figcaption class="stage-caption"><strong>One optimizer step at toy scale.</strong> The targets come from the text itself: the target at each position is the next token, as the inset shows. Production runs use many sequences and layers, accumulate gradients, synchronize workers, and save checkpoints throughout training.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter reading-section" id="generation" aria-labelledby="generation-title">
+      <div class="chapter-copy">
+        <p class="section-label">Section 7 · Generation</p>
+        <h2 id="generation-title">The last hidden state becomes one score per token</h2>
+        <p>Everything above happened before the model met a user. At request time, the prompt is tokenized and passed through the frozen transformer, exactly as in training but with no update afterward. A final normalization and linear output projection map the latest hidden state to one logit, an unnormalized score, for every vocabulary entry. Some models tie this output matrix to the input embedding table.</p>
+        <div class="formula-block">
+          <span class="formula-label">Logits and temperature-scaled probabilities</span>
+          <div class="formula">z = W<sub>U</sub>h<sub>T</sub> + b</div>
+          <div class="formula">p<sub>i</sub> = exp(z<sub>i</sub>/τ) / Σ<sub>j</sub> exp(z<sub>j</sub>/τ)</div>
+          <p class="formula-explain">W<sub>U</sub> is the output, or unembedding, matrix; some architectures omit the bias b. Lower positive temperature τ concentrates mass on larger logits. Higher τ flattens the distribution. Greedy decoding chooses the largest logit; top-k and top-p sampling first restrict the candidate set.</p>
+        </div>
+        <p>The chosen token is appended and decoding repeats. During the first prompt pass, called prefill, the model computes keys and values for every prompt token. A KV cache keeps those tensors so later decode steps compute the new position while attending over cached keys and values. Systems such as <a class="paper-link" href="https://arxiv.org/abs/2309.06180">PagedAttention</a> focus on managing that cache efficiently.</p>
+        <p class="technical-note"><strong>What remains fixed.</strong> The checkpoint does not learn from the request. The KV cache is temporary sequence state, not durable memory. Randomness enters through the decoding rule; the forward pass for fixed token IDs and weights is deterministic up to numerical implementation details.</p>
+      </div>
+
+      <figure class="visual-stage" id="generation-stage">
+        <figcaption class="stage-head">
+          <span class="stage-kicker">Figure 7</span>
+          <span class="stage-title">Project, choose, append, repeat</span>
+          <span class="stage-status" id="generation-status">Scoring the vocabulary</span>
+        </figcaption>
+        <canvas class="scene-canvas" id="generation-canvas" role="img" aria-label="Animated inference scene where prompt tokens pass through transformer layers, the final state maps to vocabulary logits, candidates receive probabilities, and one selected token loops back into context"></canvas>
+        <div class="stage-toolbar">
+          <button class="control-button primary" type="button" id="generate-next">Generate next token</button>
+          <button class="control-button" type="button" id="generate-reset">Reset</button>
+          <button class="control-button" type="button" data-scene-toggle="generation">Pause</button>
+          <div class="range-row">
+            <label for="temperature">temperature</label>
+            <input type="range" id="temperature" min="0.2" max="1.6" step="0.1" value="0.8">
+            <output id="temperature-value" for="temperature">0.8</output>
+          </div>
+        </div>
+        <div class="token-output" id="generation-output" aria-live="polite"></div>
+        <figcaption class="stage-caption"><strong>Vocabulary geometry is visual shorthand.</strong> The model computes all logits with a matrix multiplication. Candidate values and probabilities in this scene are illustrative.</figcaption>
+      </figure>
+    </section>
+  </div>
+
+  <section class="replay-section reading-section" id="replay" aria-labelledby="replay-title">
+    <div class="replay-heading">
+      <p class="section-label">Section 8 · Complete pass</p>
+      <h2 id="replay-title">Put the data, weights, and token loop on one timeline</h2>
+      <p>The upper route builds the artifacts: a corpus supports tokenizer construction and pre-training, then training saves a checkpoint. The lower route uses the fixed tokenizer and checkpoint to map a prompt to one selected token. That token extends the context for the next decode step.</p>
+    </div>
+
+    <figure class="observatory" id="system-stage">
+      <figcaption class="stage-head">
+        <span class="stage-kicker">Figure 8</span>
+        <span class="stage-title">Corpus to checkpoint, prompt to next token</span>
+        <span class="stage-status" id="system-status">Training text enters the pipeline</span>
+      </figcaption>
+      <div class="canvas-wrap">
+        <canvas class="scene-canvas" id="system-canvas" role="img" aria-label="Controllable overview with a training route from corpus through tokenization, batches, transformer updates, and checkpoint, plus an inference route from prompt through the same tokenizer and frozen transformer to logits and a selected token that loops back"></canvas>
+        <div class="scene-copy">
+          <strong id="system-title">Training begins with selected text</strong>
+          <span id="system-copy">The corpus supplies both the tokenizer sample and the encoded sequences used for next-token training.</span>
+        </div>
+      </div>
+      <div class="scrubber-row">
+        <div class="stage-controls">
+          <button class="control-button primary" type="button" id="system-toggle">Pause</button>
+          <button class="control-button" type="button" id="system-restart">Replay</button>
+        </div>
+        <input type="range" id="system-scrubber" min="0" max="11" step="0.01" value="0" aria-label="Scrub through the complete LLM lifecycle">
+        <div class="system-legend" aria-label="Full system color key">
+          <span>blue: data</span>
+          <span>coral: learning</span>
+          <span>gold: output</span>
+        </div>
+      </div>
+    </figure>
+  </section>
+
+  <section class="sources" id="sources" aria-labelledby="sources-title">
+    <p class="section-label">References</p>
+    <h2 id="sources-title">Papers and visual references</h2>
+    <p>Links appear beside the claims they support. This list collects the primary technical references and the visual work that informed the article's pacing.</p>
+    <ul class="source-list">
+      <li data-no="1"><strong><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a></strong><br>Vaswani et al., 2017. Scaled dot-product attention and the original encoder-decoder transformer.</li>
+      <li data-no="2"><strong><a href="https://arxiv.org/abs/1808.06226">SentencePiece</a></strong><br>Kudo and Richardson, 2018. BPE and Unigram tokenization trained directly from raw sentences.</li>
+      <li data-no="3"><strong><a href="https://arxiv.org/abs/2406.17557">The FineWeb Datasets</a></strong><br>Penedo et al., 2024. A documented web corpus with filtering and deduplication experiments.</li>
+      <li data-no="4"><strong><a href="https://arxiv.org/abs/2104.09864">RoFormer</a></strong><br>Su et al., 2021. Rotary position embeddings applied to attention queries and keys.</li>
+      <li data-no="5"><strong><a href="https://arxiv.org/abs/2005.14165">Language Models are Few-Shot Learners</a></strong><br>Brown et al., 2020. Decoder-only autoregressive pre-training at GPT-3 scale.</li>
+      <li data-no="6"><strong><a href="https://arxiv.org/abs/2203.15556">Training Compute-Optimal Large Language Models</a></strong><br>Hoffmann et al., 2022. Empirical scaling of parameters and training tokens under a compute budget.</li>
+      <li data-no="7"><strong><a href="https://arxiv.org/abs/2404.14619">OpenELM</a></strong><br>Mehta et al., 2024. A documented modern decoder using RMSNorm, RoPE, grouped-query attention, and SwiGLU.</li>
+      <li data-no="8"><strong><a href="https://arxiv.org/abs/2203.02155">InstructGPT</a></strong><br>Ouyang et al., 2022. Supervised instruction tuning and preference-based post-training.</li>
+      <li data-no="9"><strong><a href="https://arxiv.org/abs/2309.06180">PagedAttention</a></strong><br>Kwon et al., 2023. Efficient serving through paged KV-cache management.</li>
+      <li data-no="10"><strong><a href="https://jalammar.github.io/illustrated-transformer/">The Illustrated Transformer</a></strong><br>Jay Alammar's linear, progressive visual explanation of the original transformer.</li>
+      <li data-no="11"><strong><a href="https://arxiv.org/abs/2408.04619">Transformer Explainer</a></strong><br>Cho et al., 2024. Interactive transitions between system-level and operation-level transformer views.</li>
+      <li data-no="12"><strong><a href="https://bbycroft.net/llm">LLM Visualization</a></strong><br>Brendan Bycroft's detailed 3D inspection of a toy GPT forward pass.</li>
+    </ul>
+  </section>
+</main>
+
+<footer class="series">
+  <div class="series-inner">
+    <span>Model Mechanics · A field guide to working with LLMs</span>
+    <nav aria-label="Series">
+      <a href="effort-levels.html">02 · Reasoning Effort</a>
+      <a href="orchestration-and-subagents.html">03 · Orchestration</a>
+      <a href="loops-and-skills.html">04 · Loops and Skills</a>
+    </nav>
+  </div>
+</footer>
+<script>
+(function () {
+"use strict";
+
+var REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var TAU = Math.PI * 2;
+var COLORS = {
+  bg: "#080e1e",
+  bg2: "#10182b",
+  ink: "#f5f6fb",
+  muted: "#9eaac3",
+  line: "rgba(215,224,248,0.16)",
+  lineSoft: "rgba(215,224,248,0.08)",
+  blue: "#6f89ff",
+  blue2: "#9cb0ff",
+  coral: "#ee755f",
+  violet: "#c08bff",
+  gold: "#efb44d",
+  grey: "#65718a"
+};
+
+function clamp(v, lo, hi) {
+  return Math.max(lo, Math.min(hi, v));
+}
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function smooth(t) {
+  t = clamp(t, 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
+function easeOut(t) {
+  t = clamp(t, 0, 1);
+  return 1 - Math.pow(1 - t, 3);
+}
+
+function fract(v) {
+  return v - Math.floor(v);
+}
+
+function hash(n, salt) {
+  return fract(Math.sin(n * 127.1 + (salt || 0) * 311.7) * 43758.5453);
+}
+
+function mixPoint(a, b, t) {
+  return {
+    x: lerp(a.x, b.x, t),
+    y: lerp(a.y, b.y, t),
+    z: lerp(a.z, b.z, t)
+  };
+}
+
+function bezierPoint(a, b, c, d, t) {
+  var u = 1 - t;
+  var uu = u * u;
+  var tt = t * t;
+  return {
+    x: uu * u * a.x + 3 * uu * t * b.x + 3 * u * tt * c.x + tt * t * d.x,
+    y: uu * u * a.y + 3 * uu * t * b.y + 3 * u * tt * c.y + tt * t * d.y,
+    z: uu * u * a.z + 3 * uu * t * b.z + 3 * u * tt * c.z + tt * t * d.z
+  };
+}
+
+function roundPath(ctx, x, y, w, h, r) {
+  var rr = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+}
+
+function rotatePoint(p, yaw, pitch) {
+  var cy = Math.cos(yaw);
+  var sy = Math.sin(yaw);
+  var cp = Math.cos(pitch);
+  var sp = Math.sin(pitch);
+  var x1 = p.x * cy - p.z * sy;
+  var z1 = p.x * sy + p.z * cy;
+  return {
+    x: x1,
+    y: p.y * cp - z1 * sp,
+    z: p.y * sp + z1 * cp
+  };
+}
+
+function project3(p, view, w, h) {
+  var local = {
+    x: p.x - (view.x || 0),
+    y: p.y - (view.y || 0),
+    z: p.z - (view.z || 0)
+  };
+  var q = rotatePoint(local, view.yaw || 0, view.pitch || 0);
+  var depth = Math.max(2.2, (view.dist || 10) + q.z);
+  var focal = view.focal || Math.min(w, h) * 1.15;
+  var scale = focal / depth;
+  return {
+    x: w * (view.cx == null ? 0.5 : view.cx) + q.x * scale,
+    y: h * (view.cy == null ? 0.5 : view.cy) - q.y * scale,
+    depth: depth,
+    z: q.z,
+    scale: scale,
+    s: scale / 52
+  };
+}
+
+function line3(ctx, a, b, view, w, h, color, width, alpha) {
+  var pa = project3(a, view, w, h);
+  var pb = project3(b, view, w, h);
+  ctx.save();
+  ctx.globalAlpha = alpha == null ? 1 : alpha;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width || 1;
+  ctx.beginPath();
+  ctx.moveTo(pa.x, pa.y);
+  ctx.lineTo(pb.x, pb.y);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function poly3(ctx, points, view, w, h, fill, stroke, alpha) {
+  if (!points.length) return;
+  var projected = points.map(function (point) {
+    return project3(point, view, w, h);
+  });
+  ctx.save();
+  ctx.globalAlpha = alpha == null ? 1 : alpha;
+  ctx.beginPath();
+  ctx.moveTo(projected[0].x, projected[0].y);
+  for (var i = 1; i < projected.length; i += 1) {
+    ctx.lineTo(projected[i].x, projected[i].y);
+  }
+  ctx.closePath();
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function point3(ctx, point, view, w, h, radius, color, alpha, ring) {
+  var p = project3(point, view, w, h);
+  var r = Math.max(1.2, radius * clamp(p.s, 0.48, 1.7));
+  ctx.save();
+  ctx.globalAlpha = alpha == null ? 1 : alpha;
+  if (ring) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(Math.round(p.x - r) + 0.5, Math.round(p.y - r) + 0.5, Math.max(2, Math.round(r * 2)), Math.max(2, Math.round(r * 2)));
+  } else {
+    ctx.fillStyle = color;
+    ctx.fillRect(Math.round(p.x - r), Math.round(p.y - r), Math.max(2, Math.round(r * 2)), Math.max(2, Math.round(r * 2)));
+  }
+  ctx.restore();
+  return p;
+}
+
+function card3(ctx, point, view, w, h, text, color, alpha, size) {
+  var p = project3(point, view, w, h);
+  var scale = clamp(p.s, 0.55, 1.45);
+  var width = (size || 72) * scale;
+  var height = 26 * scale;
+  ctx.save();
+  ctx.globalAlpha = alpha == null ? 1 : alpha;
+  roundPath(ctx, Math.round(p.x - width / 2), Math.round(p.y - height / 2), Math.round(width), Math.round(height), 2);
+  ctx.fillStyle = "rgba(10,16,34,0.86)";
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = COLORS.ink;
+  ctx.font = Math.max(8, 10 * scale) + 'px "Geist Mono", monospace';
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, p.x, p.y + 0.4);
+  ctx.restore();
+  return p;
+}
+
+function label3(ctx, point, view, w, h, text, color, align, alpha) {
+  var p = project3(point, view, w, h);
+  ctx.save();
+  ctx.globalAlpha = alpha == null ? 1 : alpha;
+  ctx.fillStyle = color || COLORS.muted;
+  ctx.font = '10px "Geist Mono", monospace';
+  ctx.textAlign = align || "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, p.x, p.y);
+  ctx.restore();
+}
+
+function ring3(ctx, center, radius, axis, view, w, h, color, alpha, width) {
+  var points = [];
+  var count = 56;
+  for (var i = 0; i <= count; i += 1) {
+    var a = i / count * TAU;
+    if (axis === "xy") {
+      points.push({ x: center.x + Math.cos(a) * radius, y: center.y + Math.sin(a) * radius, z: center.z });
+    } else if (axis === "yz") {
+      points.push({ x: center.x, y: center.y + Math.cos(a) * radius, z: center.z + Math.sin(a) * radius });
+    } else {
+      points.push({ x: center.x + Math.cos(a) * radius, y: center.y, z: center.z + Math.sin(a) * radius });
+    }
+  }
+  ctx.save();
+  ctx.globalAlpha = alpha == null ? 1 : alpha;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width || 1;
+  ctx.beginPath();
+  points.forEach(function (point, index) {
+    var p = project3(point, view, w, h);
+    if (index === 0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
+  });
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawBackdrop(ctx, w, h, time, density) {
+  ctx.fillStyle = COLORS.bg;
+  ctx.fillRect(0, 0, w, h);
+
+  var count = density || 58;
+  ctx.save();
+  for (var i = 0; i < count; i += 1) {
+    var x = hash(i, 1) * w;
+    var y = hash(i, 2) * h;
+    var drift = REDUCED ? 0 : Math.sin(time * 0.16 + i) * 1.5;
+    var r = hash(i, 4) > 0.86 ? 2 : 1;
+    ctx.globalAlpha = 0.10 + hash(i, 5) * 0.22;
+    ctx.fillStyle = i % 9 === 0 ? COLORS.blue2 : "#dce5ff";
+    ctx.fillRect(Math.round(x), Math.round(y + drift), r, r);
+  }
+  ctx.restore();
+}
+
+function drawGridFloor(ctx, view, w, h, y, extent, alpha) {
+  var e = extent || 7;
+  for (var i = -e; i <= e; i += 1) {
+    line3(ctx, { x: -e, y: y, z: i }, { x: e, y: y, z: i }, view, w, h, COLORS.line, 1, alpha || 0.3);
+    line3(ctx, { x: i, y: y, z: -e }, { x: i, y: y, z: e }, view, w, h, COLORS.line, 1, alpha || 0.3);
+  }
+}
+
+function drawLayer(ctx, center, width, depth, view, w, h, color, alpha) {
+  poly3(ctx, [
+    { x: center.x - width / 2, y: center.y, z: center.z - depth / 2 },
+    { x: center.x + width / 2, y: center.y, z: center.z - depth / 2 },
+    { x: center.x + width / 2, y: center.y, z: center.z + depth / 2 },
+    { x: center.x - width / 2, y: center.y, z: center.z + depth / 2 }
+  ], view, w, h, color, "rgba(224,232,255,0.28)", alpha);
+}
+
+var sceneList = [];
+var sceneMap = {};
+
+function makeScene(name, canvasId, config) {
+  var canvas = document.getElementById(canvasId);
+  var ctx = canvas.getContext("2d");
+  var scene = {
+    name: name,
+    canvas: canvas,
+    ctx: ctx,
+    width: 1,
+    height: 1,
+    time: config.staticTime || 0,
+    playing: !REDUCED && config.autoplay !== false,
+    visible: false,
+    draw: config.draw,
+    onFrame: config.onFrame || null,
+    duration: config.duration || 0,
+    data: config.data || {},
+    dirty: true
+  };
+
+  function fit() {
+    var rect = canvas.getBoundingClientRect();
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    scene.width = Math.max(1, rect.width);
+    scene.height = Math.max(1, rect.height);
+    canvas.width = Math.max(1, Math.round(scene.width * dpr));
+    canvas.height = Math.max(1, Math.round(scene.height * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    scene.dirty = true;
+  }
+
+  fit();
+  new ResizeObserver(fit).observe(canvas);
+  new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      scene.visible = entry.isIntersecting;
+      scene.dirty = true;
+    });
+  }, { rootMargin: "180px 0px" }).observe(canvas);
+
+  scene.restart = function () {
+    scene.time = 0;
+    scene.playing = !REDUCED;
+    scene.dirty = true;
+  };
+  scene.setPlaying = function (playing) {
+    scene.playing = !REDUCED && playing;
+    scene.dirty = true;
+  };
+
+  sceneList.push(scene);
+  sceneMap[name] = scene;
+  return scene;
+}
+
+var lastFrame = performance.now();
+function renderLoop(now) {
+  var dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000));
+  lastFrame = now;
+  sceneList.forEach(function (scene) {
+    if (!scene.visible && !scene.dirty) return;
+    if (scene.playing) {
+      scene.time += dt;
+      if (scene.duration > 0) scene.time %= scene.duration;
+      scene.dirty = true;
+    }
+    if (scene.dirty || scene.playing) {
+      scene.draw(scene, scene.time, dt);
+      if (scene.onFrame) scene.onFrame(scene, scene.time);
+      scene.dirty = false;
+    }
+  });
+  requestAnimationFrame(renderLoop);
+}
+requestAnimationFrame(renderLoop);
+
+function bindSceneControls() {
+  document.querySelectorAll("[data-scene-toggle]").forEach(function (button) {
+    var scene = sceneMap[button.getAttribute("data-scene-toggle")];
+    if (!scene) return;
+    if (REDUCED) {
+      button.hidden = true;
+      return;
+    }
+    button.addEventListener("click", function () {
+      scene.setPlaying(!scene.playing);
+      button.textContent = scene.playing ? "Pause" : "Play";
+    });
+  });
+  document.querySelectorAll("[data-scene-restart]").forEach(function (button) {
+    var scene = sceneMap[button.getAttribute("data-scene-restart")];
+    if (!scene) return;
+    button.addEventListener("click", function () {
+      scene.restart();
+      var toggle = document.querySelector('[data-scene-toggle="' + scene.name + '"]');
+      if (toggle && !REDUCED) toggle.textContent = "Pause";
+    });
+  });
+}
+
+/* Theme */
+(function () {
+  var root = document.documentElement;
+  var toggle = document.getElementById("theme-toggle");
+  var saved = null;
+  try { saved = localStorage.getItem("model-mechanics-theme"); } catch (error) {}
+  if (saved === "light" || saved === "dark") root.setAttribute("data-theme", saved);
+  toggle.addEventListener("click", function () {
+    var current = root.getAttribute("data-theme");
+    if (!current) current = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    var next = current === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("model-mechanics-theme", next); } catch (error) {}
+  });
+})();
+
+/* Hero overview */
+var JOURNEY = [
+  {
+    short: "Corpus",
+    title: "Collect and filter a corpus",
+    copy: "Selected documents supply examples for tokenizer construction and model pre-training.",
+    color: COLORS.blue
+  },
+  {
+    short: "Vocabulary",
+    title: "Train and freeze the tokenizer",
+    copy: "Recurring text pieces receive stable IDs in a fixed vocabulary.",
+    color: COLORS.blue2
+  },
+  {
+    short: "Pre-train",
+    title: "Practice the next token at scale",
+    copy: "Prediction error flows backward and adjusts the transformer's weights.",
+    color: COLORS.coral
+  },
+  {
+    short: "Prompt",
+    title: "A new prompt arrives",
+    copy: "The same tokenizer turns the request into a sequence of IDs.",
+    color: COLORS.blue
+  },
+  {
+    short: "Transformer",
+    title: "Context moves through the stack",
+    copy: "Embeddings, causal attention, MLPs, and residual paths build a state for each position.",
+    color: COLORS.blue2
+  },
+  {
+    short: "Scores",
+    title: "Score the entire vocabulary",
+    copy: "The final state becomes one logit for every possible next token.",
+    color: COLORS.gold
+  },
+  {
+    short: "Repeat",
+    title: "Choose, append, and repeat",
+    copy: "The selected token joins the context and starts another pass through the frozen model.",
+    color: COLORS.gold
+  }
+];
+
+var journeyTitle = document.getElementById("journey-title");
+var journeyCopy = document.getElementById("journey-copy");
+var journeyStatus = document.getElementById("journey-status");
+var journeyReadout = document.getElementById("journey-readout");
+var journeySteps = document.getElementById("journey-steps");
+var journeyButtons = [];
+var journeyCurrent = -1;
+
+JOURNEY.forEach(function (step, index) {
+  var button = document.createElement("button");
+  button.className = "journey-step";
+  button.type = "button";
+  button.setAttribute("aria-label", "Show stage " + (index + 1) + ": " + step.short);
+  button.style.setProperty("--step-color", step.color);
+  journeySteps.appendChild(button);
+  journeyButtons.push(button);
+});
+
+function drawJourneyIcon(ctx, type, center, view, w, h, time, focus) {
+  var alpha = focus ? 1 : 0.32;
+  var pulse = 0.75 + Math.sin(time * 2.2 + type) * 0.08;
+  if (type === 0) {
+    for (var i = 0; i < 30; i += 1) {
+      var a = hash(i, 5) * TAU + time * 0.08;
+      var rr = 0.45 + hash(i, 7) * 1.1;
+      point3(ctx, {
+        x: center.x + Math.cos(a) * rr,
+        y: center.y + (hash(i, 8) - 0.5) * 1.8,
+        z: center.z + Math.sin(a) * rr
+      }, view, w, h, 2.3, i % 6 === 0 ? COLORS.blue2 : COLORS.blue, alpha * (0.35 + hash(i, 9) * 0.65));
+    }
+    ring3(ctx, center, 1.45, "xz", view, w, h, COLORS.blue, alpha * 0.35, 1);
+  } else if (type === 1) {
+    for (var j = 0; j < 4; j += 1) {
+      ring3(ctx, { x: center.x, y: center.y - 0.9 + j * 0.6, z: center.z }, 1.25, "xz", view, w, h, COLORS.blue2, alpha * (0.2 + j * 0.08), 1);
+    }
+    ["the", "ing", "light", "42"].forEach(function (text, j) {
+      var aa = j / 4 * TAU + time * 0.15;
+      card3(ctx, {
+        x: center.x + Math.cos(aa) * 1.2,
+        y: center.y - 0.75 + j * 0.48,
+        z: center.z + Math.sin(aa) * 1.2
+      }, view, w, h, text, COLORS.blue2, alpha, 52);
+    });
+  } else if (type === 2) {
+    for (var k = 0; k < 5; k += 1) {
+      drawLayer(ctx, { x: center.x, y: center.y - 1.1 + k * 0.55, z: center.z }, 2.3, 1.6, view, w, h, k % 2 ? "rgba(238,117,95,0.16)" : "rgba(111,137,255,0.13)", alpha * 0.9);
+    }
+    var down = (time * 0.45) % 1;
+    point3(ctx, { x: center.x - 1.45 + down * 2.9, y: center.y - 1.5, z: center.z }, view, w, h, 4, COLORS.coral, alpha);
+    line3(ctx, { x: center.x + 1.4, y: center.y + 1.65, z: center.z }, { x: center.x - 1.4, y: center.y + 1.65, z: center.z }, view, w, h, COLORS.coral, 2, alpha * pulse);
+  } else if (type === 3) {
+    var prompt = ["The", "old", "light", "house"];
+    prompt.forEach(function (text, j) {
+      card3(ctx, {
+        x: center.x - 1.45 + j * 0.95,
+        y: center.y + Math.sin(time * 1.2 + j) * 0.08,
+        z: center.z + (j - 1.5) * 0.14
+      }, view, w, h, text, COLORS.blue, alpha, 58);
+    });
+  } else if (type === 4) {
+    for (var layer = 0; layer < 6; layer += 1) {
+      var yy = center.y - 1.5 + layer * 0.58;
+      drawLayer(ctx, { x: center.x, y: yy, z: center.z }, 2.6, 1.8, view, w, h, "rgba(111,137,255,0.11)", alpha);
+      for (var token = 0; token < 4; token += 1) {
+        point3(ctx, { x: center.x - 1.0 + token * 0.66, y: yy + 0.04, z: center.z }, view, w, h, 2.8, token === 3 ? COLORS.gold : COLORS.blue2, alpha);
+      }
+    }
+  } else if (type === 5) {
+    ring3(ctx, center, 1.5, "xy", view, w, h, COLORS.blue2, alpha * 0.45, 1);
+    ring3(ctx, center, 1.5, "xz", view, w, h, COLORS.blue, alpha * 0.36, 1);
+    for (var p = 0; p < 24; p += 1) {
+      var th = hash(p, 4) * TAU;
+      var ph = Math.acos(2 * hash(p, 9) - 1);
+      point3(ctx, {
+        x: center.x + Math.sin(ph) * Math.cos(th) * 1.5,
+        y: center.y + Math.cos(ph) * 1.5,
+        z: center.z + Math.sin(ph) * Math.sin(th) * 1.5
+      }, view, w, h, p === 7 ? 5 : 2.2, p === 7 ? COLORS.gold : COLORS.blue2, alpha * (p === 7 ? 1 : 0.48));
+    }
+  } else {
+    card3(ctx, center, view, w, h, " harbor", COLORS.gold, alpha, 78);
+    ring3(ctx, center, 1.55 + Math.sin(time * 2) * 0.05, "xy", view, w, h, COLORS.gold, alpha * 0.4, 1.5);
+    var loopStart = { x: center.x + 0.8, y: center.y - 0.1, z: center.z };
+    var loopEnd = { x: center.x - 0.8, y: center.y - 0.1, z: center.z };
+    var lp = bezierPoint(loopStart, { x: center.x + 2.1, y: center.y + 1.5, z: center.z }, { x: center.x - 2.1, y: center.y + 1.5, z: center.z }, loopEnd, (time * 0.2) % 1);
+    point3(ctx, lp, view, w, h, 3.4, COLORS.gold, alpha);
+  }
+}
+
+var journeyScene = makeScene("journey", "journey-canvas", {
+  duration: JOURNEY.length * 4,
+  staticTime: 24.8,
+  draw: function (scene, time) {
+    var ctx = scene.ctx;
+    var w = scene.width;
+    var h = scene.height;
+    drawBackdrop(ctx, w, h, time, 66);
+    var cycle = REDUCED ? 6.2 : (time / 4) % JOURNEY.length;
+    var step = Math.floor(cycle);
+    var local = fract(cycle);
+    var travel = step < JOURNEY.length - 1 ? smooth(clamp((local - 0.70) / 0.30, 0, 1)) : 0;
+    var cameraIndex = step + travel;
+    var spacing = 3.55;
+    var view = {
+      x: (cameraIndex - 3) * spacing,
+      y: 0,
+      z: 0,
+      yaw: -0.16 + Math.sin(time * 0.18) * 0.025,
+      pitch: 0.09,
+      dist: 10.5,
+      focal: Math.min(w, h) * 1.2,
+      cy: 0.47
+    };
+    drawGridFloor(ctx, view, w, h, -2.15, 14, 0.13);
+    for (var i = 0; i < JOURNEY.length - 1; i += 1) {
+      line3(ctx,
+        { x: (i - 3) * spacing, y: -1.86, z: 0 },
+        { x: (i + 1 - 3) * spacing, y: -1.86, z: 0 },
+        view, w, h, COLORS.line, 1.2, 0.8);
+    }
+    for (var stage = 0; stage < JOURNEY.length; stage += 1) {
+      var center = { x: (stage - 3) * spacing, y: 0, z: 0 };
+      drawJourneyIcon(ctx, stage, center, view, w, h, time, stage === step);
+      label3(ctx, { x: center.x, y: -2.22, z: 0 }, view, w, h, String(stage + 1).padStart(2, "0") + "  " + JOURNEY[stage].short.toUpperCase(), stage === step ? JOURNEY[stage].color : COLORS.grey, "center", stage === step ? 1 : 0.5);
+    }
+    if (step < JOURNEY.length - 1) {
+      var from = { x: (step - 3) * spacing, y: -1.86, z: 0 };
+      var to = { x: (step + 1 - 3) * spacing, y: -1.86, z: 0 };
+      point3(ctx, mixPoint(from, to, easeOut(local)), view, w, h, 4.2, JOURNEY[step].color, 1);
+    }
+    if (step === JOURNEY.length - 1 && local > 0.78 && !REDUCED) {
+      ctx.fillStyle = "rgba(5,10,21," + smooth((local - 0.78) / 0.22) + ")";
+      ctx.fillRect(0, 0, w, h);
+    }
+    if (step !== journeyCurrent) {
+      journeyCurrent = step;
+      journeyTitle.textContent = JOURNEY[step].title;
+      journeyCopy.textContent = JOURNEY[step].copy;
+      journeyReadout.textContent = (step + 1) + " / 7";
+    }
+    journeyButtons.forEach(function (button, index) {
+      var fill = index < step ? 100 : (index === step ? Math.round(local * 100) : 0);
+      button.style.setProperty("--fill", fill + "%");
+      button.setAttribute("aria-current", index === step ? "step" : "false");
+    });
+  }
+});
+
+function setJourneyStep(index) {
+  var normalized = (index + JOURNEY.length) % JOURNEY.length;
+  journeyScene.time = normalized * 4 + 0.04;
+  journeyScene.dirty = true;
+}
+
+journeyButtons.forEach(function (button, index) {
+  button.addEventListener("click", function () {
+    journeyScene.setPlaying(false);
+    setJourneyStep(index);
+    var toggle = document.querySelector('[data-journey-action="toggle"]');
+    toggle.textContent = "Play";
+    journeyStatus.textContent = "Stage selected";
+  });
+});
+
+document.querySelectorAll("[data-journey-action]").forEach(function (button) {
+  var action = button.getAttribute("data-journey-action");
+  if (REDUCED && action === "toggle") {
+    button.hidden = true;
+    return;
+  }
+  button.addEventListener("click", function () {
+    var current = Math.floor((journeyScene.time / 4) % JOURNEY.length);
+    if (action === "toggle") {
+      journeyScene.setPlaying(!journeyScene.playing);
+      button.textContent = journeyScene.playing ? "Pause" : "Play";
+      journeyStatus.textContent = journeyScene.playing ? "Playing the full route" : "Animation paused";
+    } else if (action === "previous") {
+      journeyScene.setPlaying(false);
+      setJourneyStep(current - 1);
+      document.querySelector('[data-journey-action="toggle"]').textContent = "Play";
+      journeyStatus.textContent = "Stage selected";
+    } else if (action === "next") {
+      journeyScene.setPlaying(false);
+      setJourneyStep(current + 1);
+      document.querySelector('[data-journey-action="toggle"]').textContent = "Play";
+      journeyStatus.textContent = "Stage selected";
+    } else if (action === "restart") {
+      journeyScene.time = 0;
+      journeyScene.setPlaying(true);
+      document.querySelector('[data-journey-action="toggle"]').textContent = REDUCED ? "Static" : "Pause";
+      journeyStatus.textContent = REDUCED ? "Static overview" : "Playing the full route";
+    }
+  });
+});
+
+/* Corpus */
+var corpusStatus = document.getElementById("corpus-status");
+makeScene("corpus", "corpus-canvas", {
+  duration: 11,
+  staticTime: 8.7,
+  draw: function (scene, time) {
+    var ctx = scene.ctx;
+    var w = scene.width;
+    var h = scene.height;
+    drawBackdrop(ctx, w, h, time, 52);
+    var view = {
+      x: 0,
+      y: 0,
+      z: 0,
+      yaw: -0.16,
+      pitch: 0.08,
+      dist: w < 560 ? 14.7 : 11,
+      focal: Math.min(w, h) * 1.15,
+      cy: 0.49
+    };
+    drawGridFloor(ctx, view, w, h, -2.25, 7, 0.12);
+
+    var sources = [
+      { label: "WEB", y: 1.35, z: -0.9 },
+      { label: "BOOKS", y: 0.45, z: 0.4 },
+      { label: "CODE", y: -0.45, z: -0.3 },
+      { label: "PAPERS", y: -1.35, z: 0.8 }
+    ];
+    sources.forEach(function (source, index) {
+      card3(ctx, { x: -4.4, y: source.y, z: source.z }, view, w, h, source.label, index % 2 ? COLORS.blue2 : COLORS.blue, 0.86, 64);
+      for (var sheet = 0; sheet < 3; sheet += 1) {
+        line3(ctx,
+          { x: -4.72 + sheet * 0.08, y: source.y - 0.28, z: source.z + 0.12 * sheet },
+          { x: -4.06 + sheet * 0.08, y: source.y - 0.28, z: source.z + 0.12 * sheet },
+          view, w, h, COLORS.line, 1, 0.8);
+      }
+    });
+
+    for (var ring = 0; ring < 4; ring += 1) {
+      ring3(ctx, { x: -1.55 + ring * 0.18, y: 0, z: 0 }, 1.55 - ring * 0.14, "yz", view, w, h, ring === 2 ? COLORS.coral : COLORS.blue, 0.22 + ring * 0.08, 1.2);
+    }
+    label3(ctx, { x: -1.25, y: 2.05, z: 0 }, view, w, h, w < 560 ? "FILTER" : "FILTER + DEDUP", COLORS.coral, "center", 0.95);
+
+    var corpusCenter = { x: 1.15, y: 0, z: 0 };
+    ring3(ctx, corpusCenter, 1.7, "xy", view, w, h, COLORS.blue, 0.2, 1);
+    ring3(ctx, corpusCenter, 1.7, "xz", view, w, h, COLORS.blue2, 0.17, 1);
+    ring3(ctx, corpusCenter, 1.7, "yz", view, w, h, COLORS.blue, 0.15, 1);
+    for (var c = 0; c < 42; c += 1) {
+      var ca = hash(c, 1) * TAU + time * 0.035;
+      var cp = Math.acos(2 * hash(c, 2) - 1);
+      var cr = 0.3 + hash(c, 3) * 1.35;
+      point3(ctx, {
+        x: corpusCenter.x + Math.sin(cp) * Math.cos(ca) * cr,
+        y: corpusCenter.y + Math.cos(cp) * cr,
+        z: corpusCenter.z + Math.sin(cp) * Math.sin(ca) * cr
+      }, view, w, h, 1.8, c % 7 === 0 ? COLORS.blue2 : COLORS.blue, 0.22 + hash(c, 5) * 0.45);
+    }
+    label3(ctx, { x: 1.15, y: 2.18, z: 0 }, view, w, h, w < 560 ? "CORPUS" : "FILTERED CORPUS", COLORS.ink, "center", 0.95);
+
+    card3(ctx, { x: 4.25, y: 1.15, z: -0.3 }, view, w, h, "TOKENIZER SAMPLE", COLORS.blue2, 0.94, 118);
+    card3(ctx, { x: 4.25, y: -1.15, z: 0.3 }, view, w, h, "TOKEN BATCHES", COLORS.coral, 0.94, 104);
+    line3(ctx, { x: 2.7, y: 0.35, z: 0 }, { x: 3.75, y: 1.0, z: -0.3 }, view, w, h, COLORS.blue2, 1.3, 0.5);
+    line3(ctx, { x: 2.7, y: -0.35, z: 0 }, { x: 3.75, y: -1.0, z: 0.3 }, view, w, h, COLORS.coral, 1.3, 0.5);
+
+    var phase = (time / 11) % 1;
+    for (var i = 0; i < 86; i += 1) {
+      var p = fract(phase * 1.35 + hash(i, 14));
+      var source = sources[Math.floor(hash(i, 15) * sources.length)];
+      var start = { x: -4.0, y: source.y + (hash(i, 16) - 0.5) * 0.35, z: source.z + (hash(i, 17) - 0.5) * 0.45 };
+      var rejected = hash(i, 18) < 0.46;
+      var point;
+      var alpha = 0.85;
+      var color = i % 8 === 0 ? COLORS.blue2 : COLORS.blue;
+      if (p < 0.52) {
+        var q = p / 0.52;
+        point = bezierPoint(start, { x: -3.1, y: source.y * 0.7, z: source.z * 0.5 }, { x: -2.2, y: 0, z: 0 }, { x: -1.15, y: 0, z: 0 }, q);
+      } else if (rejected && p < 0.78) {
+        var drop = (p - 0.52) / 0.26;
+        point = bezierPoint({ x: -1.15, y: 0, z: 0 }, { x: -0.6, y: -0.4, z: 0 }, { x: -0.3, y: -2.7, z: 0.3 }, { x: 0.1, y: -4.1, z: 0.4 }, drop);
+        color = COLORS.grey;
+        alpha = 0.7 * (1 - drop);
+      } else {
+        var accepted = (p - 0.52) / 0.48;
+        var branchTop = hash(i, 19) > 0.84;
+        var end = branchTop ? { x: 4.0, y: 1.15, z: -0.3 } : { x: 4.0, y: -1.15, z: 0.3 };
+        point = bezierPoint({ x: -1.15, y: 0, z: 0 }, { x: 0.2, y: 0, z: 0 }, { x: 2.6, y: branchTop ? 0.45 : -0.45, z: 0 }, end, accepted);
+        color = branchTop ? COLORS.blue2 : COLORS.coral;
+        alpha = 0.9;
+      }
+      point3(ctx, point, view, w, h, 2.2 + hash(i, 20) * 1.5, color, alpha);
+    }
+
+    if (phase < 0.34) corpusStatus.textContent = "Collecting documents from several sources";
+    else if (phase < 0.60) corpusStatus.textContent = "Removing duplicates and low-quality material";
+    else corpusStatus.textContent = "A small sample trains the tokenizer; the full corpus becomes batches";
+  }
+});
+
+/* Tokenizer and vocabulary */
+var TOKEN_EXAMPLES = [
+  {
+    label: "Sentence",
+    raw: "The old lighthouse watched the harbor.",
+    pieces: [["The", 791], [" old", 1890], [" light", 4238], ["house", 2468], [" watched", 9462], [" the", 279], [" harbor", 57511], [".", 13]]
+  },
+  {
+    label: "Rare word",
+    raw: "unmistakable",
+    pieces: [["un", 312], ["mist", 9021], ["ak", 611], ["able", 1458]]
+  },
+  {
+    label: "Code",
+    raw: "items.map(fn)",
+    pieces: [["items", 992], [".map", 17832], ["(", 7], ["fn", 2910], [")", 8]]
+  },
+  {
+    label: "Emoji",
+    raw: "🦦",
+    pieces: [["<F0>", 241], ["<9F>", 160], ["<A6>", 167], ["<A6>", 167]]
+  }
+];
+
+var tokenIndex = 0;
+var tokenStatus = document.getElementById("token-status");
+var tokenOutput = document.getElementById("token-output");
+var tokenExamples = document.getElementById("token-examples");
+var tokenButtons = [];
+
+function renderTokenOutput() {
+  tokenOutput.innerHTML = "";
+  TOKEN_EXAMPLES[tokenIndex].pieces.forEach(function (piece) {
+    var chip = document.createElement("span");
+    chip.className = "token-chip";
+    chip.textContent = JSON.stringify(piece[0]) + "  #" + piece[1];
+    tokenOutput.appendChild(chip);
+  });
+  tokenButtons.forEach(function (button, index) {
+    button.setAttribute("aria-pressed", String(index === tokenIndex));
+  });
+}
+
+TOKEN_EXAMPLES.forEach(function (example, index) {
+  var button = document.createElement("button");
+  button.className = "example-button";
+  button.type = "button";
+  button.textContent = example.label;
+  button.setAttribute("aria-pressed", String(index === 0));
+  button.addEventListener("click", function () {
+    tokenIndex = index;
+    renderTokenOutput();
+    sceneMap.token.time = 0;
+    sceneMap.token.setPlaying(!REDUCED);
+    tokenStatus.textContent = "Scanning " + example.label.toLowerCase();
+  });
+  tokenExamples.appendChild(button);
+  tokenButtons.push(button);
+});
+
+var tokenSpacer = document.createElement("span");
+tokenSpacer.className = "control-spacer";
+tokenExamples.appendChild(tokenSpacer);
+var tokenPause = document.createElement("button");
+tokenPause.className = "control-button primary";
+tokenPause.type = "button";
+tokenPause.textContent = "Pause";
+tokenPause.setAttribute("data-scene-toggle", "token");
+tokenExamples.appendChild(tokenPause);
+var tokenReplay = document.createElement("button");
+tokenReplay.className = "control-button";
+tokenReplay.type = "button";
+tokenReplay.textContent = "Replay";
+tokenReplay.setAttribute("data-scene-restart", "token");
+tokenExamples.appendChild(tokenReplay);
+
+makeScene("token", "token-canvas", {
+  duration: 7.2,
+  staticTime: 5.2,
+  draw: function (scene, time) {
+    var ctx = scene.ctx;
+    var w = scene.width;
+    var h = scene.height;
+    drawBackdrop(ctx, w, h, time, 50);
+    var view = {
+      x: 0,
+      y: 0,
+      z: 0,
+      yaw: -0.20,
+      pitch: 0.07,
+      dist: w < 560 ? 14.6 : 11,
+      focal: Math.min(w, h) * 1.16,
+      cy: 0.48
+    };
+    drawGridFloor(ctx, view, w, h, -2.25, 7, 0.11);
+    var example = TOKEN_EXAMPLES[tokenIndex];
+    var cycle = (time / 7.2) % 1;
+
+    card3(ctx, { x: -4.2, y: 1.45, z: 0 }, view, w, h, "RAW TEXT", COLORS.blue, 0.95, 88);
+    var rawPos = project3({ x: -4.2 + easeOut(clamp(cycle / 0.30, 0, 1)) * 2.0, y: 0.45, z: 0 }, view, w, h);
+    ctx.save();
+    ctx.fillStyle = COLORS.ink;
+    ctx.font = '12px "Geist Mono", monospace';
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    var rawLimit = w < 560 ? 18 : 28;
+    var rawText = example.raw.length > rawLimit ? example.raw.slice(0, rawLimit - 1) + "…" : example.raw;
+    ctx.fillText(rawText, rawPos.x, rawPos.y);
+    ctx.restore();
+
+    for (var r = 0; r < 5; r += 1) {
+      ring3(ctx, { x: -1.45 + r * 0.15, y: 0, z: 0 }, 1.45 - r * 0.11, "yz", view, w, h, r === 2 ? COLORS.blue2 : COLORS.blue, 0.18 + r * 0.05, 1.1);
+    }
+    label3(ctx, { x: -1.2, y: 1.95, z: 0 }, view, w, h, w < 560 ? "TOKENIZER" : "FIXED TOKENIZER", COLORS.blue2, "center", 0.95);
+
+    var archive = { x: 3.4, y: 0, z: 0 };
+    for (var ring = 0; ring < 6; ring += 1) {
+      ring3(ctx, { x: archive.x, y: -1.55 + ring * 0.62, z: archive.z }, 1.45, "xz", view, w, h, COLORS.blue2, 0.11 + ring * 0.025, 1);
+    }
+    line3(ctx, { x: archive.x - 1.45, y: -1.55, z: 0 }, { x: archive.x - 1.45, y: 1.55, z: 0 }, view, w, h, COLORS.line, 1, 0.7);
+    line3(ctx, { x: archive.x + 1.45, y: -1.55, z: 0 }, { x: archive.x + 1.45, y: 1.55, z: 0 }, view, w, h, COLORS.line, 1, 0.7);
+    for (var slot = 0; slot < 78; slot += 1) {
+      var sa = hash(slot, 11) * TAU;
+      var sy = -1.45 + hash(slot, 12) * 2.9;
+      point3(ctx, {
+        x: archive.x + Math.cos(sa) * 1.43,
+        y: sy,
+        z: archive.z + Math.sin(sa) * 1.43
+      }, view, w, h, 1.5, slot % 9 === 0 ? COLORS.blue2 : COLORS.grey, 0.18 + hash(slot, 13) * 0.32);
+    }
+    label3(ctx, { x: archive.x, y: 2.05, z: 0 }, view, w, h, w < 560 ? "VOCABULARY" : "VOCABULARY ARCHIVE", COLORS.ink, "center", 0.95);
+
+    var pieces = example.pieces;
+    pieces.forEach(function (piece, index) {
+      var reveal = smooth(clamp((cycle - 0.26 - index * 0.045) / 0.20, 0, 1));
+      var spread = pieces.length > 1 ? (index / (pieces.length - 1) - 0.5) * 3.3 : 0;
+      var end = { x: 0.95, y: spread * 0.72, z: (index % 2 ? 0.34 : -0.34) };
+      var start = { x: -1.15, y: 0, z: 0 };
+      var pos = mixPoint(start, end, easeOut(reveal));
+      card3(ctx, pos, view, w, h, piece[0], COLORS.blue2, reveal, 52 + Math.min(22, piece[0].length * 4));
+      if (reveal > 0.8) {
+        var aa = (index / Math.max(1, pieces.length)) * TAU + tokenIndex * 0.6;
+        var yy = -1.25 + (index % 5) * 0.56;
+        var archivePoint = { x: archive.x + Math.cos(aa) * 1.43, y: yy, z: archive.z + Math.sin(aa) * 1.43 };
+        line3(ctx, pos, archivePoint, view, w, h, COLORS.blue, 1, (reveal - 0.8) * 2.4);
+        point3(ctx, archivePoint, view, w, h, 3.3, COLORS.blue2, reveal);
+      }
+    });
+
+    if (cycle < 0.28) tokenStatus.textContent = "Scanning the raw string";
+    else if (cycle < 0.68) tokenStatus.textContent = "Matching reusable pieces";
+    else tokenStatus.textContent = "Returning stable vocabulary IDs";
+  }
+});
+renderTokenOutput();
+
+/* Pre-training */
+var trainingStatus = document.getElementById("training-status");
+var trainingPhase = document.getElementById("training-phase");
+
+makeScene("training", "training-canvas", {
+  duration: 10,
+  staticTime: 8.6,
+  draw: function (scene, time) {
+    var ctx = scene.ctx;
+    var w = scene.width;
+    var h = scene.height;
+    drawBackdrop(ctx, w, h, time, 50);
+    var view = {
+      x: 0,
+      y: 0,
+      z: 0,
+      yaw: -0.18,
+      pitch: 0.06,
+      dist: w < 560 ? 14.8 : 11.5,
+      focal: Math.min(w, h) * 1.16,
+      cy: 0.48
+    };
+    drawGridFloor(ctx, view, w, h, -2.35, 7, 0.11);
+    var phase = (time / 10) % 1;
+    var rows = [
+      { y: 1.35, z: -0.8, text: "the old lighthouse" },
+      { y: 0.45, z: 0.55, text: "a small program" },
+      { y: -0.45, z: -0.4, text: "inside the archive" },
+      { y: -1.35, z: 0.7, text: "light crossed water" }
+    ];
+
+    rows.forEach(function (row, index) {
+      card3(ctx, { x: -4.45, y: row.y, z: row.z }, view, w, h, row.text, COLORS.blue, 0.78, 102);
+      line3(ctx,
+        { x: -3.72, y: row.y, z: row.z },
+        { x: 3.55, y: row.y, z: row.z },
+        view, w, h, COLORS.line, 1, 0.58);
+    });
+
+    var layerXs = [-1.55, -0.52, 0.52, 1.55];
+    layerXs.forEach(function (x, index) {
+      var fill = index % 2 ? "rgba(238,117,95,0.09)" : "rgba(111,137,255,0.11)";
+      var strength = phase > 0.72 ? 0.32 + Math.sin(time * 7 + index) * 0.07 : 0.2;
+      poly3(ctx, [
+        { x: x, y: -1.85, z: -1.75 },
+        { x: x, y: 1.85, z: -1.75 },
+        { x: x, y: 1.85, z: 1.75 },
+        { x: x, y: -1.85, z: 1.75 }
+      ], view, w, h, fill, index % 2 ? COLORS.coral : COLORS.blue, strength);
+      for (var gy = 0; gy < 5; gy += 1) {
+        for (var gz = 0; gz < 4; gz += 1) {
+          var weightColor = phase > 0.72 && (gy + gz + index) % 3 === 0 ? COLORS.coral : COLORS.blue2;
+          point3(ctx, {
+            x: x,
+            y: -1.35 + gy * 0.67,
+            z: -1.2 + gz * 0.8
+          }, view, w, h, 1.4, weightColor, phase > 0.72 ? 0.58 : 0.24);
+        }
+      }
+    });
+    label3(ctx, { x: 0, y: 2.35, z: 0 }, view, w, h, "SAME TRANSFORMER · MANY POSITIONS", COLORS.ink, "center", 0.94);
+
+    card3(ctx, { x: 3.75, y: 1.1, z: 0 }, view, w, h, "PREDICTIONS", COLORS.blue2, 0.9, 92);
+    card3(ctx, { x: 3.75, y: 0.15, z: 0 }, view, w, h, "TARGETS", COLORS.gold, phase > 0.25 ? 0.9 : 0.3, 76);
+    card3(ctx, { x: 3.75, y: -0.8, z: 0 }, view, w, h, "BATCH LOSS", COLORS.coral, phase > 0.35 ? 0.95 : 0.25, 84);
+    card3(ctx, { x: 3.75, y: -1.8, z: 0 }, view, w, h, "CHECKPOINT", COLORS.coral, phase > 0.76 ? 0.95 : 0.2, 90);
+
+    if (phase < 0.33) {
+      var forward = easeOut(phase / 0.33);
+      rows.forEach(function (row, index) {
+        for (var pulse = 0; pulse < 3; pulse += 1) {
+          var fp = clamp(forward * 1.35 - pulse * 0.22 - index * 0.025, 0, 1);
+          point3(ctx, {
+            x: lerp(-3.65, 3.28, fp),
+            y: row.y,
+            z: row.z
+          }, view, w, h, 3.6, pulse === 0 ? COLORS.blue2 : COLORS.blue, 0.45 + fp * 0.5);
+        }
+      });
+    } else if (phase < 0.52) {
+      var compare = smooth((phase - 0.33) / 0.19);
+      line3(ctx, { x: 3.45, y: 0.9, z: 0 }, { x: 3.45, y: -0.55, z: 0 }, view, w, h, COLORS.coral, 2.2, compare);
+      ring3(ctx, { x: 3.75, y: -0.8, z: 0 }, 0.55 + compare * 0.25, "xy", view, w, h, COLORS.coral, compare * 0.75, 1.5);
+    } else if (phase < 0.76) {
+      var backward = smooth((phase - 0.52) / 0.24);
+      rows.forEach(function (row, index) {
+        for (var bp = 0; bp < 3; bp += 1) {
+          var progress = clamp(backward * 1.28 - bp * 0.18 - index * 0.02, 0, 1);
+          point3(ctx, {
+            x: lerp(3.1, -1.8, progress),
+            y: row.y + Math.sin(index + bp) * 0.08,
+            z: row.z
+          }, view, w, h, 3.2, COLORS.coral, 0.45 + progress * 0.5);
+        }
+      });
+    } else {
+      var update = smooth((phase - 0.76) / 0.24);
+      layerXs.forEach(function (x, index) {
+        ring3(ctx, { x: x, y: 0, z: 0 }, 0.4 + update * 1.25, "yz", view, w, h, index % 2 ? COLORS.coral : COLORS.blue, (1 - update) * 0.8, 1.5);
+      });
+      line3(ctx, { x: 2.15, y: -1.35, z: 0 }, { x: 3.28, y: -1.8, z: 0 }, view, w, h, COLORS.coral, 2, update);
+    }
+
+    /* Screen-space inset: the target at position i is the input token at i+1. */
+    var insetIn = ["The", "old", "light", "house"];
+    var insetOut = ["old", "light", "house", "watched"];
+    var chipW = w < 560 ? 44 : 54;
+    var chipH = 15;
+    var chipGap = 4;
+    var ix = 18;
+    var iy = 20;
+    var labelW = 50;
+    var rowIn = iy + 15;
+    var rowOut = rowIn + chipH + 14;
+    var highlightTargets = phase >= 0.33 && phase < 0.52;
+    ctx.save();
+    ctx.font = '9px "Geist Mono", monospace';
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.globalAlpha = 0.92;
+    ctx.fillStyle = COLORS.muted;
+    ctx.fillText("TARGET AT EACH POSITION = NEXT TOKEN", ix, iy);
+    ctx.textBaseline = "middle";
+    ctx.fillText("INPUT", ix, rowIn + chipH / 2);
+    ctx.fillStyle = highlightTargets ? COLORS.gold : COLORS.muted;
+    ctx.fillText("TARGET", ix, rowOut + chipH / 2);
+    for (var ci = 0; ci < 4; ci += 1) {
+      var cx = ix + labelW + ci * (chipW + chipGap);
+      ctx.fillStyle = "rgba(10,16,34,0.9)";
+      ctx.fillRect(cx, rowIn, chipW, chipH);
+      ctx.strokeStyle = COLORS.blue;
+      ctx.strokeRect(cx + 0.5, rowIn + 0.5, chipW, chipH);
+      ctx.fillStyle = COLORS.ink;
+      ctx.textAlign = "center";
+      ctx.fillText(insetIn[ci], cx + chipW / 2, rowIn + chipH / 2 + 0.5);
+      ctx.fillStyle = "rgba(10,16,34,0.9)";
+      ctx.fillRect(cx, rowOut, chipW, chipH);
+      ctx.strokeStyle = highlightTargets ? COLORS.gold : "rgba(240,182,77,0.5)";
+      ctx.strokeRect(cx + 0.5, rowOut + 0.5, chipW, chipH);
+      ctx.fillStyle = highlightTargets ? "#ffd989" : COLORS.muted;
+      ctx.fillText(insetOut[ci], cx + chipW / 2, rowOut + chipH / 2 + 0.5);
+      ctx.textAlign = "left";
+      if (ci < 3) {
+        var shiftFrom = ix + labelW + (ci + 1) * (chipW + chipGap) + chipW / 2;
+        ctx.strokeStyle = highlightTargets ? COLORS.gold : "rgba(240,182,77,0.35)";
+        ctx.beginPath();
+        ctx.moveTo(shiftFrom, rowIn + chipH + 1);
+        ctx.lineTo(cx + chipW / 2, rowOut - 1);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+
+    if (phase < 0.33) {
+      trainingStatus.textContent = "Running a token batch forward";
+      trainingPhase.textContent = "forward pass";
+    } else if (phase < 0.52) {
+      trainingStatus.textContent = "Comparing every prediction with the observed token";
+      trainingPhase.textContent = "cross-entropy";
+    } else if (phase < 0.76) {
+      trainingStatus.textContent = "Sending the error signal backward";
+      trainingPhase.textContent = "backpropagation";
+    } else {
+      trainingStatus.textContent = "Updating weights and saving a new state";
+      trainingPhase.textContent = "optimizer update";
+    }
+  }
+});
+
+/* Embedding geometry */
+function normalize3(v) {
+  var m = Math.hypot(v.x, v.y, v.z) || 1;
+  return { x: v.x / m, y: v.y / m, z: v.z / m };
+}
+
+function dot3(a, b) {
+  return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+var EMBEDDINGS = [
+  { word: "harbor", cluster: "sea", p: normalize3({ x: 0.95, y: 0.10, z: 0.31 }) },
+  { word: "ship", cluster: "sea", p: normalize3({ x: 0.82, y: 0.45, z: 0.20 }) },
+  { word: "tide", cluster: "sea", p: normalize3({ x: 0.72, y: -0.35, z: 0.56 }) },
+  { word: "dock", cluster: "sea", p: normalize3({ x: 0.88, y: 0.02, z: 0.62 }) },
+  { word: "cat", cluster: "animal", p: normalize3({ x: -0.72, y: 0.55, z: -0.34 }) },
+  { word: "dog", cluster: "animal", p: normalize3({ x: -0.92, y: 0.24, z: -0.22 }) },
+  { word: "wolf", cluster: "animal", p: normalize3({ x: -0.66, y: 0.72, z: -0.51 }) },
+  { word: "violin", cluster: "music", p: normalize3({ x: 0.28, y: 0.42, z: -0.91 }) },
+  { word: "sonata", cluster: "music", p: normalize3({ x: -0.04, y: 0.58, z: -0.82 }) },
+  { word: "piano", cluster: "music", p: normalize3({ x: 0.13, y: 0.72, z: -0.68 }) },
+  { word: "seven", cluster: "number", p: normalize3({ x: -0.32, y: -0.91, z: 0.14 }) },
+  { word: "eight", cluster: "number", p: normalize3({ x: 0.08, y: -0.96, z: 0.36 }) },
+  { word: "nine", cluster: "number", p: normalize3({ x: -0.44, y: -0.72, z: 0.59 }) },
+  { word: "python", cluster: "code", p: normalize3({ x: 0.46, y: 0.83, z: 0.20 }) },
+  { word: "function", cluster: "code", p: normalize3({ x: 0.24, y: 0.92, z: 0.36 }) },
+  { word: "array", cluster: "code", p: normalize3({ x: 0.58, y: 0.72, z: 0.42 }) }
+];
+
+var EMBEDDING_EDGES = [];
+for (var ee = 0; ee < EMBEDDINGS.length; ee += 1) {
+  for (var ef = ee + 1; ef < EMBEDDINGS.length; ef += 1) {
+    if (EMBEDDINGS[ee].cluster === EMBEDDINGS[ef].cluster && dot3(EMBEDDINGS[ee].p, EMBEDDINGS[ef].p) > 0.87) {
+      EMBEDDING_EDGES.push([ee, ef]);
+    }
+  }
+}
+
+var EMBEDDING_CONTEXTS = [
+  { label: "Free rotate", dir: null, note: "No output direction selected. The points are grouped only to show a toy projection." },
+  { label: "The boat entered the ___", dir: normalize3({ x: 0.92, y: 0.04, z: 0.38 }), note: "The toy final state points toward the nautical region." },
+  { label: "My pet chased the ___", dir: normalize3({ x: -0.79, y: 0.48, z: -0.28 }), note: "A different context direction raises candidates in the animal region." },
+  { label: "Two plus five is ___", dir: normalize3({ x: -0.25, y: -0.91, z: 0.30 }), note: "The context points toward number-like tokens, though the transformer must still identify the right one." }
+];
+
+var embeddingData = {
+  yaw: 0.50,
+  pitch: 0.20,
+  dragging: false,
+  lastX: 0,
+  lastY: 0,
+  context: 1,
+  currentDir: EMBEDDING_CONTEXTS[1].dir,
+  targetDir: EMBEDDING_CONTEXTS[1].dir
+};
+
+var embeddingCaption = document.getElementById("embedding-caption");
+var embeddingContexts = document.getElementById("embedding-contexts");
+var embeddingButtons = [];
+
+EMBEDDING_CONTEXTS.forEach(function (context, index) {
+  var button = document.createElement("button");
+  button.className = "example-button";
+  button.type = "button";
+  button.textContent = context.label;
+  button.setAttribute("aria-pressed", String(index === 1));
+  button.addEventListener("click", function () {
+    embeddingData.context = index;
+    embeddingData.targetDir = context.dir;
+    if (context.dir && !embeddingData.currentDir) embeddingData.currentDir = context.dir;
+    embeddingButtons.forEach(function (item, itemIndex) {
+      item.setAttribute("aria-pressed", String(itemIndex === index));
+    });
+    embeddingCaption.innerHTML = "<strong>Context direction:</strong> " + context.note;
+    sceneMap.embedding.dirty = true;
+  });
+  embeddingContexts.appendChild(button);
+  embeddingButtons.push(button);
+});
+
+var embeddingSpacer = document.createElement("span");
+embeddingSpacer.className = "control-spacer";
+embeddingContexts.appendChild(embeddingSpacer);
+var embeddingPause = document.createElement("button");
+embeddingPause.className = "control-button primary";
+embeddingPause.type = "button";
+embeddingPause.textContent = "Pause";
+embeddingPause.setAttribute("data-scene-toggle", "embedding");
+embeddingContexts.appendChild(embeddingPause);
+
+var embeddingScene = makeScene("embedding", "embedding-canvas", {
+  staticTime: 1,
+  draw: function (scene, time, dt) {
+    var ctx = scene.ctx;
+    var w = scene.width;
+    var h = scene.height;
+    drawBackdrop(ctx, w, h, time, 60);
+    if (scene.playing && !embeddingData.dragging) embeddingData.yaw += dt * 0.10;
+    if (embeddingData.targetDir) {
+      if (!embeddingData.currentDir) embeddingData.currentDir = embeddingData.targetDir;
+      embeddingData.currentDir = normalize3({
+        x: lerp(embeddingData.currentDir.x, embeddingData.targetDir.x, 1 - Math.pow(0.001, dt)),
+        y: lerp(embeddingData.currentDir.y, embeddingData.targetDir.y, 1 - Math.pow(0.001, dt)),
+        z: lerp(embeddingData.currentDir.z, embeddingData.targetDir.z, 1 - Math.pow(0.001, dt))
+      });
+    }
+    var view = {
+      x: 0,
+      y: 0,
+      z: 0,
+      yaw: embeddingData.yaw,
+      pitch: embeddingData.pitch,
+      dist: 8.7,
+      focal: Math.min(w, h) * 1.23,
+      cy: 0.48
+    };
+
+    ring3(ctx, { x: 0, y: 0, z: 0 }, 2.72, "xy", view, w, h, COLORS.line, 0.72, 1);
+    ring3(ctx, { x: 0, y: 0, z: 0 }, 2.72, "xz", view, w, h, COLORS.line, 0.72, 1);
+    ring3(ctx, { x: 0, y: 0, z: 0 }, 2.72, "yz", view, w, h, COLORS.line, 0.72, 1);
+    [-0.9, 0.9].forEach(function (offset) {
+      var radius = Math.sqrt(2.72 * 2.72 - offset * offset);
+      ring3(ctx, { x: 0, y: offset, z: 0 }, radius, "xz", view, w, h, COLORS.lineSoft, 0.82, 1);
+    });
+
+    var probabilities = null;
+    if (embeddingData.context > 0 && embeddingData.currentDir) {
+      var expValues = EMBEDDINGS.map(function (item) {
+        return Math.exp(7.4 * dot3(item.p, embeddingData.currentDir));
+      });
+      var total = expValues.reduce(function (sum, value) { return sum + value; }, 0);
+      probabilities = expValues.map(function (value) { return value / total; });
+    }
+
+    EMBEDDING_EDGES.forEach(function (edge) {
+      line3(ctx,
+        { x: EMBEDDINGS[edge[0]].p.x * 2.55, y: EMBEDDINGS[edge[0]].p.y * 2.55, z: EMBEDDINGS[edge[0]].p.z * 2.55 },
+        { x: EMBEDDINGS[edge[1]].p.x * 2.55, y: EMBEDDINGS[edge[1]].p.y * 2.55, z: EMBEDDINGS[edge[1]].p.z * 2.55 },
+        view, w, h, COLORS.blue, 1, 0.17);
+    });
+
+    if (embeddingData.context > 0 && embeddingData.currentDir) {
+      var arrowTip = {
+        x: embeddingData.currentDir.x * 3.0,
+        y: embeddingData.currentDir.y * 3.0,
+        z: embeddingData.currentDir.z * 3.0
+      };
+      line3(ctx, { x: 0, y: 0, z: 0 }, arrowTip, view, w, h, COLORS.gold, 2.2, 0.95);
+      point3(ctx, arrowTip, view, w, h, 5.0, COLORS.gold, 1);
+      label3(ctx, {
+        x: arrowTip.x * 1.08,
+        y: arrowTip.y * 1.08 + 0.16,
+        z: arrowTip.z * 1.08
+      }, view, w, h, "CONTEXT", COLORS.gold, "center", 1);
+    }
+
+    var projected = EMBEDDINGS.map(function (item, index) {
+      var world = { x: item.p.x * 2.55, y: item.p.y * 2.55, z: item.p.z * 2.55 };
+      return {
+        index: index,
+        item: item,
+        world: world,
+        point: project3(world, view, w, h),
+        probability: probabilities ? probabilities[index] : 0
+      };
+    }).sort(function (a, b) {
+      return b.point.depth - a.point.depth;
+    });
+
+    projected.forEach(function (entry) {
+      var front = entry.point.z < 0;
+      var strong = entry.probability > 0.08;
+      var alpha = probabilities ? 0.20 + Math.min(0.8, entry.probability * 3.2) : (front ? 0.82 : 0.30);
+      var radius = 3.3 + entry.probability * 20;
+      point3(ctx, entry.world, view, w, h, radius, strong ? COLORS.gold : COLORS.blue2, alpha);
+      if (front || strong) {
+        var labelPoint = {
+          x: entry.world.x + 0.16,
+          y: entry.world.y + 0.2 + (entry.index % 2) * 0.15,
+          z: entry.world.z
+        };
+        var suffix = strong ? "  " + Math.round(entry.probability * 100) + "%" : "";
+        label3(ctx, labelPoint, view, w, h, entry.item.word + suffix, strong ? COLORS.ink : COLORS.muted, "left", strong ? 1 : 0.78);
+      }
+    });
+
+    ctx.save();
+    ctx.fillStyle = COLORS.muted;
+    ctx.font = '10px "Geist Mono", monospace';
+    ctx.textAlign = "left";
+    ctx.fillText(w < 560 ? "3D PROJECTION · TOY VIEW OF HIGH-D SPACE" : "3D PROJECTION · REAL WIDTH: THOUSANDS OF DIMENSIONS", 18, 24);
+    ctx.restore();
+  }
+});
+
+var embeddingCanvas = document.getElementById("embedding-canvas");
+embeddingCanvas.addEventListener("pointerdown", function (event) {
+  embeddingData.dragging = true;
+  embeddingData.lastX = event.clientX;
+  embeddingData.lastY = event.clientY;
+  embeddingCanvas.classList.add("dragging");
+  try { embeddingCanvas.setPointerCapture(event.pointerId); } catch (error) {}
+});
+embeddingCanvas.addEventListener("pointermove", function (event) {
+  if (!embeddingData.dragging) return;
+  embeddingData.yaw += (event.clientX - embeddingData.lastX) * 0.008;
+  embeddingData.pitch = clamp(embeddingData.pitch + (event.clientY - embeddingData.lastY) * 0.006, -0.65, 0.85);
+  embeddingData.lastX = event.clientX;
+  embeddingData.lastY = event.clientY;
+  embeddingScene.dirty = true;
+});
+["pointerup", "pointercancel"].forEach(function (eventName) {
+  embeddingCanvas.addEventListener(eventName, function () {
+    embeddingData.dragging = false;
+    embeddingCanvas.classList.remove("dragging");
+  });
+});
+embeddingCanvas.addEventListener("keydown", function (event) {
+  var used = true;
+  if (event.key === "ArrowLeft") embeddingData.yaw -= 0.16;
+  else if (event.key === "ArrowRight") embeddingData.yaw += 0.16;
+  else if (event.key === "ArrowUp") embeddingData.pitch = clamp(embeddingData.pitch + 0.12, -0.65, 0.85);
+  else if (event.key === "ArrowDown") embeddingData.pitch = clamp(embeddingData.pitch - 0.12, -0.65, 0.85);
+  else used = false;
+  if (used) {
+    event.preventDefault();
+    embeddingScene.dirty = true;
+  }
+});
+
+/* Exploded transformer */
+function drawCurve3(ctx, points, view, w, h, color, width, alpha) {
+  if (!points.length) return;
+  ctx.save();
+  ctx.globalAlpha = alpha == null ? 1 : alpha;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width || 1;
+  ctx.beginPath();
+  points.forEach(function (point, index) {
+    var projected = project3(point, view, w, h);
+    if (index === 0) ctx.moveTo(projected.x, projected.y);
+    else ctx.lineTo(projected.x, projected.y);
+  });
+  ctx.stroke();
+  ctx.restore();
+}
+
+function cubicPoints(a, b, c, d, count) {
+  var points = [];
+  var total = count || 24;
+  for (var i = 0; i <= total; i += 1) {
+    points.push(bezierPoint(a, b, c, d, i / total));
+  }
+  return points;
+}
+
+var transformerData = {
+  mode: "overview",
+  yaw: 0.42,
+  pitch: 0.22,
+  dragging: false,
+  lastX: 0,
+  lastY: 0
+};
+var transformerStatus = document.getElementById("transformer-status");
+var TRANSFORMER_STATUS = {
+  overview: "Following the full block",
+  attention: "Earlier positions feed the current one",
+  mlp: "Each position expands and contracts separately",
+  residual: "The original state stays on a direct path"
+};
+
+function focusAlpha(part) {
+  if (transformerData.mode === "overview") return 0.86;
+  return transformerData.mode === part ? 1 : 0.12;
+}
+
+var transformerScene = makeScene("transformer", "transformer-canvas", {
+  duration: 12,
+  staticTime: 7.4,
+  draw: function (scene, time, dt) {
+    var ctx = scene.ctx;
+    var w = scene.width;
+    var h = scene.height;
+    drawBackdrop(ctx, w, h, time, 58);
+    if (scene.playing && !transformerData.dragging) transformerData.yaw += dt * 0.025;
+    var mobile = w < 560;
+    var view = {
+      yaw: transformerData.yaw,
+      pitch: transformerData.pitch,
+      dist: w < 560 ? 14.6 : 12.4,
+      focal: Math.min(w, h) * 1.28,
+      cy: 0.58
+    };
+    drawGridFloor(ctx, view, w, h, -2.55, 6, 0.16);
+
+    var tokenX = [-3, -1, 1, 3];
+    var tokenNames = ["The", " old", " light", "house"];
+    var inputY = -2.15;
+    var attentionY = -0.78;
+    var mlpY = 0.72;
+    var outputY = 2.12;
+    var fullAlpha = transformerData.mode === "overview" ? 0.82 : 0.34;
+
+    drawLayer(ctx, { x: 0, y: attentionY, z: 0 }, 7.6, 3.1, view, w, h, "rgba(111,137,255,0.13)", fullAlpha);
+    drawLayer(ctx, { x: 0, y: mlpY, z: 0 }, 7.6, 3.1, view, w, h, "rgba(192,139,255,0.11)", fullAlpha);
+    if (!mobile) {
+      label3(ctx, { x: -3.58, y: attentionY, z: 1.23 }, view, w, h, "CAUSAL ATTENTION", COLORS.blue2, "left", focusAlpha("attention"));
+      label3(ctx, { x: -3.58, y: mlpY, z: 1.23 }, view, w, h, "MLP · EACH POSITION", COLORS.violet, "left", focusAlpha("mlp"));
+    }
+
+    tokenX.forEach(function (x, index) {
+      var pathAlpha = transformerData.mode === "overview" ? 0.72 : 0.28;
+      line3(ctx, { x: x, y: inputY + 0.22, z: 0 }, { x: x, y: outputY, z: 0 }, view, w, h, COLORS.line, 1.3, pathAlpha);
+      card3(ctx, { x: x, y: inputY, z: 0 }, view, w, h, tokenNames[index], COLORS.blue, 1, 62);
+      point3(ctx, { x: x, y: outputY, z: 0 }, view, w, h, 5, COLORS.ink, 0.92);
+      label3(ctx, { x: x, y: outputY + 0.33, z: 0 }, view, w, h, "state " + (index + 1), COLORS.muted, "center", 0.8);
+    });
+
+    /* Only self and earlier positions connect: the causal mask is structural here. */
+    tokenX.forEach(function (targetX, targetIndex) {
+      for (var sourceIndex = 0; sourceIndex <= targetIndex; sourceIndex += 1) {
+        var sourceX = tokenX[sourceIndex];
+        var lift = 0.24 + Math.abs(targetIndex - sourceIndex) * 0.18;
+        var zArc = -0.55 - sourceIndex * 0.16;
+        var curve = cubicPoints(
+          { x: sourceX, y: attentionY - 0.08, z: zArc },
+          { x: sourceX, y: attentionY + lift, z: zArc - 0.42 },
+          { x: targetX, y: attentionY + lift, z: zArc - 0.42 },
+          { x: targetX, y: attentionY + 0.08, z: zArc },
+          18
+        );
+        drawCurve3(ctx, curve, view, w, h, COLORS.blue2, sourceIndex === targetIndex ? 1 : 1.35, focusAlpha("attention") * (0.36 + targetIndex * 0.08));
+        var pulse = fract(time * 0.34 + sourceIndex * 0.17 + targetIndex * 0.11);
+        point3(ctx, bezierPoint(curve[0], curve[5], curve[13], curve[18], pulse), view, w, h, 2.4, COLORS.blue2, focusAlpha("attention"));
+      }
+    });
+    if (!mobile && transformerData.mode === "attention") label3(ctx, { x: 3.55, y: attentionY + 0.1, z: -0.95 }, view, w, h, "SELF + EARLIER ONLY", COLORS.blue2, "right", 1);
+
+    tokenX.forEach(function (x, tokenIndex) {
+      var hiddenZ = [-1.02, -0.52, 0, 0.52, 1.02];
+      hiddenZ.forEach(function (z, hiddenIndex) {
+        var input = { x: x, y: mlpY - 0.48, z: 0 };
+        var hidden = { x: x, y: mlpY, z: z };
+        var output = { x: x, y: mlpY + 0.48, z: 0 };
+        line3(ctx, input, hidden, view, w, h, COLORS.violet, 1, focusAlpha("mlp") * 0.38);
+        line3(ctx, hidden, output, view, w, h, COLORS.violet, 1, focusAlpha("mlp") * 0.38);
+        point3(ctx, hidden, view, w, h, hiddenIndex === 2 ? 3.2 : 2.2, COLORS.violet, focusAlpha("mlp") * 0.9);
+      });
+      var mlpPulse = smooth(fract(time * 0.28 + tokenIndex * 0.14));
+      point3(ctx, { x: x, y: lerp(mlpY - 0.48, mlpY + 0.48, mlpPulse), z: Math.sin(mlpPulse * Math.PI) * 0.78 }, view, w, h, 3.2, COLORS.violet, focusAlpha("mlp"));
+    });
+
+    tokenX.forEach(function (x, index) {
+      var railZ = 1.52;
+      var rail = [
+        { x: x, y: inputY + 0.16, z: 0 },
+        { x: x, y: inputY + 0.34, z: railZ },
+        { x: x, y: outputY - 0.24, z: railZ },
+        { x: x, y: outputY, z: 0 }
+      ];
+      drawCurve3(ctx, rail, view, w, h, COLORS.ink, 1.6, focusAlpha("residual") * 0.72);
+      var railPhase = fract(time * 0.22 + index * 0.17);
+      var segment = Math.min(2, Math.floor(railPhase * 3));
+      var local = railPhase * 3 - segment;
+      point3(ctx, mixPoint(rail[segment], rail[segment + 1], local), view, w, h, 3.1, COLORS.ink, focusAlpha("residual"));
+    });
+    if (!mobile && transformerData.mode === "residual") label3(ctx, { x: 3.55, y: 0, z: 1.52 }, view, w, h, "RESIDUAL ADD", COLORS.ink, "right", 1);
+
+    [2.75, 3.28, 3.81].forEach(function (y, index) {
+      drawLayer(ctx, { x: 0, y: y, z: 0 }, 7.2, 2.8, view, w, h, index % 2 ? "rgba(192,139,255,0.08)" : "rgba(111,137,255,0.08)", 0.24 - index * 0.045);
+    });
+
+    ctx.save();
+    ctx.fillStyle = COLORS.muted;
+    ctx.font = '10px "Geist Mono", monospace';
+    ctx.fillText(mobile ? "EXPLODED BLOCK · DRAG TO ROTATE" : "DRAG TO ROTATE · BLUE ATTENTION · VIOLET MLP · WHITE RESIDUAL", 18, 24);
+    ctx.restore();
+  }
+});
+
+document.querySelectorAll("[data-transformer-mode]").forEach(function (button) {
+  button.addEventListener("click", function () {
+    transformerData.mode = button.getAttribute("data-transformer-mode");
+    document.querySelectorAll("[data-transformer-mode]").forEach(function (item) {
+      item.setAttribute("aria-pressed", String(item === button));
+    });
+    transformerStatus.textContent = TRANSFORMER_STATUS[transformerData.mode];
+    transformerScene.dirty = true;
+  });
+});
+
+var transformerCanvas = document.getElementById("transformer-canvas");
+transformerCanvas.addEventListener("pointerdown", function (event) {
+  transformerData.dragging = true;
+  transformerData.lastX = event.clientX;
+  transformerData.lastY = event.clientY;
+  transformerCanvas.classList.add("dragging");
+  try { transformerCanvas.setPointerCapture(event.pointerId); } catch (error) {}
+});
+transformerCanvas.addEventListener("pointermove", function (event) {
+  if (!transformerData.dragging) return;
+  transformerData.yaw += (event.clientX - transformerData.lastX) * 0.008;
+  transformerData.pitch = clamp(transformerData.pitch + (event.clientY - transformerData.lastY) * 0.006, -0.45, 0.72);
+  transformerData.lastX = event.clientX;
+  transformerData.lastY = event.clientY;
+  transformerScene.dirty = true;
+});
+["pointerup", "pointercancel"].forEach(function (eventName) {
+  transformerCanvas.addEventListener(eventName, function () {
+    transformerData.dragging = false;
+    transformerCanvas.classList.remove("dragging");
+  });
+});
+transformerCanvas.addEventListener("keydown", function (event) {
+  var used = true;
+  if (event.key === "ArrowLeft") transformerData.yaw -= 0.16;
+  else if (event.key === "ArrowRight") transformerData.yaw += 0.16;
+  else if (event.key === "ArrowUp") transformerData.pitch = clamp(transformerData.pitch + 0.12, -0.45, 0.72);
+  else if (event.key === "ArrowDown") transformerData.pitch = clamp(transformerData.pitch - 0.12, -0.45, 0.72);
+  else used = false;
+  if (used) {
+    event.preventDefault();
+    transformerScene.dirty = true;
+  }
+});
+
+/* Next-token generation */
+function drawWall(ctx, x, height, depth, view, w, h, color, alpha) {
+  poly3(ctx, [
+    { x: x, y: -height / 2, z: -depth / 2 },
+    { x: x, y: height / 2, z: -depth / 2 },
+    { x: x, y: height / 2, z: depth / 2 },
+    { x: x, y: -height / 2, z: depth / 2 }
+  ], view, w, h, color, "rgba(224,232,255,0.26)", alpha);
+}
+
+var GENERATION_BASE = ["The", " old", " lighthouse"];
+var GENERATION_BANKS = [
+  [[" stood", 2.8], [" keeper", 2.05], [" was", 1.72], [" watched", 1.12], [" glowed", 0.45]],
+  [[" above", 2.64], [" silent", 1.91], [" beside", 1.54], [" through", 1.22], [" over", 0.84]],
+  [[" the", 2.95], [" a", 2.28], [" dark", 1.04], [" quiet", 0.78], [" old", 0.31]],
+  [[" harbor", 2.72], [" sea", 2.18], [" town", 1.33], [" rocks", 0.82], [" water", 0.45]],
+  [[".", 3.12], [",", 1.65], [" as", 1.17], [" while", 0.72], [" and", 0.33]]
+];
+
+function softmaxCandidates(bank, temperature) {
+  var scaled = bank.map(function (item) { return item[1] / temperature; });
+  var max = Math.max.apply(Math, scaled);
+  var exps = scaled.map(function (value) { return Math.exp(value - max); });
+  var sum = exps.reduce(function (total, value) { return total + value; }, 0);
+  return bank.map(function (item, index) {
+    return { token: item[0], logit: item[1], probability: exps[index] / sum };
+  });
+}
+
+function currentCandidateBank() {
+  var generated = Math.max(0, generationData.tokens.length - GENERATION_BASE.length);
+  return GENERATION_BANKS[Math.min(generated, GENERATION_BANKS.length - 1)];
+}
+
+function sampleCandidate(candidates) {
+  var draw = Math.random();
+  var cumulative = 0;
+  for (var i = 0; i < candidates.length; i += 1) {
+    cumulative += candidates[i].probability;
+    if (draw <= cumulative) return candidates[i];
+  }
+  return candidates[candidates.length - 1];
+}
+
+var generationData = {
+  tokens: GENERATION_BASE.slice(),
+  temperature: 0.8,
+  pending: null,
+  committed: false
+};
+var generationStatus = document.getElementById("generation-status");
+var generationOutput = document.getElementById("generation-output");
+var generateButton = document.getElementById("generate-next");
+var resetGenerationButton = document.getElementById("generate-reset");
+var temperatureInput = document.getElementById("temperature");
+var temperatureValue = document.getElementById("temperature-value");
+
+function renderGenerationOutput() {
+  generationOutput.innerHTML = "";
+  generationData.tokens.forEach(function (token, index) {
+    var chip = document.createElement("span");
+    chip.className = "token-chip";
+    if (index >= GENERATION_BASE.length) chip.classList.add("new");
+    chip.textContent = JSON.stringify(token);
+    generationOutput.appendChild(chip);
+  });
+}
+
+function generationPhase(time) {
+  if (time < 1.15) return "Prompt tokens enter the frozen checkpoint";
+  if (time < 2.8) return "Context moves through the transformer";
+  if (time < 4.25) return "The last state produces one logit per token";
+  if (time < 5.25) return "A decoding rule selects one candidate";
+  return "The selected token joins the context";
+}
+
+var generationScene = makeScene("generation", "generation-canvas", {
+  duration: 6.8,
+  staticTime: 5.75,
+  draw: function (scene, time) {
+    var ctx = scene.ctx;
+    var w = scene.width;
+    var h = scene.height;
+    drawBackdrop(ctx, w, h, time, 62);
+    var mobile = w < 560;
+    var view = { yaw: -0.18, pitch: 0.16, dist: w < 560 ? 14.8 : 12.2, focal: Math.min(w, h) * 1.25, cy: 0.55 };
+    drawGridFloor(ctx, view, w, h, -1.82, 6, 0.16);
+    var candidates = softmaxCandidates(currentCandidateBank(), generationData.temperature);
+    var selected = generationData.pending || candidates[0];
+    var phase = time / 6.8;
+
+    var shownTokens = generationData.tokens.slice(-4);
+    if (mobile) {
+      card3(ctx, { x: -3.8, y: -0.08, z: 0 }, view, w, h, generationData.tokens.length + " TOKEN CONTEXT", COLORS.blue, 0.95, 106);
+    } else {
+      shownTokens.forEach(function (token, index) {
+        var x = -4.65 + index * 0.82;
+        card3(ctx, { x: x, y: -0.18 + index * 0.05, z: 0.15 * index }, view, w, h, token, COLORS.blue, 0.95, 56);
+      });
+    }
+    label3(ctx, { x: -3.35, y: -0.83, z: 0 }, view, w, h, "CONTEXT", COLORS.blue2, "center", 0.8);
+
+    [-1.15, -0.55, 0.05, 0.65].forEach(function (x, index) {
+      drawWall(ctx, x, 2.65, 3.15, view, w, h, index % 2 ? "rgba(192,139,255,0.08)" : "rgba(111,137,255,0.1)", 0.72);
+      if (!mobile) label3(ctx, { x: x, y: 1.58, z: 0 }, view, w, h, String(index + 1).padStart(2, "0"), COLORS.muted, "center", 0.72);
+    });
+    label3(ctx, { x: -0.25, y: -1.52, z: 0 }, view, w, h, "FROZEN TRANSFORMER", COLORS.muted, "center", 0.82);
+
+    var statePath = cubicPoints(
+      { x: -2.18, y: -0.08, z: 0 },
+      { x: -1.5, y: 0.5, z: -0.45 },
+      { x: 0.4, y: 0.5, z: 0.45 },
+      { x: 1.25, y: 0.08, z: 0 },
+      30
+    );
+    drawCurve3(ctx, statePath, view, w, h, COLORS.blue2, 1.5, 0.52);
+    var stateProgress = smooth(clamp((time - 0.5) / 2.7, 0, 1));
+    var stateIndex = Math.min(statePath.length - 1, Math.floor(stateProgress * (statePath.length - 1)));
+    point3(ctx, statePath[stateIndex], view, w, h, 4.6, COLORS.blue2, 1);
+
+    var sphere = { x: 3.45, y: 0.08, z: 0 };
+    ring3(ctx, sphere, 1.58, "xy", view, w, h, COLORS.line, 0.62, 1);
+    ring3(ctx, sphere, 1.58, "yz", view, w, h, COLORS.line, 0.45, 1);
+    ring3(ctx, sphere, 1.58, "xz", view, w, h, COLORS.line, 0.38, 1);
+    label3(ctx, { x: 3.45, y: -2.14, z: 0 }, view, w, h, "VOCABULARY LOGITS", COLORS.muted, "center", 0.84);
+
+    var visibleCandidates = mobile ? candidates.slice(0, 3) : candidates;
+    if (mobile && !visibleCandidates.some(function (candidate) { return candidate.token === selected.token; })) visibleCandidates[2] = selected;
+    visibleCandidates.forEach(function (candidate, index) {
+      var angle = mobile ? -Math.PI / 2 + index * Math.PI / 2 : -1.38 + index * 0.69;
+      var point = {
+        x: sphere.x + Math.cos(angle) * 1.32,
+        y: sphere.y + Math.sin(angle) * 1.18,
+        z: Math.sin(index * 1.7) * 0.72
+      };
+      var isSelected = candidate.token === selected.token;
+      var reveal = smooth(clamp((time - 2.65 - index * 0.08) / 0.8, 0, 1));
+      line3(ctx, { x: 1.25, y: 0.08, z: 0 }, point, view, w, h, isSelected ? COLORS.gold : COLORS.blue, isSelected ? 1.8 : 1, reveal * (isSelected ? 0.76 : 0.26));
+      point3(ctx, point, view, w, h, 3.2 + candidate.probability * 19, isSelected ? COLORS.gold : COLORS.blue2, reveal * (isSelected ? 1 : 0.68));
+      var labelText = candidate.token.trim() + "  " + Math.round(candidate.probability * 100) + "%";
+      var labelColor = isSelected ? COLORS.gold : COLORS.ink;
+      if (mobile) {
+        var labelOnRight = point.x > sphere.x;
+        label3(ctx, { x: point.x + (labelOnRight ? -0.16 : 0.16), y: point.y + 0.2, z: point.z }, view, w, h, labelText, labelColor, labelOnRight ? "right" : "left", reveal);
+      } else {
+        /* Radial placement outside the sphere keeps adjacent labels from colliding. */
+        label3(ctx, { x: sphere.x + Math.cos(angle) * 2.0, y: sphere.y + Math.sin(angle) * 1.78, z: point.z }, view, w, h, labelText, labelColor, "left", reveal);
+      }
+    });
+
+    var loopReveal = smooth(clamp((time - 4.55) / 1.2, 0, 1));
+    var loopPath = mobile ? cubicPoints(
+      { x: 3.45, y: 1.58, z: 0 },
+      { x: 2.1, y: 3.18, z: -1.0 },
+      { x: -3.45, y: 3.1, z: -1.0 },
+      { x: -3.8, y: 1.18, z: 0 },
+      40
+    ) : cubicPoints(
+      { x: 3.45, y: 1.58, z: 0 },
+      { x: 2.2, y: 3.05, z: -1.0 },
+      { x: -3.8, y: 3.0, z: -1.0 },
+      { x: -4.3, y: 0.55, z: 0 },
+      40
+    );
+    drawCurve3(ctx, loopPath.slice(0, Math.max(2, Math.floor(loopReveal * loopPath.length))), view, w, h, COLORS.gold, 1.7, 0.86);
+    if (loopReveal > 0.03) {
+      var loopIndex = Math.min(loopPath.length - 1, Math.floor(loopReveal * (loopPath.length - 1)));
+      card3(ctx, loopPath[loopIndex], view, w, h, selected.token, COLORS.gold, 1, 54);
+    }
+
+    generationStatus.textContent = generationPhase(time);
+    if (generationData.pending && !generationData.committed && time >= 5.35) {
+      generationData.tokens.push(generationData.pending.token);
+      generationData.committed = true;
+      generationData.pending = null;
+      renderGenerationOutput();
+    }
+    ctx.save();
+    ctx.fillStyle = COLORS.muted;
+    ctx.font = '10px "Geist Mono", monospace';
+    ctx.fillText("ONE FORWARD PASS · ONE TOKEN · THEN LOOP", 18, 24);
+    ctx.restore();
+  }
+});
+
+generateButton.addEventListener("click", function () {
+  var candidates = softmaxCandidates(currentCandidateBank(), generationData.temperature);
+  generationData.pending = sampleCandidate(candidates);
+  generationData.committed = false;
+  generationScene.time = 0;
+  generationScene.setPlaying(!REDUCED);
+  var toggle = document.querySelector('[data-scene-toggle="generation"]');
+  if (toggle && !REDUCED) toggle.textContent = "Pause";
+});
+resetGenerationButton.addEventListener("click", function () {
+  generationData.tokens = GENERATION_BASE.slice();
+  generationData.pending = null;
+  generationData.committed = false;
+  generationScene.time = REDUCED ? 5.75 : 0;
+  generationScene.dirty = true;
+  renderGenerationOutput();
+});
+temperatureInput.addEventListener("input", function () {
+  generationData.temperature = Number(temperatureInput.value);
+  temperatureValue.value = generationData.temperature.toFixed(1);
+  temperatureValue.textContent = generationData.temperature.toFixed(1);
+  generationScene.dirty = true;
+});
+renderGenerationOutput();
+
+/* Complete training and inference replay */
+var SYSTEM_STEPS = [
+  { short: "Corpus", title: "Training begins with selected text", copy: "A source mix is filtered, deduplicated, and sampled. The corpus supplies examples for tokenizer construction and token sequences for model training.", color: COLORS.blue },
+  { short: "Tokenizer", title: "Build and freeze the tokenizer", copy: "A separate algorithm builds a fixed vocabulary and segmentation rules. It does not learn semantic coordinates or generate text.", color: COLORS.blue },
+  { short: "Batches", title: "The corpus becomes token sequences", copy: "The frozen tokenizer converts training text to IDs. Sequences are packed into batches with the next token at each position serving as the target.", color: COLORS.blue },
+  { short: "Forward", title: "Token states move through the transformer", copy: "Embeddings and repeated decoder blocks produce a probability distribution at every training position, while the causal mask hides future tokens.", color: COLORS.coral },
+  { short: "Loss", title: "Prediction error travels backward", copy: "Cross-entropy compares each distribution with the observed next token. Backpropagation computes a gradient for every trainable parameter.", color: COLORS.coral },
+  { short: "Checkpoint", title: "Repeated updates produce a checkpoint", copy: "An optimizer applies small weight changes across many batches. A checkpoint stores a parameter snapshot; post-training may update it again.", color: COLORS.coral },
+  { short: "Prompt", title: "Inference starts with a prompt", copy: "At request time the checkpoint is fixed. The input string enters the same tokenizer used during training.", color: COLORS.blue },
+  { short: "IDs", title: "Prompt pieces become token IDs", copy: "Vocabulary lookup turns each piece into an integer, then the embedding matrix turns each ID into an initial vector.", color: COLORS.blue },
+  { short: "Context", title: "The frozen transformer builds context-rich states", copy: "Causal attention mixes information from allowed earlier positions. MLPs transform each position, and a KV cache preserves reusable attention state.", color: COLORS.blue },
+  { short: "Logits", title: "The final state scores the whole vocabulary", copy: "An output projection produces one logit per vocabulary entry. Softmax and decoding settings turn those scores into a choice distribution.", color: COLORS.blue },
+  { short: "Select", title: "The decoder chooses one token", copy: "Greedy, sampling, or another decoding rule selects a token. The selected token is not a sentence, fact, or plan; it is one vocabulary entry.", color: COLORS.gold },
+  { short: "Repeat", title: "Append the token and run another lap", copy: "The token joins the context, the cache grows, and the frozen model predicts again. Repetition turns one-token decisions into a response.", color: COLORS.gold }
+];
+
+var systemStatus = document.getElementById("system-status");
+var systemTitle = document.getElementById("system-title");
+var systemCopy = document.getElementById("system-copy");
+var systemToggle = document.getElementById("system-toggle");
+var systemRestart = document.getElementById("system-restart");
+var systemScrubber = document.getElementById("system-scrubber");
+var systemLastStep = -1;
+var SYSTEM_STEP_DURATION = 2.75;
+
+function drawSystemOrb(ctx, step, position, active, view, w, h, time) {
+  var color = step.color;
+  var radius = active ? 0.48 : 0.34;
+  ring3(ctx, position, radius, "xy", view, w, h, color, active ? 0.95 : 0.5, active ? 1.8 : 1);
+  ring3(ctx, position, radius, "yz", view, w, h, color, active ? 0.66 : 0.26, 1);
+  point3(ctx, position, view, w, h, active ? 4.6 : 3.1, color, active ? 1 : 0.7);
+  for (var i = 0; i < 4; i += 1) {
+    var angle = time * (0.28 + i * 0.03) + i * TAU / 4;
+    point3(ctx, {
+      x: position.x + Math.cos(angle) * radius,
+      y: position.y + Math.sin(angle) * radius,
+      z: position.z + Math.sin(angle * 1.7) * radius * 0.45
+    }, view, w, h, active ? 2.1 : 1.3, color, active ? 0.9 : 0.38);
+  }
+  label3(ctx, { x: position.x, y: position.y - 0.72, z: position.z }, view, w, h, step.short.toUpperCase(), active ? COLORS.ink : COLORS.muted, "center", active ? 1 : 0.74);
+}
+
+function systemPositions(mobile) {
+  if (mobile) {
+    var compact = [
+      [-3.05, 2.8], [0, 2.8], [3.05, 2.8],
+      [3.05, 1.0], [0, 1.0], [-3.05, 1.0],
+      [-3.05, -0.8], [0, -0.8], [3.05, -0.8],
+      [3.05, -2.6], [0, -2.6], [-3.05, -2.6]
+    ];
+    return compact.map(function (point, index) {
+      return { x: point[0], y: point[1], z: index < 6 ? 0.08 : -0.08 };
+    });
+  }
+  var xs = [-4.45, -2.68, -0.9, 0.9, 2.68, 4.45];
+  return SYSTEM_STEPS.map(function (step, index) {
+    return { x: xs[index % 6], y: index < 6 ? 1.25 : -1.18, z: index < 6 ? 0.08 : -0.08 };
+  });
+}
+
+function updateSystemCopy(stepIndex) {
+  if (stepIndex === systemLastStep) return;
+  systemLastStep = stepIndex;
+  var step = SYSTEM_STEPS[stepIndex];
+  systemStatus.textContent = (stepIndex < 6 ? "Training · " : "Inference · ") + step.short;
+  systemTitle.textContent = step.title;
+  systemCopy.textContent = step.copy;
+}
+
+var systemScene = makeScene("system", "system-canvas", {
+  duration: SYSTEM_STEPS.length * SYSTEM_STEP_DURATION,
+  staticTime: 11 * SYSTEM_STEP_DURATION + 0.8,
+  draw: function (scene, time) {
+    var ctx = scene.ctx;
+    var w = scene.width;
+    var h = scene.height;
+    drawBackdrop(ctx, w, h, time, 74);
+    var mobile = w < 620;
+    var view = { yaw: -0.08, pitch: mobile ? 0.10 : 0.16, dist: mobile ? 14.7 : 13.2, focal: Math.min(w, h) * 1.31, cy: mobile ? 0.48 : 0.51 };
+    var positions = systemPositions(mobile);
+    var stepFloat = time / SYSTEM_STEP_DURATION;
+    var current = clamp(Math.floor(stepFloat), 0, SYSTEM_STEPS.length - 1);
+    var local = smooth(fract(stepFloat));
+
+    if (!mobile) {
+      label3(ctx, { x: -5.22, y: 1.25, z: 0 }, view, w, h, "BUILD", COLORS.coral, "right", 0.88);
+      label3(ctx, { x: -5.22, y: -1.18, z: 0 }, view, w, h, "RUN", COLORS.blue2, "right", 0.88);
+    }
+
+    for (var i = 0; i < 5; i += 1) {
+      line3(ctx, positions[i], positions[i + 1], view, w, h, i >= 2 ? COLORS.coral : COLORS.blue, 1.45, current > i ? 0.72 : 0.22);
+    }
+    for (var j = 6; j < 11; j += 1) {
+      line3(ctx, positions[j], positions[j + 1], view, w, h, j >= 9 ? COLORS.gold : COLORS.blue, 1.45, current > j ? 0.72 : 0.22);
+    }
+
+    var bridge = mobile ? cubicPoints(
+      positions[5],
+      { x: -3.75, y: 0.6, z: -0.7 },
+      { x: -3.75, y: -0.4, z: -0.7 },
+      positions[6],
+      28
+    ) : cubicPoints(
+      positions[5],
+      { x: 5.05, y: 0.42, z: -1.25 },
+      { x: -5.05, y: -0.3, z: -1.25 },
+      positions[6],
+      42
+    );
+    drawCurve3(ctx, bridge, view, w, h, COLORS.line, 1.2, current >= 6 ? 0.62 : 0.22);
+    if (!mobile) label3(ctx, { x: 0, y: -0.04, z: -1.25 }, view, w, h, "TOKENIZER + CHECKPOINT REUSED", COLORS.muted, "center", 0.72);
+
+    var repeatPath = mobile ? cubicPoints(
+      positions[11],
+      { x: -4.12, y: -2.8, z: 0.8 },
+      { x: -4.12, y: -0.6, z: 0.8 },
+      positions[6],
+      34
+    ) : cubicPoints(
+      positions[11],
+      { x: 5.25, y: -2.75, z: 0.8 },
+      { x: -5.1, y: -2.75, z: 0.8 },
+      positions[6],
+      48
+    );
+    drawCurve3(ctx, repeatPath, view, w, h, COLORS.gold, 1.55, current === 11 ? 0.86 : 0.18);
+    if (!mobile) label3(ctx, { x: 0, y: -2.55, z: 0.8 }, view, w, h, "APPEND · PREDICT AGAIN", COLORS.gold, "center", current === 11 ? 0.94 : 0.3);
+
+    positions.forEach(function (position, index) {
+      drawSystemOrb(ctx, SYSTEM_STEPS[index], position, index === current, view, w, h, time + index * 0.3);
+    });
+
+    if (current > 0 && current < 6) {
+      point3(ctx, mixPoint(positions[current - 1], positions[current], local), view, w, h, 4.2, SYSTEM_STEPS[current].color, 1);
+    } else if (current === 11) {
+      var repeatIndex = Math.min(repeatPath.length - 1, Math.floor(local * (repeatPath.length - 1)));
+      point3(ctx, repeatPath[repeatIndex], view, w, h, 4.2, COLORS.gold, 1);
+    } else if (current > 6 && current < 11) {
+      point3(ctx, mixPoint(positions[current - 1], positions[current], local), view, w, h, 4.2, SYSTEM_STEPS[current].color, 1);
+    } else if (current === 6) {
+      var bridgeIndex = Math.min(bridge.length - 1, Math.floor(local * (bridge.length - 1)));
+      point3(ctx, bridge[bridgeIndex], view, w, h, 4.2, COLORS.blue, 1);
+    }
+
+    updateSystemCopy(current);
+    if (!systemScrubber.matches(":active")) systemScrubber.value = String(Math.min(11, stepFloat));
+    ctx.save();
+    ctx.fillStyle = COLORS.muted;
+    ctx.font = '10px "Geist Mono", monospace';
+    ctx.fillText(mobile ? "BUILD CHANGES WEIGHTS · RUN DOES NOT" : "UPPER ROUTE CHANGES WEIGHTS · LOWER ROUTE DOES NOT", 18, 24);
+    ctx.restore();
+  }
+});
+
+if (REDUCED) systemToggle.hidden = true;
+systemToggle.addEventListener("click", function () {
+  systemScene.setPlaying(!systemScene.playing);
+  systemToggle.textContent = systemScene.playing ? "Pause" : "Play";
+});
+systemRestart.addEventListener("click", function () {
+  systemScene.restart();
+  systemLastStep = -1;
+  if (!REDUCED) systemToggle.textContent = "Pause";
+});
+systemScrubber.addEventListener("input", function () {
+  systemScene.time = Number(systemScrubber.value) * SYSTEM_STEP_DURATION;
+  systemScene.setPlaying(false);
+  systemScene.dirty = true;
+  systemToggle.textContent = "Play";
+});
+
+bindSceneControls();
+})();
+</script>
+</body>
+</html>

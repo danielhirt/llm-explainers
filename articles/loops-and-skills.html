@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loops and Skills</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%3Crect%20width=%2232%22%20height=%2232%22%20rx=%228%22%20fill=%22%230a1020%22/%3E%3Ccircle%20cx=%2210%22%20cy=%2216%22%20r=%223%22%20fill=%22%235d7cff%22/%3E%3Ccircle%20cx=%2218%22%20cy=%2210%22%20r=%223%22%20fill=%22%23ee755f%22/%3E%3Ccircle%20cx=%2222%22%20cy=%2221%22%20r=%223%22%20fill=%22%23efb44d%22/%3E%3Cpath%20d=%22M12%2015L16%2012M19%2013L21%2018M13%2018L19%2020%22%20stroke=%22%23f7f5ef%22%20stroke-width=%221.5%22/%3E%3C/svg%3E">
+<meta name="description" content="The agentic loop that turns a text predictor into a worker, and skills: procedure packaged as loadable files.">
+<style>
+@font-face { font-family: "Geist"; src: url("../fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Geist"; src: url("../fonts/Geist-VariableItalic.woff2") format("woff2"); font-weight: 100 900; font-style: italic; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("../fonts/GeistMono-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+
+:root,
+[data-theme="light"] {
+  --page: #f7f6f2;
+  --surface: #ffffff;
+  --ink: #111a31;
+  --ink-body: #2b3550;
+  --ink-soft: #4e5b76;
+  --ink-faint: #78839a;
+  --line: rgba(17, 26, 49, 0.12);
+  --line-strong: rgba(17, 26, 49, 0.24);
+  --accent: #4e6ff2;
+  --accent-soft: rgba(78, 111, 242, 0.11);
+  --coral: #df6756;
+  --gold: #d9982d;
+  --gold-soft: rgba(217, 152, 45, 0.13);
+  --code-bg: rgba(17, 26, 49, 0.06);
+  --stage: #0a101f;
+  --stage-ink: #f5f6fb;
+  --stage-muted: #9eaac3;
+  --stage-line: rgba(215, 224, 248, 0.14);
+  --panel-shadow: 0 1px 3px rgba(19, 28, 55, 0.10);
+}
+
+[data-theme="dark"] {
+  --page: #0d1322;
+  --surface: #161f34;
+  --ink: #f4f4ef;
+  --ink-body: #ced3e2;
+  --ink-soft: #b2bace;
+  --ink-faint: #8792aa;
+  --line: rgba(234, 239, 255, 0.10);
+  --line-strong: rgba(234, 239, 255, 0.20);
+  --accent: #7f98ff;
+  --accent-soft: rgba(127, 152, 255, 0.13);
+  --coral: #ff8a74;
+  --gold: #f0b64d;
+  --gold-soft: rgba(240, 182, 77, 0.13);
+  --code-bg: rgba(234, 239, 255, 0.08);
+  --stage: #080d1b;
+  --stage-ink: #f7f6f0;
+  --stage-muted: #aab5cc;
+  --stage-line: rgba(220, 228, 250, 0.14);
+  --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --page: #0d1322;
+    --surface: #161f34;
+    --ink: #f4f4ef;
+    --ink-body: #ced3e2;
+    --ink-soft: #b2bace;
+    --ink-faint: #8792aa;
+    --line: rgba(234, 239, 255, 0.10);
+    --line-strong: rgba(234, 239, 255, 0.20);
+    --accent: #7f98ff;
+    --accent-soft: rgba(127, 152, 255, 0.13);
+    --coral: #ff8a74;
+    --gold: #f0b64d;
+    --gold-soft: rgba(240, 182, 77, 0.13);
+    --code-bg: rgba(234, 239, 255, 0.08);
+    --stage: #080d1b;
+    --stage-ink: #f7f6f0;
+    --stage-muted: #aab5cc;
+    --stage-line: rgba(220, 228, 250, 0.14);
+    --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--page);
+  color: var(--ink-body);
+  font-family: "Geist", "Avenir Next", sans-serif;
+  font-size: 18px;
+  line-height: 1.7;
+  text-rendering: optimizeLegibility;
+  overflow-wrap: break-word;
+}
+
+.col { width: min(720px, calc(100% - 48px)); margin: 0 auto; }
+
+header.masthead { padding: 50px 0 0; }
+
+.mast-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 50px;
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+}
+
+.mast-row .brand {
+  color: var(--ink);
+  font-family: "Geist", sans-serif;
+  font-size: 13px;
+  font-weight: 620;
+  text-decoration: none;
+}
+
+.mast-separator { color: var(--line-strong); }
+
+.theme-toggle {
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 160ms ease;
+}
+
+.theme-toggle:hover { border-color: var(--accent); }
+
+.theme-toggle svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+
+h1 {
+  max-width: 18ch;
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(31px, 4vw, 39px);
+  font-weight: 640;
+  line-height: 1.16;
+  letter-spacing: -0.02em;
+  text-wrap: pretty;
+}
+
+.dek {
+  max-width: 62ch;
+  margin: 20px 0 0;
+  color: var(--ink-soft);
+  font-size: 20px;
+  line-height: 1.58;
+}
+
+main { padding: 30px 0 0; }
+
+h2 {
+  margin: 52px 0 16px;
+  color: var(--ink);
+  font-size: clamp(24px, 3vw, 28px);
+  font-weight: 640;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  text-wrap: pretty;
+}
+
+h3 {
+  margin: 32px 0 10px;
+  color: var(--ink);
+  font-size: 19px;
+  font-weight: 630;
+  line-height: 1.3;
+}
+
+p { max-width: 66ch; margin: 0 0 1.2em; }
+
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+
+strong { color: var(--ink); font-weight: 620; }
+
+code {
+  font-family: "Geist Mono", monospace;
+  font-size: 0.85em;
+  color: var(--ink);
+  background: var(--code-bg);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+
+pre {
+  max-width: 100%;
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+pre code { background: none; padding: 0; font-size: 1em; }
+
+ul { max-width: 66ch; padding-left: 1.2rem; margin: 0 0 1.2em; }
+li { margin-bottom: 0.5em; }
+li::marker { color: var(--ink-faint); }
+
+table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 26px 0; }
+
+th {
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: left;
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+td {
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  color: var(--ink-soft);
+}
+
+td:first-child { font-family: "Geist Mono", monospace; font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+
+.tablewrap { overflow-x: auto; }
+
+figure.instrument {
+  width: min(940px, calc(100% - 40px));
+  margin: 30px auto;
+  padding: 0;
+  background: var(--stage);
+  border: 1px solid var(--stage-line);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--panel-shadow);
+  color: var(--stage-ink);
+}
+
+.instrument-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--stage-line);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  color: var(--stage-muted);
+}
+
+.fig-id { color: var(--stage-muted); font-weight: 620; white-space: nowrap; }
+
+.fig-name { color: var(--stage-ink); font-family: "Geist", sans-serif; font-size: 13.5px; font-weight: 560; }
+
+.fig-note { margin-left: auto; font-size: 10.5px; text-align: right; }
+
+button.fig-btn {
+  margin-left: auto;
+  min-height: 30px;
+  padding: 6px 11px;
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  color: var(--stage-muted);
+  background: rgba(225, 232, 255, 0.05);
+  border: 1px solid rgba(225, 232, 255, 0.22);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+button.fig-btn:hover { color: var(--stage-ink); border-color: rgba(141, 162, 255, 0.65); }
+
+.instrument-body { padding: 20px 18px; }
+.instrument-body.scrollx { overflow-x: auto; }
+.instrument-body.scrollx svg { min-width: 640px; }
+
+figcaption.below {
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--stage-line);
+  color: var(--stage-muted);
+  font-family: "Geist", sans-serif;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+footer.series {
+  margin: 84px 0 0;
+  border-top: 1px solid var(--line);
+  padding: 28px 0 42px;
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+footer.series nav { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }
+footer.series a { color: var(--ink-soft); }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* loop svg */
+#loop-svg { display: block; width: 100%; height: auto; }
+#loop-svg text { font-family: "Geist Mono", monospace; font-size: 11px; fill: #9eaac3; }
+#loop-svg .node { fill: rgba(225, 232, 255, 0.06); stroke: rgba(215, 224, 248, 0.20); transition: stroke 0.35s; }
+#loop-svg .node.hot { stroke: #6f89ff; stroke-width: 1.8; }
+#loop-svg .node.exit { stroke-dasharray: 4 4; }
+#loop-svg .node.exit.hot { stroke: #efb44d; stroke-dasharray: none; }
+#loop-svg .arc { stroke: rgba(215, 224, 248, 0.16); stroke-width: 1.5; fill: none; transition: stroke 0.35s; }
+#loop-svg .arc.hot { stroke: #6f89ff; stroke-width: 2; }
+#loop-svg .arc.exitarc.hot { stroke: #efb44d; }
+#loop-svg .nodelabel { fill: #f5f6fb; font-size: 12px; }
+#loop-svg .detail { fill: #9cb0ff; font-size: 11px; }
+#loop-meter-wrap { display: flex; align-items: center; gap: 12px; font-family: "Geist Mono", monospace; font-size: 10.5px; color: var(--stage-muted); margin-top: 10px; }
+#loop-meter { flex: 1; height: 8px; background: rgba(225, 232, 255, 0.10); border-radius: 2px; overflow: hidden; }
+#loop-meter-fill { height: 100%; width: 4%; background: #6f89ff; opacity: 0.65; border-radius: 2px; transition: width 0.5s; }
+#loop-status { text-align: center; font-family: "Geist Mono", monospace; font-size: 11px; color: var(--stage-muted); min-height: 1.2em; margin-top: 10px; }
+/* skills fig */
+#skill-wrap { display: grid; grid-template-columns: 15rem 1fr; gap: 24px; align-items: start; }
+#skill-shelf { display: flex; flex-direction: column; gap: 8px; }
+.skill-card { border: 1px solid rgba(215, 224, 248, 0.18); border-radius: 5px; padding: 7px 11px; font-family: "Geist Mono", monospace; transition: border-color 0.3s, background 0.3s; }
+.skill-card .sk-name { font-size: 11.5px; color: #f5f6fb; }
+.skill-card .sk-desc { font-size: 10px; color: #9eaac3; line-height: 1.45; margin-top: 2px; }
+.skill-card.scan { border-color: #9eaac3; }
+.skill-card.match { border-color: #6f89ff; background: rgba(111, 137, 255, 0.14); }
+#skill-right { display: flex; flex-direction: column; gap: 14px; min-height: 16rem; }
+#skill-task { font-family: "Geist Mono", monospace; font-size: 12px; padding: 8px 12px; border: 1px solid rgba(239, 180, 77, 0.65); background: rgba(239, 180, 77, 0.10); border-radius: 5px; min-height: 2.4rem; color: #f5f6fb; }
+#skill-task .tlabel { font-size: 9.5px; color: #9eaac3; display: block; }
+#skill-steps { display: flex; flex-direction: column; gap: 6px; }
+.skill-step { font-family: "Geist Mono", monospace; font-size: 11px; color: #f5f6fb; background: rgba(225, 232, 255, 0.08); border-radius: 4px; padding: 5px 10px; opacity: 0; transform: translateY(4px); transition: opacity 0.35s, transform 0.35s; }
+.skill-step.on { opacity: 1; transform: none; }
+#skill-ctx-wrap { font-family: "Geist Mono", monospace; font-size: 10.5px; color: #9eaac3; margin-top: auto; }
+#skill-ctx { height: 8px; background: rgba(225, 232, 255, 0.10); border-radius: 2px; overflow: hidden; margin-top: 5px; }
+#skill-ctx-fill { height: 100%; width: 3%; background: #6f89ff; opacity: 0.65; border-radius: 2px; transition: width 0.6s; }
+#skill-status { font-family: "Geist Mono", monospace; font-size: 11px; color: #9eaac3; margin-top: 10px; min-height: 1.1em; }
+
+@media (max-width: 680px) {
+  body { font-size: 17px; }
+  .col { width: min(720px, calc(100% - 32px)); }
+  header.masthead { padding-top: 28px; }
+  .mast-row { margin-bottom: 36px; }
+  h1 { font-size: clamp(29px, 8.5vw, 33px); }
+  .dek { font-size: 18px; }
+  figure.instrument { width: calc(100% - 16px); border-radius: 7px; }
+  .instrument-body { padding: 14px 13px; }
+  #skill-wrap { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="col">
+    <div class="mast-row">
+      <a class="brand" href="../index.html">Model Mechanics</a>
+      <span class="mast-separator" aria-hidden="true">/</span>
+      <span class="mast-label">Explainer 4</span>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle color theme">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+      </button>
+    </div>
+    <h1>Loops and Skills</h1>
+    <p class="dek">The while-loop that turns a text predictor into a worker, and procedure packaged as files it can load.</p>
+  </div>
+</header>
+
+<main>
+  <div class="col">
+    <p>Nothing in <a href="how-llms-work.html">the transformer</a> acts. It reads tokens and emits tokens, once, and stops. Everything agentic about an "agent", the file edits and the test runs, comes from a plain while-loop wrapped around that function by a piece of ordinary software called the harness. The loop is small enough to sketch in full:</p>
+    <pre><code>context = [system_prompt, tools_schema, user_request]
+while True:
+    output = model(context)          # one forward pass per token
+    if output.is_answer:
+        return output                # the model chose to stop
+    result = execute(output.tool_call)
+    context += [output, result]      # both are just tokens</code></pre>
+    <p>Two things about this loop repay attention. The model never executes anything: it emits a tool call as text, the harness runs it, and the result comes back as more text. And the context grows every lap, which means a long-running loop inherits every property of the context window covered in the first piece: the cost of re-reading grows, retrieval degrades in the middle, and eventually compaction throws away detail. Loops do not escape the window; they run inside it.</p>
+  </div>
+
+  <figure class="instrument" id="fig-loop">
+    <figcaption class="instrument-head">
+      <span class="fig-id">Figure 1</span><span class="fig-name">The agentic loop</span>
+      <button class="fig-btn" data-ctl aria-label="Pause animation">Pause</button>
+    </figcaption>
+    <div class="instrument-body scrollx">
+      <svg id="loop-svg" viewBox="0 0 720 356" role="img" aria-label="A cycle: the context feeds the model, the model emits a tool call, the harness executes it, the result appends to the context, until the model exits with an answer"></svg>
+      <div id="loop-meter-wrap"><span>Context</span><div id="loop-meter"><div id="loop-meter-fill"></div></div><span id="loop-meter-pct">4%</span></div>
+      <div id="loop-status"></div>
+    </div>
+    <figcaption class="below">Each lap appends the tool call and its result to the context, so the window fills as the loop runs. The loop ends when the model answers instead of calling.</figcaption>
+  </figure>
+
+  <div class="col">
+    <p>The difference between a loop that converges and one that thrashes is mostly the lap body. Verification belongs inside it: an agent that runs the tests after each edit gets steered by real feedback every lap, while one that edits five files and tests at the end has spent four laps guessing. The result tokens are the only steering input the model gets. Make them informative and the loop self-corrects; leave them silent and it drifts.</p>
+    <p>Loops also need a reason to stop. Well-behaved harnesses enforce step caps and token budgets on top of the model's own judgment, because a model that keeps finding one more thing to check will happily spend your budget being diligent. The stop condition is part of the task definition, so state it explicitly.</p>
+
+    <h2>Loops that outlive the session</h2>
+    <p>Some loops run longer than any single context: the nightly dependency triage, the agent that watches CI and files issues, the recurring cleanup pass. Two mechanics change at that scale. Scheduling moves to the harness, either a cron-style trigger that starts a fresh agent on a timer or a self-paced loop where the agent finishes a pass and schedules its own wake-up. And state must live outside the model, in files it re-reads on every wake: the weights are frozen, the old context is gone, and whatever the loop learned last night exists only if it was written down. A recurring agent without externalized state re-derives the world from scratch every morning.</p>
+    <p>The rule of thumb for pacing came up in the effort piece in another form: match the spend to the signal. A loop polling every minute for a state that changes daily burns budget observing nothing. When the harness can notify on events, event-driven beats polling outright.</p>
+
+    <h2>Skills: procedure as files</h2>
+    <p>Once agents run in loops, the same instructions start getting retyped. How this team deploys. How to run this repo's flaky test suite. The incident checklist. The obvious fix, pasting all of it into the system prompt, works and then quietly gets expensive: every request pays tokens for every procedure, relevant or never, and the pile grows until it competes with the task for the model's attention.</p>
+    <p>A <strong>skill</strong> is the packaged alternative: a named file of instructions, optionally with reference docs and scripts alongside, registered with the harness under a one-line description. The economics are progressive disclosure. The index of descriptions rides along in every context at a few tokens per skill; the full instructions load only when a task matches. A library of forty procedures costs a few hundred always-on tokens instead of forty thousand.</p>
+  </div>
+
+  <figure class="instrument" id="fig-skill">
+    <figcaption class="instrument-head">
+      <span class="fig-id">Figure 2</span><span class="fig-name">A skill loads on demand</span>
+      <button class="fig-btn" data-ctl aria-label="Pause animation">Pause</button>
+    </figcaption>
+    <div class="instrument-body">
+      <div id="skill-wrap">
+        <div id="skill-shelf" aria-hidden="true"></div>
+        <div id="skill-right">
+          <div id="skill-task"><span class="tlabel">Incoming task</span><span id="skill-task-text"></span></div>
+          <div id="skill-steps" aria-hidden="true"></div>
+          <div id="skill-ctx-wrap">Context <div id="skill-ctx"><div id="skill-ctx-fill"></div></div></div>
+          <div id="skill-status"></div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="below">The shelf's one-line descriptions are always in context; the procedure itself loads only when a task matches it. The description is all the model sees when routing.</figcaption>
+  </figure>
+
+  <div class="col">
+    <p>Because a skill is a file, it inherits everything files already do well. It lives in a repo, versioned and reviewable in a pull request. Editing it changes the agent's behavior on the next run, with no retraining and no deploy. A teammate's hard-won procedure becomes your agent's procedure by copying a directory. Compare the alternatives: fine-tuning bakes procedure into weights where nobody can read or patch it, and prompt-stuffing pays rent on every request. Files sit in the sweet spot, cheap to change and auditable by anyone who can read.</p>
+    <p>It helps to keep the three kinds of instruction distinct, because they fail differently when mixed. The prompt states the task at hand. Memory holds durable facts about this project and this user. A skill holds a reusable procedure for a kind of task. When procedure leaks into memory or tasks get baked into skills, the agent starts applying yesterday's specifics to tomorrow's work.</p>
+
+    <h2>Loops and skills compose</h2>
+    <p>The two ideas meet in the recurring agent: a scheduled loop whose body is a skill. The cron entry says "every night at two, run the dependency triage skill" and the skill says what triage means here: which manifests to check, what counts as urgent, where to file what it finds, what to write down for tomorrow's run. The schedule is configuration and the procedure is prose, both in version control and both editable in thirty seconds. A surprising amount of operational automation reduces to this shape.</p>
+
+    <h2>Working defaults</h2>
+    <ul>
+      <li>Write the skill the second time you type the same instructions. The first time is a task; the second is a pattern with a third occurrence coming.</li>
+      <li>Spend effort on the description line. It is the only part the model sees when deciding whether to load the skill, so a vague description is an unreachable skill.</li>
+      <li>Give every loop a budget and a stop condition, and put verification inside the lap rather than after it.</li>
+      <li>For anything recurring, decide what the loop writes down for its future self. That file is the loop's memory, so give its format the same care as the schedule.</li>
+    </ul>
+    <p>One layer sits under all of this: the harness itself, the software that owns the loop, the tools, the permissions, and the context budget. That piece is next in the series.</p>
+  </div>
+</main>
+
+<footer class="series">
+  <div class="col">
+    <span>Model Mechanics · A field guide to working with LLMs</span>
+    <nav aria-label="series">
+      <a href="how-llms-work.html">1 · How a Language Model Works</a>
+      <a href="effort-levels.html">2 · Reasoning Effort</a>
+      <a href="orchestration-and-subagents.html">3 · Orchestration and Subagents</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var toggle = document.getElementById('theme-toggle');
+  var saved = null;
+  try { saved = localStorage.getItem('model-mechanics-theme'); } catch (error) {}
+  if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved);
+  toggle.addEventListener('click', function () {
+    var current = root.getAttribute('data-theme');
+    if (!current) current = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    var next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('model-mechanics-theme', next); } catch (error) {}
+  });
+})();
+</script>
+<script>
+(function () {
+'use strict';
+var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function makeInstrument(figId, api) {
+  var fig = document.getElementById(figId);
+  if (!fig) return;
+  var btn = fig.querySelector('[data-ctl]');
+  if (REDUCED) { api.renderStatic(); if (btn) btn.style.display = 'none'; return; }
+  var userPaused = false, visible = false, running = false;
+  function sync() {
+    var want = visible && !userPaused;
+    if (want && !running) { running = true; api.start(); }
+    else if (!want && running) { running = false; api.stop(); }
+  }
+  if (btn) btn.addEventListener('click', function () {
+    userPaused = !userPaused;
+    btn.textContent = userPaused ? 'Play' : 'Pause';
+    sync();
+  });
+  new IntersectionObserver(function (es) {
+    visible = es.some(function (e) { return e.isIntersecting; });
+    sync();
+  }, { threshold: 0.15 }).observe(fig);
+}
+function timerBag() {
+  var ids = [];
+  return {
+    after: function (ms, fn) { ids.push(setTimeout(fn, ms)); },
+    clear: function () { ids.forEach(clearTimeout); ids = []; }
+  };
+}
+
+/* ---------- fig 01: the agentic loop ---------- */
+(function () {
+  var svg = document.getElementById('loop-svg');
+  var status = document.getElementById('loop-status');
+  var fill = document.getElementById('loop-meter-fill');
+  var pct = document.getElementById('loop-meter-pct');
+  var NS = 'http://www.w3.org/2000/svg';
+  var t = timerBag();
+  function mk(tag, attrs, text) {
+    var n = document.createElementNS(NS, tag);
+    Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+    if (text) n.textContent = text;
+    svg.appendChild(n);
+    return n;
+  }
+  var N = {
+    ctx:    { x: 120, y: 165, w: 130, h: 44, label: 'Context' },
+    model:  { x: 320, y: 60,  w: 120, h: 40, label: 'Model' },
+    tool:   { x: 520, y: 165, w: 140, h: 44, label: 'Harness runs tool' },
+    result: { x: 320, y: 270, w: 130, h: 40, label: 'Tool result' },
+    answer: { x: 550, y: 60,  w: 120, h: 40, label: 'Answer' }
+  };
+  var nodes = {}, labels = {}, arcs = {};
+  function edge(a, b, bend) {
+    var ax = N[a].x + N[a].w / 2, ay = N[a].y + N[a].h / 2;
+    var bx = N[b].x + N[b].w / 2, by = N[b].y + N[b].h / 2;
+    var mx = (ax + bx) / 2 + bend[0], my = (ay + by) / 2 + bend[1];
+    return 'M ' + ax + ' ' + ay + ' Q ' + mx + ' ' + my + ' ' + bx + ' ' + by;
+  }
+  function build() {
+    svg.innerHTML = '';
+    arcs.cm = mk('path', { d: edge('ctx', 'model', [-40, -50]), 'class': 'arc' });
+    arcs.mt = mk('path', { d: edge('model', 'tool', [40, -50]), 'class': 'arc' });
+    arcs.tr = mk('path', { d: edge('tool', 'result', [40, 50]), 'class': 'arc' });
+    arcs.rc = mk('path', { d: edge('result', 'ctx', [-40, 50]), 'class': 'arc' });
+    arcs.ma = mk('path', { d: edge('model', 'answer', [0, -18]), 'class': 'arc exitarc' });
+    Object.keys(N).forEach(function (k) {
+      var n = N[k];
+      nodes[k] = mk('rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: 2, 'class': 'node' + (k === 'answer' ? ' exit' : '') });
+      mk('text', { x: n.x + n.w / 2, y: n.y + n.h / 2 + 4, 'text-anchor': 'middle', 'class': 'nodelabel' }, n.label);
+    });
+    labels.detail = mk('text', { x: 360, y: 344, 'text-anchor': 'middle', 'class': 'detail' }, '');
+  }
+  var LAPS = [
+    { tool: 'grep -rn "flaky" tests/', result: '3 matches in test_queue.py', ctx: 14 },
+    { tool: 'read test_queue.py', result: '210 lines, uses shared worker pool', ctx: 32 },
+    { tool: 'pytest -k queue -x', result: '1 failed: race in enqueue()', ctx: 47 }
+  ];
+  function setHot(keys) {
+    Object.keys(nodes).forEach(function (k) { nodes[k].classList.toggle('hot', keys.indexOf(k) >= 0); });
+    Object.keys(arcs).forEach(function (k) { arcs[k].classList.toggle('hot', keys.indexOf('arc:' + k) >= 0); });
+  }
+  function setCtx(v) { fill.style.width = v + '%'; pct.textContent = v + '%'; }
+  function lap(i) {
+    if (i >= LAPS.length) {
+      setHot(['model', 'arc:ma', 'answer']);
+      labels.detail.textContent = '"the fix: take the pool lock inside enqueue()"';
+      status.textContent = 'The model answers instead of calling a tool · the loop exits';
+      t.after(3400, function () { setCtx(4); build(); lap(0); });
+      return;
+    }
+    var L = LAPS[i];
+    setHot(['ctx', 'arc:cm', 'model']);
+    status.textContent = 'Lap ' + (i + 1) + ' · the model reads the context and decides what it needs';
+    labels.detail.textContent = '';
+    t.after(1100, function () {
+      setHot(['model', 'arc:mt', 'tool']);
+      labels.detail.textContent = L.tool;
+      status.textContent = 'A tool call is emitted as tokens · the harness executes it';
+      t.after(1300, function () {
+        setHot(['tool', 'arc:tr', 'result']);
+        labels.detail.textContent = L.result;
+        status.textContent = 'The result comes back as tokens';
+        t.after(1200, function () {
+          setHot(['result', 'arc:rc', 'ctx']);
+          setCtx(L.ctx);
+          status.textContent = 'Call and result append to the context · the window grows';
+          t.after(1100, function () { lap(i + 1); });
+        });
+      });
+    });
+  }
+  makeInstrument('fig-loop', {
+    start: function () { build(); setCtx(4); lap(0); },
+    stop: function () { t.clear(); },
+    renderStatic: function () {
+      build();
+      setHot(['model', 'arc:ma', 'answer']);
+      setCtx(47);
+      labels.detail.textContent = '"the fix: take the pool lock inside enqueue()"';
+      status.textContent = 'Three tool laps, then an answer: the loop, unrolled';
+    }
+  });
+})();
+
+/* ---------- fig 02: skill loading ---------- */
+(function () {
+  var SKILLS = [
+    { name: 'deploy-checklist', desc: 'Ship a service to prod: gates, canary, rollback' },
+    { name: 'incident-triage', desc: 'Prod incident: stabilize, diagnose, escalate, write up' },
+    { name: 'db-migration', desc: 'Schema changes: expand-contract, backfill, verify' },
+    { name: 'sprite-pipeline', desc: 'Generate pixel-art sprite sheets with consistent frames' }
+  ];
+  var ROUNDS = [
+    {
+      task: 'API 500s spiking in prod since 14:02',
+      match: 1,
+      steps: ['1 · Freeze deploys, page secondary', '2 · Diff last 3 releases vs error onset', '3 · Check saturation before code', '4 · Mitigate first, root-cause second', '5 · Timeline doc while fresh'],
+      cost: '+1.8k tokens, loaded only now'
+    },
+    {
+      task: 'Add a walk cycle to the mascot sprite',
+      match: 3,
+      steps: ['1 · Reuse palette + geometry from base sheet', '2 · Eight frames, loop-safe endpoints', '3 · Run frame-consistency checks', '4 · Export GIF + sheet'],
+      cost: '+1.2k tokens, loaded only now'
+    }
+  ];
+  var shelf = document.getElementById('skill-shelf');
+  var taskText = document.getElementById('skill-task-text');
+  var stepsBox = document.getElementById('skill-steps');
+  var ctxFill = document.getElementById('skill-ctx-fill');
+  var statusEl = document.getElementById('skill-status');
+  var t = timerBag();
+  var cards = SKILLS.map(function (s) {
+    var card = document.createElement('div');
+    card.className = 'skill-card';
+    card.innerHTML = '<div class="sk-name">' + s.name + '</div><div class="sk-desc">' + s.desc + '</div>';
+    shelf.appendChild(card);
+    return card;
+  });
+  function clearCards() { cards.forEach(function (c) { c.classList.remove('scan', 'match'); }); }
+  function round(r) {
+    var R = ROUNDS[r];
+    clearCards();
+    stepsBox.innerHTML = '';
+    ctxFill.style.width = '3%';
+    taskText.textContent = ' ' + R.task;
+    statusEl.textContent = 'The index of descriptions is already in context (~80 tokens for all four)';
+    cards.forEach(function (c, i) {
+      t.after(700 + i * 260, function () {
+        clearCards();
+        c.classList.add('scan');
+        if (i === cards.length - 1) t.after(300, function () {
+          clearCards();
+          cards[R.match].classList.add('match');
+          statusEl.textContent = 'Match → the full procedure loads';
+          t.after(500, function () {
+            R.steps.forEach(function (s, j) {
+              var step = document.createElement('div');
+              step.className = 'skill-step';
+              step.textContent = s;
+              stepsBox.appendChild(step);
+              t.after(180 * j, function () { step.classList.add('on'); });
+            });
+            ctxFill.style.width = '12%';
+            statusEl.textContent = R.cost + ' · the other three skills cost nothing';
+            t.after(4200, function () { round((r + 1) % ROUNDS.length); });
+          });
+        });
+      });
+    });
+  }
+  makeInstrument('fig-skill', {
+    start: function () { round(0); },
+    stop: function () { t.clear(); },
+    renderStatic: function () {
+      var R = ROUNDS[0];
+      taskText.textContent = ' ' + R.task;
+      cards[R.match].classList.add('match');
+      R.steps.forEach(function (s) {
+        var step = document.createElement('div');
+        step.className = 'skill-step on';
+        step.textContent = s;
+        stepsBox.appendChild(step);
+      });
+      ctxFill.style.width = '12%';
+      statusEl.textContent = R.cost + ' · the other three skills cost nothing';
+    }
+  });
+})();
+})();
+</script>
+</body>
+</html>

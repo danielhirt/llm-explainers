@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reasoning Effort</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%3Crect%20width=%2232%22%20height=%2232%22%20rx=%228%22%20fill=%22%230a1020%22/%3E%3Ccircle%20cx=%2210%22%20cy=%2216%22%20r=%223%22%20fill=%22%235d7cff%22/%3E%3Ccircle%20cx=%2218%22%20cy=%2210%22%20r=%223%22%20fill=%22%23ee755f%22/%3E%3Ccircle%20cx=%2222%22%20cy=%2221%22%20r=%223%22%20fill=%22%23efb44d%22/%3E%3Cpath%20d=%22M12%2015L16%2012M19%2013L21%2018M13%2018L19%2020%22%20stroke=%22%23f7f5ef%22%20stroke-width=%221.5%22/%3E%3C/svg%3E">
+<meta name="description" content="What a model's effort knob turns, why its returns are concave, and how to pick a level.">
+<style>
+@font-face { font-family: "Geist"; src: url("../fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Geist"; src: url("../fonts/Geist-VariableItalic.woff2") format("woff2"); font-weight: 100 900; font-style: italic; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("../fonts/GeistMono-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+
+:root,
+[data-theme="light"] {
+  --page: #f7f6f2;
+  --surface: #ffffff;
+  --ink: #111a31;
+  --ink-body: #2b3550;
+  --ink-soft: #4e5b76;
+  --ink-faint: #78839a;
+  --line: rgba(17, 26, 49, 0.12);
+  --line-strong: rgba(17, 26, 49, 0.24);
+  --accent: #4e6ff2;
+  --accent-soft: rgba(78, 111, 242, 0.11);
+  --coral: #df6756;
+  --gold: #d9982d;
+  --gold-soft: rgba(217, 152, 45, 0.13);
+  --code-bg: rgba(17, 26, 49, 0.06);
+  --stage: #0a101f;
+  --stage-ink: #f5f6fb;
+  --stage-muted: #9eaac3;
+  --stage-line: rgba(215, 224, 248, 0.14);
+  --panel-shadow: 0 1px 3px rgba(19, 28, 55, 0.10);
+}
+
+[data-theme="dark"] {
+  --page: #0d1322;
+  --surface: #161f34;
+  --ink: #f4f4ef;
+  --ink-body: #ced3e2;
+  --ink-soft: #b2bace;
+  --ink-faint: #8792aa;
+  --line: rgba(234, 239, 255, 0.10);
+  --line-strong: rgba(234, 239, 255, 0.20);
+  --accent: #7f98ff;
+  --accent-soft: rgba(127, 152, 255, 0.13);
+  --coral: #ff8a74;
+  --gold: #f0b64d;
+  --gold-soft: rgba(240, 182, 77, 0.13);
+  --code-bg: rgba(234, 239, 255, 0.08);
+  --stage: #080d1b;
+  --stage-ink: #f7f6f0;
+  --stage-muted: #aab5cc;
+  --stage-line: rgba(220, 228, 250, 0.14);
+  --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --page: #0d1322;
+    --surface: #161f34;
+    --ink: #f4f4ef;
+    --ink-body: #ced3e2;
+    --ink-soft: #b2bace;
+    --ink-faint: #8792aa;
+    --line: rgba(234, 239, 255, 0.10);
+    --line-strong: rgba(234, 239, 255, 0.20);
+    --accent: #7f98ff;
+    --accent-soft: rgba(127, 152, 255, 0.13);
+    --coral: #ff8a74;
+    --gold: #f0b64d;
+    --gold-soft: rgba(240, 182, 77, 0.13);
+    --code-bg: rgba(234, 239, 255, 0.08);
+    --stage: #080d1b;
+    --stage-ink: #f7f6f0;
+    --stage-muted: #aab5cc;
+    --stage-line: rgba(220, 228, 250, 0.14);
+    --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--page);
+  color: var(--ink-body);
+  font-family: "Geist", "Avenir Next", sans-serif;
+  font-size: 18px;
+  line-height: 1.7;
+  text-rendering: optimizeLegibility;
+  overflow-wrap: break-word;
+}
+
+.col { width: min(720px, calc(100% - 48px)); margin: 0 auto; }
+
+header.masthead { padding: 50px 0 0; }
+
+.mast-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 50px;
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+}
+
+.mast-row .brand {
+  color: var(--ink);
+  font-family: "Geist", sans-serif;
+  font-size: 13px;
+  font-weight: 620;
+  text-decoration: none;
+}
+
+.mast-separator { color: var(--line-strong); }
+
+.theme-toggle {
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 160ms ease;
+}
+
+.theme-toggle:hover { border-color: var(--accent); }
+
+.theme-toggle svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+
+h1 {
+  max-width: 18ch;
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(31px, 4vw, 39px);
+  font-weight: 640;
+  line-height: 1.16;
+  letter-spacing: -0.02em;
+  text-wrap: pretty;
+}
+
+.dek {
+  max-width: 62ch;
+  margin: 20px 0 0;
+  color: var(--ink-soft);
+  font-size: 20px;
+  line-height: 1.58;
+}
+
+main { padding: 30px 0 0; }
+
+h2 {
+  margin: 52px 0 16px;
+  color: var(--ink);
+  font-size: clamp(24px, 3vw, 28px);
+  font-weight: 640;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  text-wrap: pretty;
+}
+
+h3 {
+  margin: 32px 0 10px;
+  color: var(--ink);
+  font-size: 19px;
+  font-weight: 630;
+  line-height: 1.3;
+}
+
+p { max-width: 66ch; margin: 0 0 1.2em; }
+
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+
+strong { color: var(--ink); font-weight: 620; }
+
+code {
+  font-family: "Geist Mono", monospace;
+  font-size: 0.85em;
+  color: var(--ink);
+  background: var(--code-bg);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+
+pre {
+  max-width: 100%;
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+pre code { background: none; padding: 0; font-size: 1em; }
+
+ul { max-width: 66ch; padding-left: 1.2rem; margin: 0 0 1.2em; }
+li { margin-bottom: 0.5em; }
+li::marker { color: var(--ink-faint); }
+
+table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 26px 0; }
+
+th {
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: left;
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+td {
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  color: var(--ink-soft);
+}
+
+td:first-child { font-family: "Geist Mono", monospace; font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+
+.tablewrap { overflow-x: auto; }
+
+figure.instrument {
+  width: min(940px, calc(100% - 40px));
+  margin: 30px auto;
+  padding: 0;
+  background: var(--stage);
+  border: 1px solid var(--stage-line);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--panel-shadow);
+  color: var(--stage-ink);
+}
+
+.instrument-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--stage-line);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  color: var(--stage-muted);
+}
+
+.fig-id { color: var(--stage-muted); font-weight: 620; white-space: nowrap; }
+
+.fig-name { color: var(--stage-ink); font-family: "Geist", sans-serif; font-size: 13.5px; font-weight: 560; }
+
+.fig-note { margin-left: auto; font-size: 10.5px; text-align: right; }
+
+button.fig-btn {
+  margin-left: auto;
+  min-height: 30px;
+  padding: 6px 11px;
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  color: var(--stage-muted);
+  background: rgba(225, 232, 255, 0.05);
+  border: 1px solid rgba(225, 232, 255, 0.22);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+button.fig-btn:hover { color: var(--stage-ink); border-color: rgba(141, 162, 255, 0.65); }
+
+.instrument-body { padding: 20px 18px; }
+.instrument-body.scrollx { overflow-x: auto; }
+.instrument-body.scrollx svg { min-width: 640px; }
+
+figcaption.below {
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--stage-line);
+  color: var(--stage-muted);
+  font-family: "Geist", sans-serif;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+footer.series {
+  margin: 84px 0 0;
+  border-top: 1px solid var(--line);
+  padding: 28px 0 42px;
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+footer.series nav { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }
+footer.series a { color: var(--ink-soft); }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* effort instrument */
+#task-picker { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 16px; }
+.task-btn {
+  min-height: 30px;
+  padding: 6px 11px;
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  color: var(--stage-muted);
+  background: rgba(225, 232, 255, 0.05);
+  border: 1px solid rgba(225, 232, 255, 0.22);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+.task-btn:hover { color: var(--stage-ink); border-color: rgba(141, 162, 255, 0.65); }
+.task-btn[aria-pressed="true"] { color: #ffffff; border-color: #6c86f7; background: rgba(78, 111, 242, 0.72); }
+#effort-svg { display: block; width: 100%; height: auto; }
+#effort-svg text { font-family: "Geist Mono", monospace; font-size: 11px; fill: #9eaac3; }
+#effort-svg .grid { stroke: rgba(215, 224, 248, 0.10); stroke-width: 1; }
+#effort-svg .axis { stroke: #9eaac3; stroke-width: 1; }
+#effort-svg .curve { stroke: #6f89ff; stroke-width: 2; fill: none; }
+#effort-svg .curvefill { fill: rgba(111, 137, 255, 0.14); }
+#effort-svg .guide { stroke: #9eaac3; stroke-width: 1; stroke-dasharray: 2 4; opacity: 0.55; }
+#effort-svg .marker { fill: #efb44d; stroke: #0a101f; stroke-width: 2; }
+#effort-svg .marker-line { stroke: #efb44d; stroke-width: 1; stroke-dasharray: 3 3; }
+#effort-controls { display: flex; align-items: center; gap: 12px; font-family: "Geist Mono", monospace; font-size: 11px; color: var(--stage-muted); margin: 14px 0 6px; flex-wrap: wrap; }
+#effort-controls input[type=range] { flex: 1; min-width: 10rem; accent-color: #6f89ff; }
+#effort-reads { display: flex; gap: 22px; font-family: "Geist Mono", monospace; font-size: 11px; color: var(--stage-muted); flex-wrap: wrap; margin-top: 10px; }
+#effort-reads b { color: var(--stage-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+#effort-reads .warmread b { color: #ffd989; }
+
+@media (max-width: 680px) {
+  body { font-size: 17px; }
+  .col { width: min(720px, calc(100% - 32px)); }
+  header.masthead { padding-top: 28px; }
+  .mast-row { margin-bottom: 36px; }
+  h1 { font-size: clamp(29px, 8.5vw, 33px); }
+  .dek { font-size: 18px; }
+  figure.instrument { width: calc(100% - 16px); border-radius: 7px; }
+  .instrument-body { padding: 14px 13px; }
+}
+
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="col">
+    <div class="mast-row">
+      <a class="brand" href="../index.html">Model Mechanics</a>
+      <span class="mast-separator" aria-hidden="true">/</span>
+      <span class="mast-label">Explainer 2</span>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle color theme">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+      </button>
+    </div>
+    <h1>Reasoning Effort</h1>
+    <p class="dek">What the effort knob turns, why its returns flatten, and how to pick a level.</p>
+  </div>
+</header>
+
+<main>
+  <div class="col">
+    <p>Most frontier models now ship with a version of the same knob. Claude exposes extended thinking with a token budget, and coding harnesses wrap it in levels with names like <code>low</code>, <code>medium</code>, <code>high</code>, and <code>max</code>; OpenAI models take a <code>reasoning_effort</code> parameter. Behind every one of these labels sits the same quantity: how much private scratch work the model may do before it starts the answer you see.</p>
+    <p>Engineers tend to treat the knob superstitiously, either pinned at max "to be safe" or left untouched. It deserves better, because it maps to something mechanical, its returns have a knowable shape, and misjudging it is either money and minutes wasted or a wrong answer delivered confidently.</p>
+
+    <h2>What the knob turns</h2>
+    <p><a href="how-llms-work.html">The first piece in this series</a> covered the constraint that makes effort interesting: a transformer spends a fixed amount of compute per token. One forward pass through the stack, roughly two FLOPs per parameter, whether the token completes boilerplate or carries the crux of a proof. There is no loop inside the architecture where a model could quietly think harder about a hard token. Depth is fixed at inference; width is fixed; one pass is one pass.</p>
+    <p>The only way to give a model more computation is to give it more tokens, and that is the entire mechanism. Raising effort raises the budget of <strong>thinking tokens</strong>: text the model generates for itself, conditioned on like any other output, but held back from the visible reply. Each thinking token is one more forward pass whose result lands back in the context, available to every pass that follows. Intermediate conclusions become inputs. A model working through a race condition can name the interleaving, check it against the lock order, discard it, and try another, and each of those steps is real computation the answer-so-far gets to build on.</p>
+    <p>Nothing else changes. Same weights, same knowledge, same context. Effort buys serial depth, one extra step at a time.</p>
+
+    <h2>The shape of the returns</h2>
+    <p>Spending is linear: token cost and wall-clock latency grow in direct proportion to the budget. The return is anything but. Quality as a function of thinking budget is concave, it climbs steeply while the model still has genuine steps to work through and flattens once it runs out of them. Where the flattening happens depends on the task, and that dependence is the entire skill of setting the knob.</p>
+  </div>
+
+  <figure class="instrument" id="fig-effort">
+    <figcaption class="instrument-head">
+      <span class="fig-id">Figure 1</span><span class="fig-name">Quality vs. thinking budget</span>
+      <span class="fig-note">Pick a task, drag the budget</span>
+    </figcaption>
+    <div class="instrument-body">
+      <div id="task-picker" role="group" aria-label="task type">
+        <button class="task-btn" data-task="rename" aria-pressed="false">Mechanical rename</button>
+        <button class="task-btn" data-task="feature" aria-pressed="true">Mid-size feature</button>
+        <button class="task-btn" data-task="debug" aria-pressed="false">Concurrency bug</button>
+      </div>
+      <div class="instrument-body scrollx" style="padding:0"><svg id="effort-svg" viewBox="0 0 680 312" role="img" aria-label="Concave curve of answer quality against thinking-token budget; the curve saturates at a task-dependent point while cost grows linearly"></svg></div>
+      <div id="effort-controls">
+        <label for="effort-range">Budget</label>
+        <input type="range" id="effort-range" min="200" max="32000" step="200" value="8000">
+      </div>
+      <div id="effort-reads">
+        <span>Thinking tokens <b id="read-tokens">8,000</b></span>
+        <span>Est. quality <b id="read-quality">…</b></span>
+        <span>Added latency <b id="read-latency">…</b></span>
+        <span class="warmread">Marginal gain of next 1k tokens <b id="read-marginal">…</b></span>
+      </div>
+    </div>
+    <figcaption class="below">Curves are illustrative; the shape is the point. Dashed verticals mark where typical effort levels land. Note how the saturation point moves with the task while cost stays linear in the budget.</figcaption>
+  </figure>
+
+  <div class="col">
+    <p>Three regimes show up in practice, and the figure sketches one task from each:</p>
+    <ul>
+      <li><strong>Flat from the start.</strong> A mechanical rename has no multi-step structure. The model's first read of the problem contains the answer, and additional thinking mostly restates it. Extra budget here buys latency, and occasionally worse: models given room to deliberate on trivial questions sometimes talk themselves out of a correct first take.</li>
+      <li><strong>Steep, then saturating.</strong> A mid-size feature rewards enough thinking to plan the change, check the interfaces it touches, and catch one or two interactions. Past that, the plan stops improving before the tokens stop flowing.</li>
+      <li><strong>Steep for a long time.</strong> A concurrency bug, a cross-cutting design decision, a security review: tasks whose answer sits behind a chain of dependent deductions keep paying for depth, because each thinking pass extends the chain instead of rephrasing it.</li>
+    </ul>
+    <p>One more property matters: effort cannot add what the weights and the context lack. If the model has never seen your internal framework, no thinking budget will derive it. When a failure looks like missing knowledge, the fix is context or a different model, and when it looks like skipped steps, the fix is effort. Learning to tell those two failure smells apart pays for itself quickly.</p>
+
+    <h2>Picking a level</h2>
+    <p>Two questions do most of the work: how long is the chain of dependent steps between the problem and the answer, and what does a wrong answer cost net of how cheaply you can catch it? Shallow, self-verifying tasks go low. Deep ones, and any task expensive to be wrong about, go high. Everything else sits in the middle, which is why the middle is the default.</p>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Level</th><th>Reach for it when</th><th>Examples</th></tr></thead>
+      <tbody>
+        <tr><td>low</td><td>the task is mechanical, reversible, and its output is checked by tooling anyway</td><td>renames, formatting, boilerplate, config edits, summarizing a diff</td></tr>
+        <tr><td>medium</td><td>ordinary engineering work with a few interacting parts; the daily default</td><td>a scoped feature, a straightforward bug, test writing, code review of a small change</td></tr>
+        <tr><td>high</td><td>the answer sits behind several dependent deductions, or spans systems</td><td>debugging heisenbugs, API design, performance work, security review</td></tr>
+        <tr><td>max</td><td>one shot at a correctness-critical answer, and verification is expensive</td><td>migration plans, concurrency invariants, incident root-cause under pressure</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>Calibrate against the transcript. When the visible reasoning mostly restates the prompt, the budget is too high for the task; when an answer arrives fast with an unexamined assumption in the middle of it, the budget was too low. Both smells are easier to read than any rule of thumb.</p>
+
+    <h2>Effort is not the same axis as model choice</h2>
+    <p>Raising effort and upgrading the model both cost more, so they get conflated, and they should not be. Effort scales <em>serial</em> compute: more dependent steps on the same machinery. A stronger model improves the machinery itself: better priors and better judgment at every step. A small model at max effort will diligently explore a chain of wrong turns; a strong model at low effort will make one excellent snap judgment and miss an interaction it never looked for.</p>
+    <p>A third option competes with both: sampling. For tasks whose answers are cheap to verify, several low-effort attempts plus a checker can beat one max-effort attempt on both cost and reliability, since independent samples fail differently while one long deliberation fails as a unit. That pattern, spending tokens across attempts rather than within one, is where <a href="orchestration-and-subagents.html">orchestration</a> starts.</p>
+
+    <h2>Defaults that hold up</h2>
+    <ul>
+      <li>Set the session default to medium and deviate per task, in either direction, on the two-question test above.</li>
+      <li>Spend effort where verification is weak. If a test suite will catch failure in seconds, low effort plus the suite outperforms max effort without it.</li>
+      <li>Treat a max-effort run whose thinking you never sampled as unreviewed work product.</li>
+      <li>When a high-effort answer still misses, stop raising effort. The bottleneck has moved to context or model, and more budget will explore the same gaps more thoroughly.</li>
+    </ul>
+  </div>
+</main>
+
+<footer class="series">
+  <div class="col">
+    <span>Model Mechanics · A field guide to working with LLMs</span>
+    <nav aria-label="series">
+      <a href="how-llms-work.html">1 · How a Language Model Works</a>
+      <a href="orchestration-and-subagents.html">3 · Orchestration and Subagents</a>
+      <a href="loops-and-skills.html">4 · Loops and Skills</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var toggle = document.getElementById('theme-toggle');
+  var saved = null;
+  try { saved = localStorage.getItem('model-mechanics-theme'); } catch (error) {}
+  if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved);
+  toggle.addEventListener('click', function () {
+    var current = root.getAttribute('data-theme');
+    if (!current) current = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    var next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('model-mechanics-theme', next); } catch (error) {}
+  });
+})();
+</script>
+<script>
+(function () {
+'use strict';
+var TASKS = {
+  rename:  { q0: 84, qmax: 90, tau: 2500,  label: 'Mechanical rename' },
+  feature: { q0: 52, qmax: 88, tau: 6500,  label: 'Mid-size feature' },
+  debug:   { q0: 22, qmax: 93, tau: 14000, label: 'Concurrency bug' }
+};
+var LEVELS = [[2000, 'low'], [8000, 'med'], [16000, 'high'], [30000, 'max']];
+var W = 680, H = 312, ML = 46, MR = 130, MT = 24, MB = 46;
+var XMAX = 32000;
+var svg = document.getElementById('effort-svg');
+var range = document.getElementById('effort-range');
+var NS = 'http://www.w3.org/2000/svg';
+var current = 'feature';
+function x(t) { return ML + (t / XMAX) * (W - ML - MR); }
+function y(q) { return MT + (1 - q / 100) * (H - MT - MB); }
+function q(task, t) { var p = TASKS[task]; return p.qmax - (p.qmax - p.q0) * Math.exp(-t / p.tau); }
+function mk(tag, attrs, text) {
+  var n = document.createElementNS(NS, tag);
+  Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+  if (text) n.textContent = text;
+  svg.appendChild(n);
+  return n;
+}
+function draw() {
+  svg.innerHTML = '';
+  [0, 25, 50, 75, 100].forEach(function (g) {
+    mk('line', { x1: ML, y1: y(g), x2: W - MR, y2: y(g), 'class': 'grid' });
+    mk('text', { x: ML - 8, y: y(g) + 4, 'text-anchor': 'end' }, g + '%');
+  });
+  mk('text', { x: ML, y: H - 8 }, '0');
+  mk('text', { x: W - MR, y: H - 8, 'text-anchor': 'end' }, '32k thinking tokens');
+  LEVELS.forEach(function (lv) {
+    mk('line', { x1: x(lv[0]), y1: MT, x2: x(lv[0]), y2: H - MB, 'class': 'guide' });
+    mk('text', { x: x(lv[0]), y: H - MB + 16, 'text-anchor': 'middle' }, lv[1]);
+  });
+  var pts = [], fill = ['M', x(0), y(0) + 0].join(' ');
+  for (var t = 0; t <= XMAX; t += 400) pts.push((t ? 'L' : 'M') + x(t).toFixed(1) + ' ' + y(q(current, t)).toFixed(1));
+  var d = pts.join(' ');
+  mk('path', { d: d + ' L ' + x(XMAX) + ' ' + y(0) + ' L ' + x(0) + ' ' + y(0) + ' Z', 'class': 'curvefill', stroke: 'none' });
+  mk('path', { d: d, 'class': 'curve' });
+  var qe = q(current, XMAX);
+  mk('circle', { cx: x(XMAX), cy: y(qe), r: 3.5, fill: '#6f89ff' });
+  mk('text', { x: x(XMAX) + 8, y: y(qe) + 4 }, TASKS[current].label);
+  var b = +range.value;
+  var qb = q(current, b);
+  mk('line', { x1: x(b), y1: y(0), x2: x(b), y2: y(qb), 'class': 'marker-line' });
+  mk('circle', { cx: x(b), cy: y(qb), r: 5.5, 'class': 'marker' });
+  document.getElementById('read-tokens').textContent = b.toLocaleString('en-US');
+  document.getElementById('read-quality').textContent = qb.toFixed(0) + '%';
+  var secs = b / 90;
+  document.getElementById('read-latency').textContent = secs < 90 ? '≈' + secs.toFixed(0) + 's' : '≈' + (secs / 60).toFixed(1) + 'min';
+  var marginal = q(current, b + 1000) - qb;
+  document.getElementById('read-marginal').textContent = '+' + marginal.toFixed(2) + 'pts';
+}
+document.querySelectorAll('.task-btn').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    current = btn.getAttribute('data-task');
+    document.querySelectorAll('.task-btn').forEach(function (b2) {
+      b2.setAttribute('aria-pressed', String(b2 === btn));
+    });
+    draw();
+  });
+});
+range.addEventListener('input', draw);
+draw();
+})();
+</script>
+</body>
+</html>

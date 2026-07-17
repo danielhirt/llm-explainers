@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model Mechanics</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%3Crect%20width=%2232%22%20height=%2232%22%20rx=%228%22%20fill=%22%230a1020%22/%3E%3Ccircle%20cx=%2210%22%20cy=%2216%22%20r=%223%22%20fill=%22%235d7cff%22/%3E%3Ccircle%20cx=%2218%22%20cy=%2210%22%20r=%223%22%20fill=%22%23ee755f%22/%3E%3Ccircle%20cx=%2222%22%20cy=%2221%22%20r=%223%22%20fill=%22%23efb44d%22/%3E%3Cpath%20d=%22M12%2015L16%2012M19%2013L21%2018M13%2018L19%2020%22%20stroke=%22%23f7f5ef%22%20stroke-width=%221.5%22/%3E%3C/svg%3E">
+<meta name="description" content="A field guide to working with large language models. Animated explainers on transformers, reasoning effort, orchestration, and agent loops.">
+<style>
+@font-face { font-family: "Geist"; src: url("fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Geist"; src: url("fonts/Geist-VariableItalic.woff2") format("woff2"); font-weight: 100 900; font-style: italic; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("fonts/GeistMono-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+
+:root,
+[data-theme="light"] {
+  --page: #f7f6f2;
+  --surface: #ffffff;
+  --ink: #111a31;
+  --ink-body: #2b3550;
+  --ink-soft: #4e5b76;
+  --ink-faint: #78839a;
+  --line: rgba(17, 26, 49, 0.12);
+  --line-strong: rgba(17, 26, 49, 0.24);
+  --accent: #4e6ff2;
+  --accent-soft: rgba(78, 111, 242, 0.11);
+  --gold-soft: rgba(217, 152, 45, 0.13);
+}
+
+[data-theme="dark"] {
+  --page: #0d1322;
+  --surface: #161f34;
+  --ink: #f4f4ef;
+  --ink-body: #ced3e2;
+  --ink-soft: #b2bace;
+  --ink-faint: #8792aa;
+  --line: rgba(234, 239, 255, 0.10);
+  --line-strong: rgba(234, 239, 255, 0.20);
+  --accent: #7f98ff;
+  --accent-soft: rgba(127, 152, 255, 0.13);
+  --gold-soft: rgba(240, 182, 77, 0.13);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --page: #0d1322;
+    --surface: #161f34;
+    --ink: #f4f4ef;
+    --ink-body: #ced3e2;
+    --ink-soft: #b2bace;
+    --ink-faint: #8792aa;
+    --line: rgba(234, 239, 255, 0.10);
+    --line-strong: rgba(234, 239, 255, 0.20);
+    --accent: #7f98ff;
+    --accent-soft: rgba(127, 152, 255, 0.13);
+    --gold-soft: rgba(240, 182, 77, 0.13);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--page);
+  color: var(--ink-body);
+  font-family: "Geist", "Avenir Next", sans-serif;
+  font-size: 18px;
+  line-height: 1.7;
+  text-rendering: optimizeLegibility;
+}
+
+.col { width: min(740px, calc(100% - 48px)); margin: 0 auto; }
+
+header.masthead { padding: 50px 0 0; }
+
+.mast-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 46px;
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+}
+
+.theme-toggle {
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 160ms ease;
+}
+
+.theme-toggle:hover { border-color: var(--accent); }
+
+.theme-toggle svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+
+h1 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(34px, 5vw, 46px);
+  font-weight: 640;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+}
+
+.dek {
+  max-width: 62ch;
+  margin: 18px 0 0;
+  color: var(--ink-soft);
+  font-size: 20px;
+  line-height: 1.58;
+}
+
+#strip { display: flex; flex-wrap: wrap; gap: 6px; margin: 34px 0 0; min-height: 2rem; align-items: flex-start; }
+
+.chip {
+  display: inline-block;
+  font-family: "Geist Mono", monospace;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--ink);
+  white-space: pre;
+}
+
+.chip.warm { background: var(--gold-soft); }
+
+main { padding: 40px 0 0; }
+
+.toc { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; list-style: none; }
+
+.toc a.card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 18px 20px;
+  transition: border-color 0.25s;
+}
+
+.toc a.card:hover { border-color: var(--accent); }
+.toc a.card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.card-no { font-family: "Geist Mono", monospace; font-size: 11px; color: var(--ink-faint); }
+
+.card h2 { font-size: 19px; font-weight: 630; color: var(--ink); margin: 5px 0 6px; line-height: 1.3; }
+
+.card p { margin: 0; color: var(--ink-soft); font-size: 15px; line-height: 1.6; }
+
+.card.pending {
+  opacity: 0.65;
+  background: none;
+  padding: 18px 20px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 6px;
+}
+
+footer.site {
+  margin: 84px 0 0;
+  border-top: 1px solid var(--line);
+  padding: 28px 0 42px;
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+footer.site a { color: var(--ink-soft); }
+footer.site a:hover { color: var(--accent); }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+@media (max-width: 680px) {
+  body { font-size: 17px; }
+  .col { width: min(740px, calc(100% - 32px)); }
+  header.masthead { padding-top: 28px; }
+  .mast-row { margin-bottom: 34px; }
+  h1 { font-size: clamp(30px, 9vw, 36px); }
+  .dek { font-size: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="col">
+    <div class="mast-row">
+      <span>A field guide, in four parts and counting</span>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle color theme">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+      </button>
+    </div>
+    <h1>Model Mechanics</h1>
+    <p class="dek">How large language models work and how to work with them.</p>
+    <div id="strip" aria-hidden="true"></div>
+  </div>
+</header>
+
+<main>
+  <div class="col">
+    <ol class="toc">
+      <li>
+        <a class="card" href="articles/how-llms-work.html">
+          <span class="card-no">1</span>
+          <h2>Inside an LLM: Corpus to Next Token</h2>
+          <p>Follow selected text through tokenization, learned vectors, transformer blocks, pre-training updates, and one-token decoding.</p>
+        </a>
+      </li>
+      <li>
+        <a class="card" href="articles/effort-levels.html">
+          <span class="card-no">2</span>
+          <h2>Reasoning Effort</h2>
+          <p>The knob buys serial compute. Its returns are concave and task-dependent. How to set it without superstition.</p>
+        </a>
+      </li>
+      <li>
+        <a class="card" href="articles/orchestration-and-subagents.html">
+          <span class="card-no">3</span>
+          <h2>Orchestration and Subagents</h2>
+          <p>One context window is the wrong shape for big work. Fan-out, pipelines, and verification with a return contract.</p>
+        </a>
+      </li>
+      <li>
+        <a class="card" href="articles/loops-and-skills.html">
+          <span class="card-no">4</span>
+          <h2>Loops and Skills</h2>
+          <p>The while-loop that turns a text predictor into a worker, and procedure packaged as files an agent loads on demand.</p>
+        </a>
+      </li>
+      <li>
+        <div class="card pending">
+          <span class="card-no">5</span>
+          <h2>Harness Engineering</h2>
+          <p>The software around the model: tools, permissions, context budgets, and feedback design. In preparation.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</main>
+
+<footer class="site">
+  <div class="col">
+    <span>Daniel Hirt · <a href="https://danielhirt.dev">danielhirt.dev</a></span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var toggle = document.getElementById('theme-toggle');
+  var saved = null;
+  try { saved = localStorage.getItem('model-mechanics-theme'); } catch (error) {}
+  if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved);
+  toggle.addEventListener('click', function () {
+    var current = root.getAttribute('data-theme');
+    if (!current) current = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    var next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('model-mechanics-theme', next); } catch (error) {}
+  });
+})();
+</script>
+<script>
+(function () {
+'use strict';
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  var strip = document.getElementById('strip');
+  ['A', ' language', ' model', ' is', ' a', ' function', ' run', ' in', ' a', ' loop', '.'].forEach(function (w, i) {
+    var s = document.createElement('span');
+    s.className = 'chip' + (i > 5 ? ' warm' : '');
+    s.textContent = w;
+    strip.appendChild(s);
+  });
+  return;
+}
+var PROMPT = ['A', ' language', ' model', ' is'];
+var GEN = [' a', ' function', ' run', ' in', ' a', ' loop', '.'];
+var strip = document.getElementById('strip');
+function reset() {
+  strip.innerHTML = '';
+  PROMPT.forEach(function (w) {
+    var s = document.createElement('span');
+    s.className = 'chip';
+    s.textContent = w;
+    strip.appendChild(s);
+  });
+}
+function emit(i) {
+  if (i >= GEN.length) { setTimeout(function () { reset(); emit(0); }, 3200); return; }
+  var s = document.createElement('span');
+  s.className = 'chip warm';
+  s.textContent = GEN[i];
+  strip.appendChild(s);
+  setTimeout(function () { emit(i + 1); }, 420);
+}
+reset();
+emit(0);
+})();
+</script>
+</body>
+</html>

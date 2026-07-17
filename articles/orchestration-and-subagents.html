@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orchestration and Subagents</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%3Crect%20width=%2232%22%20height=%2232%22%20rx=%228%22%20fill=%22%230a1020%22/%3E%3Ccircle%20cx=%2210%22%20cy=%2216%22%20r=%223%22%20fill=%22%235d7cff%22/%3E%3Ccircle%20cx=%2218%22%20cy=%2210%22%20r=%223%22%20fill=%22%23ee755f%22/%3E%3Ccircle%20cx=%2222%22%20cy=%2221%22%20r=%223%22%20fill=%22%23efb44d%22/%3E%3Cpath%20d=%22M12%2015L16%2012M19%2013L21%2018M13%2018L19%2020%22%20stroke=%22%23f7f5ef%22%20stroke-width=%221.5%22/%3E%3C/svg%3E">
+<meta name="description" content="Why one context window is the wrong shape for big work, and the fan-out, pipeline, and verification patterns that fix it.">
+<style>
+@font-face { font-family: "Geist"; src: url("../fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Geist"; src: url("../fonts/Geist-VariableItalic.woff2") format("woff2"); font-weight: 100 900; font-style: italic; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("../fonts/GeistMono-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+
+:root,
+[data-theme="light"] {
+  --page: #f7f6f2;
+  --surface: #ffffff;
+  --ink: #111a31;
+  --ink-body: #2b3550;
+  --ink-soft: #4e5b76;
+  --ink-faint: #78839a;
+  --line: rgba(17, 26, 49, 0.12);
+  --line-strong: rgba(17, 26, 49, 0.24);
+  --accent: #4e6ff2;
+  --accent-soft: rgba(78, 111, 242, 0.11);
+  --coral: #df6756;
+  --gold: #d9982d;
+  --gold-soft: rgba(217, 152, 45, 0.13);
+  --code-bg: rgba(17, 26, 49, 0.06);
+  --stage: #0a101f;
+  --stage-ink: #f5f6fb;
+  --stage-muted: #9eaac3;
+  --stage-line: rgba(215, 224, 248, 0.14);
+  --panel-shadow: 0 1px 3px rgba(19, 28, 55, 0.10);
+}
+
+[data-theme="dark"] {
+  --page: #0d1322;
+  --surface: #161f34;
+  --ink: #f4f4ef;
+  --ink-body: #ced3e2;
+  --ink-soft: #b2bace;
+  --ink-faint: #8792aa;
+  --line: rgba(234, 239, 255, 0.10);
+  --line-strong: rgba(234, 239, 255, 0.20);
+  --accent: #7f98ff;
+  --accent-soft: rgba(127, 152, 255, 0.13);
+  --coral: #ff8a74;
+  --gold: #f0b64d;
+  --gold-soft: rgba(240, 182, 77, 0.13);
+  --code-bg: rgba(234, 239, 255, 0.08);
+  --stage: #080d1b;
+  --stage-ink: #f7f6f0;
+  --stage-muted: #aab5cc;
+  --stage-line: rgba(220, 228, 250, 0.14);
+  --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --page: #0d1322;
+    --surface: #161f34;
+    --ink: #f4f4ef;
+    --ink-body: #ced3e2;
+    --ink-soft: #b2bace;
+    --ink-faint: #8792aa;
+    --line: rgba(234, 239, 255, 0.10);
+    --line-strong: rgba(234, 239, 255, 0.20);
+    --accent: #7f98ff;
+    --accent-soft: rgba(127, 152, 255, 0.13);
+    --coral: #ff8a74;
+    --gold: #f0b64d;
+    --gold-soft: rgba(240, 182, 77, 0.13);
+    --code-bg: rgba(234, 239, 255, 0.08);
+    --stage: #080d1b;
+    --stage-ink: #f7f6f0;
+    --stage-muted: #aab5cc;
+    --stage-line: rgba(220, 228, 250, 0.14);
+    --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--page);
+  color: var(--ink-body);
+  font-family: "Geist", "Avenir Next", sans-serif;
+  font-size: 18px;
+  line-height: 1.7;
+  text-rendering: optimizeLegibility;
+  overflow-wrap: break-word;
+}
+
+.col { width: min(720px, calc(100% - 48px)); margin: 0 auto; }
+
+header.masthead { padding: 50px 0 0; }
+
+.mast-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 50px;
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+}
+
+.mast-row .brand {
+  color: var(--ink);
+  font-family: "Geist", sans-serif;
+  font-size: 13px;
+  font-weight: 620;
+  text-decoration: none;
+}
+
+.mast-separator { color: var(--line-strong); }
+
+.theme-toggle {
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 160ms ease;
+}
+
+.theme-toggle:hover { border-color: var(--accent); }
+
+.theme-toggle svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+
+h1 {
+  max-width: 18ch;
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(31px, 4vw, 39px);
+  font-weight: 640;
+  line-height: 1.16;
+  letter-spacing: -0.02em;
+  text-wrap: pretty;
+}
+
+.dek {
+  max-width: 62ch;
+  margin: 20px 0 0;
+  color: var(--ink-soft);
+  font-size: 20px;
+  line-height: 1.58;
+}
+
+main { padding: 30px 0 0; }
+
+h2 {
+  margin: 52px 0 16px;
+  color: var(--ink);
+  font-size: clamp(24px, 3vw, 28px);
+  font-weight: 640;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  text-wrap: pretty;
+}
+
+h3 {
+  margin: 32px 0 10px;
+  color: var(--ink);
+  font-size: 19px;
+  font-weight: 630;
+  line-height: 1.3;
+}
+
+p { max-width: 66ch; margin: 0 0 1.2em; }
+
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+
+strong { color: var(--ink); font-weight: 620; }
+
+code {
+  font-family: "Geist Mono", monospace;
+  font-size: 0.85em;
+  color: var(--ink);
+  background: var(--code-bg);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+
+pre {
+  max-width: 100%;
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+pre code { background: none; padding: 0; font-size: 1em; }
+
+ul { max-width: 66ch; padding-left: 1.2rem; margin: 0 0 1.2em; }
+li { margin-bottom: 0.5em; }
+li::marker { color: var(--ink-faint); }
+
+table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 26px 0; }
+
+th {
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: left;
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+td {
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  color: var(--ink-soft);
+}
+
+td:first-child { font-family: "Geist Mono", monospace; font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+
+.tablewrap { overflow-x: auto; }
+
+figure.instrument {
+  width: min(940px, calc(100% - 40px));
+  margin: 30px auto;
+  padding: 0;
+  background: var(--stage);
+  border: 1px solid var(--stage-line);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--panel-shadow);
+  color: var(--stage-ink);
+}
+
+.instrument-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--stage-line);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  color: var(--stage-muted);
+}
+
+.fig-id { color: var(--stage-muted); font-weight: 620; white-space: nowrap; }
+
+.fig-name { color: var(--stage-ink); font-family: "Geist", sans-serif; font-size: 13.5px; font-weight: 560; }
+
+.fig-note { margin-left: auto; font-size: 10.5px; text-align: right; }
+
+button.fig-btn {
+  margin-left: auto;
+  min-height: 30px;
+  padding: 6px 11px;
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  color: var(--stage-muted);
+  background: rgba(225, 232, 255, 0.05);
+  border: 1px solid rgba(225, 232, 255, 0.22);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+button.fig-btn:hover { color: var(--stage-ink); border-color: rgba(141, 162, 255, 0.65); }
+
+.instrument-body { padding: 20px 18px; }
+.instrument-body.scrollx { overflow-x: auto; }
+.instrument-body.scrollx svg { min-width: 640px; }
+
+figcaption.below {
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--stage-line);
+  color: var(--stage-muted);
+  font-family: "Geist", sans-serif;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+footer.series {
+  margin: 84px 0 0;
+  border-top: 1px solid var(--line);
+  padding: 28px 0 42px;
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+footer.series nav { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }
+footer.series a { color: var(--ink-soft); }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* orchestration svg */
+#orch-svg { display: block; width: 100%; height: auto; }
+#orch-svg text { font-family: "Geist Mono", monospace; font-size: 11px; fill: #9eaac3; }
+#orch-svg .node { fill: rgba(225, 232, 255, 0.06); stroke: rgba(215, 224, 248, 0.20); rx: 2; transition: stroke 0.4s, fill 0.4s; }
+#orch-svg .node.busy { stroke: #6f89ff; }
+#orch-svg .node.done { stroke: #efb44d; }
+#orch-svg .node.dead { opacity: 0.3; }
+#orch-svg .edge { stroke: rgba(215, 224, 248, 0.16); stroke-width: 1.5; fill: none; transition: stroke 0.4s; }
+#orch-svg .edge.hot { stroke: #6f89ff; }
+#orch-svg .edge.back { stroke: #efb44d; }
+#orch-svg .meter-track { fill: rgba(4, 8, 18, 0.6); stroke: rgba(215, 224, 248, 0.18); }
+#orch-svg .meter { fill: #6f89ff; opacity: 0.6; }
+#orch-svg .payload { fill: #efb44d; }
+#orch-svg .verdict-x { stroke: #ee755f; stroke-width: 2; }
+#orch-svg .nodelabel { fill: #f5f6fb; font-size: 11.5px; }
+#orch-status { text-align: center; font-family: "Geist Mono", monospace; font-size: 11px; color: var(--stage-muted); min-height: 1.2em; margin-top: 8px; }
+/* ledger */
+#ledger { display: grid; grid-template-columns: 1fr 1.6fr; gap: 40px; align-items: end; }
+.ledger-col h4 { font-family: "Geist Mono", monospace; font-size: 11px; color: var(--stage-muted); font-weight: 600; margin: 0 0 12px; }
+.ctx-stack { display: flex; gap: 14px; align-items: flex-end; }
+.ctx-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.ctx-bar { width: 44px; height: 180px; border: 1px solid rgba(215, 224, 248, 0.20); border-radius: 3px; background: rgba(4, 8, 18, 0.5); position: relative; overflow: hidden; }
+.ctx-fill { position: absolute; bottom: 0; left: 0; right: 0; height: 0%; background: #6f89ff; opacity: 0.55; transition: height 0.3s linear, opacity 0.6s; }
+.ctx-fill.junk { background: #65718a; opacity: 0.5; }
+.ctx-bar .keep { position: absolute; bottom: 0; left: 0; right: 0; height: 0%; background: #efb44d; opacity: 0.9; transition: height 0.4s; }
+.ctx-bar-wrap.faded .ctx-bar { opacity: 0.25; transition: opacity 0.8s; }
+.ctx-label { font-family: "Geist Mono", monospace; font-size: 10px; color: var(--stage-muted); text-align: center; line-height: 1.4; }
+.ctx-pct { font-family: "Geist Mono", monospace; font-size: 10.5px; color: var(--stage-ink); font-variant-numeric: tabular-nums; }
+#ledger-note { font-family: "Geist Mono", monospace; font-size: 11px; color: var(--stage-muted); margin-top: 14px; min-height: 1.1em; }
+
+@media (max-width: 680px) {
+  body { font-size: 17px; }
+  .col { width: min(720px, calc(100% - 32px)); }
+  header.masthead { padding-top: 28px; }
+  .mast-row { margin-bottom: 36px; }
+  h1 { font-size: clamp(29px, 8.5vw, 33px); }
+  .dek { font-size: 18px; }
+  figure.instrument { width: calc(100% - 16px); border-radius: 7px; }
+  .instrument-body { padding: 14px 13px; }
+  #ledger { grid-template-columns: 1fr; gap: 24px; align-items: start; }
+}
+
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="col">
+    <div class="mast-row">
+      <a class="brand" href="../index.html">Model Mechanics</a>
+      <span class="mast-separator" aria-hidden="true">/</span>
+      <span class="mast-label">Explainer 3</span>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle color theme">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+      </button>
+    </div>
+    <h1>Orchestration and Subagents</h1>
+    <p class="dek">One context window is the wrong shape for big work. The fix is delegation with a return contract.</p>
+  </div>
+</header>
+
+<main>
+  <div class="col">
+    <p>An agent doing real work accumulates debris. Every file it reads, every search that comes back empty, every test log and dead end lands in the context window and stays there, because <a href="how-llms-work.html">the window is the model's only memory</a>. On a large task the debris wins: a context meant for reasoning fills with raw material, retrieval from the middle of it degrades, and eventually the harness has to summarize the history to make room, which throws detail away at exactly the moment detail might matter.</p>
+    <p>A <strong>subagent</strong> is the escape hatch. Spawn a fresh model instance with its own empty window, hand it one scoped job, and take back a distilled result. The subagent reads the fifty files and burns its context doing so; the parent, usually called the <strong>orchestrator</strong>, receives three sentences of conclusion. Its window carries decisions and findings while the process that produced them gets thrown away with the worker.</p>
+  </div>
+
+  <figure class="instrument" id="fig-orch">
+    <figcaption class="instrument-head">
+      <span class="fig-id">Figure 1</span><span class="fig-name">Fan out, verify, integrate</span>
+      <button class="fig-btn" data-ctl aria-label="Pause animation">Pause</button>
+    </figcaption>
+    <div class="instrument-body scrollx">
+      <svg id="orch-svg" viewBox="0 0 720 364" role="img" aria-label="An orchestrator node dispatches four scoped workers in parallel; their compact results return, pass through verification where one finding is rejected, and the survivors are integrated"></svg>
+      <div id="orch-status"></div>
+    </div>
+    <figcaption class="below">Each worker fills its own context (blue meters) and returns only a compact result (gold). Verification kills one finding before integration. Wall-clock time is the slowest worker, not the sum.</figcaption>
+  </figure>
+
+  <div class="col">
+    <h2>The economics</h2>
+    <p>Delegation costs more tokens in total and less of everything that matters. Four workers reading 40,000 tokens each spend four times what one agent would to read the same material serially, and finish in roughly the wall-clock time of the slowest one. Meanwhile the orchestrator's window, the scarce resource on a long-running task, stays almost empty: it holds the plan and four short results instead of 160,000 tokens of raw reading. You are trading money for the two things a single context cannot buy: parallel wall-clock time and headroom to keep reasoning at full quality.</p>
+  </div>
+
+  <figure class="instrument" id="fig-ledger">
+    <figcaption class="instrument-head">
+      <span class="fig-id">Figure 2</span><span class="fig-name">The context ledger</span>
+      <button class="fig-btn" data-ctl aria-label="Pause animation">Pause</button>
+    </figcaption>
+    <div class="instrument-body">
+      <div id="ledger">
+        <div class="ledger-col">
+          <h4>One agent</h4>
+          <div class="ctx-stack">
+            <div class="ctx-bar-wrap" id="solo-wrap">
+              <span class="ctx-pct" id="solo-pct">0%</span>
+              <div class="ctx-bar"><div class="ctx-fill junk" id="solo-fill"></div><div class="keep" id="solo-keep"></div></div>
+              <span class="ctx-label">Everything,<br>forever</span>
+            </div>
+          </div>
+        </div>
+        <div class="ledger-col">
+          <h4>Orchestrated</h4>
+          <div class="ctx-stack" id="orch-stack">
+            <div class="ctx-bar-wrap" id="boss-wrap">
+              <span class="ctx-pct" id="boss-pct">0%</span>
+              <div class="ctx-bar"><div class="ctx-fill" id="boss-fill" style="background: #efb44d; opacity: 0.85;"></div></div>
+              <span class="ctx-label">Orchestrator<br>plan + results</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="ledger-note"></div>
+    </div>
+    <figcaption class="below">Grey is raw material: file dumps, search noise, dead ends. Gold is conclusions. Workers are disposable, so their grey never crowds the window that makes the decisions.</figcaption>
+  </figure>
+
+  <div class="col">
+    <p>The corollary is that a subagent's prompt carries unusual weight. A worker wakes up with no conversation history, no idea what you have already tried, no access to the reasoning that scoped its task. The prompt is its entire world. Orchestration failures trace back to underspecified delegation more often than to any model limitation: say what the worker should return, in what form, and what it should not bother doing, or plan to pay for the round trip twice.</p>
+
+    <h2>The patterns</h2>
+    <p>A handful of shapes cover nearly everything people build with subagents.</p>
+
+    <h3>Fan-out</h3>
+    <p>Independent shards of the same job run in parallel: one worker per module in an audit, or per search angle in a research sweep. Fan-out is the default and the least fragile, because workers never need to know about each other. The orchestrator's job is picking shard boundaries so that stays true.</p>
+
+    <h3>Pipeline</h3>
+    <p>Each item flows through stages, find, then fix, then check, with no barrier between stages: item A can be in review while item B is still being searched for. Pipelines beat staged batches on wall-clock time whenever stage durations vary, which is always. The orchestrator only forces a barrier when a stage needs every prior result at once, to deduplicate findings, say, or to stop early if there is nothing to do.</p>
+
+    <h3>Judge and jury</h3>
+    <p>Verification as its own delegation. Each finding from the discovery stage goes to one or more fresh skeptics prompted to refute it, and only claims that survive get integrated. Independent contexts are the point: a verifier that watched the discovery happen inherits its blind spots, while a fresh one has to reconstruct the evidence, and plausible-but-wrong findings die in the reconstruction. For expensive claims, several skeptics vote.</p>
+
+    <h3>Loop until dry</h3>
+    <p>For discovery jobs with unknown size, bug hunts, dependency audits, keep dispatching finder waves until a couple of consecutive waves come back empty. A fixed worker count encodes a guess about how much there is to find; the loop replaces the guess with evidence.</p>
+
+    <h2>What goes wrong</h2>
+    <ul>
+      <li><strong>Workers collide.</strong> Two subagents editing the same file produce garbage merges. Either shard by disjoint scope or give each worker an isolated copy of the workspace and reconcile afterward.</li>
+      <li><strong>Findings get trusted raw.</strong> A worker's confident summary is a claim, and claims from a context you cannot inspect deserve the judge treatment before they drive decisions.</li>
+      <li><strong>The orchestrator micromanages.</strong> If the parent re-reads everything a worker read to check its work, the ledger collapses back to one fat context that cost four times as much.</li>
+      <li><strong>Everything gets orchestrated.</strong> A task that fits comfortably in one window with room to think is cheaper, simpler, and easier to debug as a single agent. Orchestration pays off past a threshold of scale or required confidence, and below it, it is pure overhead.</li>
+    </ul>
+
+    <h2>When to reach for it</h2>
+    <p>Three signals, any one of which is sufficient. The reading exceeds the window, as in audits and codebase-wide questions. The work shards into independent units whose results are easy to state compactly. Or the answer needs confidence that one perspective cannot provide, so you buy independent perspectives and let them disagree. Absent all three, stay in one context, which is cheaper and easier to debug.</p>
+    <p>Effort levels compose with all of this: <a href="effort-levels.html">the previous piece</a> covered spending serial compute within one agent, and orchestration spends across agents. Mechanical shards run cheap and low; the judge that decides what ships runs high. The knobs are orthogonal, and mature setups turn both.</p>
+  </div>
+</main>
+
+<footer class="series">
+  <div class="col">
+    <span>Model Mechanics · A field guide to working with LLMs</span>
+    <nav aria-label="series">
+      <a href="how-llms-work.html">1 · How a Language Model Works</a>
+      <a href="effort-levels.html">2 · Reasoning Effort</a>
+      <a href="loops-and-skills.html">4 · Loops and Skills</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var toggle = document.getElementById('theme-toggle');
+  var saved = null;
+  try { saved = localStorage.getItem('model-mechanics-theme'); } catch (error) {}
+  if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved);
+  toggle.addEventListener('click', function () {
+    var current = root.getAttribute('data-theme');
+    if (!current) current = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    var next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('model-mechanics-theme', next); } catch (error) {}
+  });
+})();
+</script>
+<script>
+(function () {
+'use strict';
+var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function makeInstrument(figId, api) {
+  var fig = document.getElementById(figId);
+  if (!fig) return;
+  var btn = fig.querySelector('[data-ctl]');
+  if (REDUCED) { api.renderStatic(); if (btn) btn.style.display = 'none'; return; }
+  var userPaused = false, visible = false, running = false;
+  function sync() {
+    var want = visible && !userPaused;
+    if (want && !running) { running = true; api.start(); }
+    else if (!want && running) { running = false; api.stop(); }
+  }
+  if (btn) btn.addEventListener('click', function () {
+    userPaused = !userPaused;
+    btn.textContent = userPaused ? 'Play' : 'Pause';
+    sync();
+  });
+  new IntersectionObserver(function (es) {
+    visible = es.some(function (e) { return e.isIntersecting; });
+    sync();
+  }, { threshold: 0.15 }).observe(fig);
+}
+function timerBag() {
+  var ids = [];
+  return {
+    after: function (ms, fn) { ids.push(setTimeout(fn, ms)); },
+    every: function (ms, fn) { ids.push(setInterval(fn, ms)); },
+    clear: function () { ids.forEach(function (id) { clearTimeout(id); clearInterval(id); }); ids = []; }
+  };
+}
+
+/* ---------- fig 01: fan out, verify, integrate ---------- */
+(function () {
+  var svg = document.getElementById('orch-svg');
+  var status = document.getElementById('orch-status');
+  var NS = 'http://www.w3.org/2000/svg';
+  var t = timerBag();
+  var WORKERS = [
+    { x: 90,  label: 'Auth module',  speed: 1.0 },
+    { x: 260, label: 'API surface',  speed: 1.7 },
+    { x: 430, label: 'DB layer',     speed: 0.8 },
+    { x: 600, label: 'UI routes',    speed: 1.3 }
+  ];
+  var BOSS = { x: 345, y: 40, w: 150, h: 34 };
+  var WY = 150, WW = 120, WH = 56;
+  var JUDGE = { x: 345, y: 285, w: 150, h: 30 };
+  function mk(tag, attrs, text) {
+    var n = document.createElementNS(NS, tag);
+    Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+    if (text) n.textContent = text;
+    svg.appendChild(n);
+    return n;
+  }
+  var parts = {};
+  function build() {
+    svg.innerHTML = '';
+    parts = { edges: [], nodes: [], meters: [], backs: [], payloads: [], verdicts: [] };
+    mk('rect', { x: BOSS.x - BOSS.w / 2, y: BOSS.y - BOSS.h / 2, width: BOSS.w, height: BOSS.h, 'class': 'node', id: 'boss-node' });
+    mk('text', { x: BOSS.x, y: BOSS.y + 4, 'text-anchor': 'middle', 'class': 'nodelabel' }, 'Orchestrator');
+    WORKERS.forEach(function (w, i) {
+      var cx = w.x + WW / 2;
+      var e = mk('path', { d: 'M ' + BOSS.x + ' ' + (BOSS.y + BOSS.h / 2) + ' C ' + BOSS.x + ' 110, ' + cx + ' 100, ' + cx + ' ' + WY, 'class': 'edge' });
+      parts.edges.push(e);
+      var n = mk('rect', { x: w.x, y: WY, width: WW, height: WH, 'class': 'node' });
+      parts.nodes.push(n);
+      mk('text', { x: cx, y: WY + 20, 'text-anchor': 'middle', 'class': 'nodelabel' }, w.label);
+      mk('rect', { x: w.x + 12, y: WY + 32, width: WW - 24, height: 8, rx: 3, 'class': 'meter-track' });
+      var m = mk('rect', { x: w.x + 12, y: WY + 32, width: 0, height: 8, rx: 3, 'class': 'meter' });
+      parts.meters.push(m);
+      var b = mk('path', { d: 'M ' + cx + ' ' + (WY + WH) + ' C ' + cx + ' 250, ' + JUDGE.x + ' 240, ' + JUDGE.x + ' ' + (JUDGE.y - JUDGE.h / 2), 'class': 'edge' });
+      parts.backs.push(b);
+      var p = mk('circle', { cx: cx, cy: WY + WH, r: 5, 'class': 'payload', opacity: 0 });
+      parts.payloads.push(p);
+    });
+    mk('rect', { x: JUDGE.x - JUDGE.w / 2, y: JUDGE.y - JUDGE.h / 2, width: JUDGE.w, height: JUDGE.h, 'class': 'node', id: 'judge-node' });
+    mk('text', { x: JUDGE.x, y: JUDGE.y + 4, 'text-anchor': 'middle', 'class': 'nodelabel' }, 'Verify · integrate');
+    mk('text', { x: JUDGE.x, y: JUDGE.y + 48, 'text-anchor': 'middle', id: 'orch-out' }, '');
+  }
+  function run() {
+    build();
+    status.textContent = 'Decompose: four scoped prompts, dispatched in parallel';
+    parts.edges.forEach(function (e) { e.classList.add('hot'); });
+    var progress = [0, 0, 0, 0], finished = [false, false, false, false];
+    t.after(600, function () {
+      parts.nodes.forEach(function (n) { n.classList.add('busy'); });
+      status.textContent = 'Workers fill their own contexts · the orchestrator waits, empty';
+      t.every(90, function () {
+        var allDone = true;
+        WORKERS.forEach(function (w, i) {
+          if (finished[i]) return;
+          progress[i] = Math.min(1, progress[i] + 0.022 * w.speed);
+          parts.meters[i].setAttribute('width', (progress[i] * (WW - 24)).toFixed(1));
+          if (progress[i] >= 1) {
+            finished[i] = true;
+            parts.nodes[i].classList.remove('busy');
+            parts.nodes[i].classList.add('done');
+            parts.backs[i].classList.add('back');
+            parts.payloads[i].setAttribute('opacity', 1);
+            var cx2 = w.x + WW / 2;
+            parts.payloads[i].animate ? animatePayload(parts.payloads[i], cx2) : null;
+          }
+          if (!finished[i]) allDone = false;
+        });
+        if (allDone) {
+          t.clear();
+          status.textContent = 'Compact results return · one claim fails verification';
+          t.after(900, function () {
+            parts.nodes[1].classList.remove('done');
+            parts.nodes[1].classList.add('dead');
+            var w1 = WORKERS[1];
+            mk('line', { x1: w1.x + 34, y1: WY + 12, x2: w1.x + WW - 34, y2: WY + WH - 12, 'class': 'verdict-x' });
+            mk('line', { x1: w1.x + WW - 34, y1: WY + 12, x2: w1.x + 34, y2: WY + WH - 12, 'class': 'verdict-x' });
+            document.getElementById('judge-node').classList.add('done');
+            t.after(1000, function () {
+              document.getElementById('orch-out').textContent = '→ 3 verified findings, ~600 tokens total';
+              status.textContent = 'Integrate: conclusions enter the orchestrator, the process is discarded';
+              t.after(3200, run);
+            });
+          });
+        }
+      });
+    });
+  }
+  function animatePayload(p, cx2) {
+    p.animate([
+      { transform: 'translate(0, 0)' },
+      { transform: 'translate(' + (JUDGE.x - cx2) + 'px, ' + (JUDGE.y - JUDGE.h / 2 - (WY + WH)) + 'px)' }
+    ], { duration: 700, easing: 'ease-in-out', fill: 'forwards' });
+  }
+  makeInstrument('fig-orch', {
+    start: run,
+    stop: function () { t.clear(); },
+    renderStatic: function () {
+      build();
+      parts.meters.forEach(function (m, i) { m.setAttribute('width', ((WW - 24) * [1, 1, 0.7, 0.9][i]).toFixed(1)); });
+      parts.nodes[0].classList.add('done');
+      parts.nodes[1].classList.add('dead');
+      status.textContent = 'Workers in parallel; results verified, one rejected, three integrated';
+    }
+  });
+})();
+
+/* ---------- fig 02: the context ledger ---------- */
+(function () {
+  var stack = document.getElementById('orch-stack');
+  var bossWrap = document.getElementById('boss-wrap');
+  var t = timerBag();
+  var workerEls = [];
+  function buildWorkers() {
+    workerEls.forEach(function (w) { w.wrap.remove(); });
+    workerEls = [];
+    for (var i = 0; i < 4; i++) {
+      var wrap = document.createElement('div');
+      wrap.className = 'ctx-bar-wrap';
+      wrap.innerHTML = '<span class="ctx-pct">0%</span><div class="ctx-bar"><div class="ctx-fill junk"></div></div><span class="ctx-label">Worker ' + (i + 1) + '</span>';
+      stack.insertBefore(wrap, bossWrap);
+      workerEls.push({ wrap: wrap, fill: wrap.querySelector('.ctx-fill'), pct: wrap.querySelector('.ctx-pct') });
+    }
+  }
+  function run() {
+    buildWorkers();
+    var soloFill = document.getElementById('solo-fill');
+    var soloKeep = document.getElementById('solo-keep');
+    var soloPct = document.getElementById('solo-pct');
+    var bossFill = document.getElementById('boss-fill');
+    var bossPct = document.getElementById('boss-pct');
+    var note = document.getElementById('ledger-note');
+    document.getElementById('solo-wrap').classList.remove('faded');
+    soloKeep.style.height = '6%';
+    bossFill.style.height = '8%';
+    bossPct.textContent = '8%';
+    note.textContent = 'Same job, two ledgers: read four modules, report findings';
+    var p = 0;
+    t.every(110, function () {
+      p = Math.min(1, p + 0.02);
+      var soloH = Math.min(96, p * 96);
+      soloFill.style.height = soloH + '%';
+      soloPct.textContent = Math.round(soloH) + '%';
+      workerEls.forEach(function (w, i) {
+        var wp = Math.min(60, p * [58, 44, 60, 50][i]);
+        w.fill.style.height = wp + '%';
+        w.pct.textContent = Math.round(wp) + '%';
+      });
+      if (p >= 1) {
+        t.clear();
+        note.textContent = 'Workers return ~150 tokens each and are discarded · their contexts stop existing';
+        workerEls.forEach(function (w) { w.wrap.classList.add('faded'); });
+        bossFill.style.height = '14%';
+        bossPct.textContent = '14%';
+        t.after(1400, function () {
+          note.textContent = 'The solo agent now reasons in its last 4% of headroom; the orchestrator has 86%.';
+          t.after(3000, run);
+        });
+      }
+    });
+  }
+  makeInstrument('fig-ledger', {
+    start: run,
+    stop: function () { t.clear(); },
+    renderStatic: function () {
+      buildWorkers();
+      document.getElementById('solo-fill').style.height = '96%';
+      document.getElementById('solo-pct').textContent = '96%';
+      document.getElementById('solo-keep').style.height = '6%';
+      document.getElementById('boss-fill').style.height = '14%';
+      document.getElementById('boss-pct').textContent = '14%';
+      workerEls.forEach(function (w, i) {
+        w.fill.style.height = [58, 44, 60, 50][i] + '%';
+        w.pct.textContent = [58, 44, 60, 50][i] + '%';
+        w.wrap.classList.add('faded');
+      });
+      document.getElementById('ledger-note').textContent = 'End state: the solo window is 96% raw material; the orchestrator keeps 86% headroom.';
+    }
+  });
+})();
+})();
+</script>
+</body>
+</html>
