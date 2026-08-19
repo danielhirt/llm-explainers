@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Model Mechanics</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%3Crect%20width=%2232%22%20height=%2232%22%20rx=%228%22%20fill=%22%230a1020%22/%3E%3Ccircle%20cx=%2210%22%20cy=%2216%22%20r=%223%22%20fill=%22%235d7cff%22/%3E%3Ccircle%20cx=%2218%22%20cy=%2210%22%20r=%223%22%20fill=%22%23ee755f%22/%3E%3Ccircle%20cx=%2222%22%20cy=%2221%22%20r=%223%22%20fill=%22%23efb44d%22/%3E%3Cpath%20d=%22M12%2015L16%2012M19%2013L21%2018M13%2018L19%2020%22%20stroke=%22%23f7f5ef%22%20stroke-width=%221.5%22/%3E%3C/svg%3E">
-<meta name="description" content="A field guide to working with large language models. Animated explainers on transformers, reasoning effort, orchestration, and agent loops.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%3Crect%20width=%2232%22%20height=%2232%22%20fill=%22%23eae7da%22/%3E%3Crect%20x=%221%22%20y=%221%22%20width=%2230%22%20height=%2230%22%20fill=%22none%22%20stroke=%22%231e1d12%22%20stroke-width=%222%22/%3E%3Crect%20x=%226%22%20y=%2218%22%20width=%228%22%20height=%228%22%20fill=%22%233b55c4%22/%3E%3Crect%20x=%2218%22%20y=%2218%22%20width=%228%22%20height=%228%22%20fill=%22%23a8801c%22/%3E%3Cpath%20d=%22M16%206l5%205-5%205-5-5z%22%20fill=%22%23b23b2b%22/%3E%3C/svg%3E">
+<meta name="description" content="A field guide to large language models: an interactive map of the machine, a hands-on tokenizer playground, and animated deep dives on transformers, reasoning effort, orchestration, and agent loops.">
 <style>
 @font-face { font-family: "Geist"; src: url("fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
 @font-face { font-family: "Geist"; src: url("fonts/Geist-VariableItalic.woff2") format("woff2"); font-weight: 100 900; font-style: italic; font-display: swap; }
@@ -13,46 +13,61 @@
 
 :root,
 [data-theme="light"] {
-  --page: #f7f6f2;
-  --surface: #ffffff;
-  --ink: #111a31;
-  --ink-body: #2b3550;
-  --ink-soft: #4e5b76;
-  --ink-faint: #78839a;
-  --line: rgba(17, 26, 49, 0.12);
-  --line-strong: rgba(17, 26, 49, 0.24);
-  --accent: #4e6ff2;
-  --accent-soft: rgba(78, 111, 242, 0.11);
-  --gold-soft: rgba(217, 152, 45, 0.13);
+  --page: #eae7da;
+  --surface: #f3f1e6;
+  --ink: #1e1d12;
+  --ink-body: #3b392a;
+  --ink-soft: #6b6955;
+  --ink-faint: #8c8a75;
+  --line: rgba(30, 29, 18, 0.16);
+  --line-strong: rgba(30, 29, 18, 0.34);
+  --accent: #b23b2b;
+  --accent-soft: rgba(178, 59, 43, 0.10);
+  --cobalt: #3b55c4;
+  --gold: #a8801c;
+  --gold-soft: rgba(168, 128, 28, 0.14);
+  --hatch: rgba(30, 29, 18, 0.10);
+  --face-shade: rgba(30, 29, 18, 0.07);
+  --grid-line: rgba(30, 29, 18, 0.05);
 }
 
 [data-theme="dark"] {
-  --page: #0d1322;
-  --surface: #161f34;
-  --ink: #f4f4ef;
-  --ink-body: #ced3e2;
-  --ink-soft: #b2bace;
-  --ink-faint: #8792aa;
-  --line: rgba(234, 239, 255, 0.10);
-  --line-strong: rgba(234, 239, 255, 0.20);
-  --accent: #7f98ff;
-  --accent-soft: rgba(127, 152, 255, 0.13);
-  --gold-soft: rgba(240, 182, 77, 0.13);
+  --page: #14130d;
+  --surface: #1d1c14;
+  --ink: #ece9d8;
+  --ink-body: #cdcab6;
+  --ink-soft: #a3a08b;
+  --ink-faint: #7f7d69;
+  --line: rgba(236, 233, 216, 0.13);
+  --line-strong: rgba(236, 233, 216, 0.30);
+  --accent: #e06a50;
+  --accent-soft: rgba(224, 106, 80, 0.13);
+  --cobalt: #8fa2ff;
+  --gold: #d9a83c;
+  --gold-soft: rgba(217, 168, 60, 0.14);
+  --hatch: rgba(236, 233, 216, 0.10);
+  --face-shade: rgba(0, 0, 0, 0.22);
+  --grid-line: rgba(236, 233, 216, 0.05);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    --page: #0d1322;
-    --surface: #161f34;
-    --ink: #f4f4ef;
-    --ink-body: #ced3e2;
-    --ink-soft: #b2bace;
-    --ink-faint: #8792aa;
-    --line: rgba(234, 239, 255, 0.10);
-    --line-strong: rgba(234, 239, 255, 0.20);
-    --accent: #7f98ff;
-    --accent-soft: rgba(127, 152, 255, 0.13);
-    --gold-soft: rgba(240, 182, 77, 0.13);
+    --page: #14130d;
+    --surface: #1d1c14;
+    --ink: #ece9d8;
+    --ink-body: #cdcab6;
+    --ink-soft: #a3a08b;
+    --ink-faint: #7f7d69;
+    --line: rgba(236, 233, 216, 0.13);
+    --line-strong: rgba(236, 233, 216, 0.30);
+    --accent: #e06a50;
+    --accent-soft: rgba(224, 106, 80, 0.13);
+    --cobalt: #8fa2ff;
+    --gold: #d9a83c;
+    --gold-soft: rgba(217, 168, 60, 0.14);
+    --hatch: rgba(236, 233, 216, 0.10);
+    --face-shade: rgba(0, 0, 0, 0.22);
+    --grid-line: rgba(236, 233, 216, 0.05);
   }
 }
 
@@ -69,37 +84,71 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-.col { width: min(740px, calc(100% - 48px)); margin: 0 auto; }
+.col { width: min(1060px, calc(100% - 48px)); margin: 0 auto; }
+.col-narrow { width: min(760px, calc(100% - 48px)); margin: 0 auto; }
 
-header.masthead { padding: 50px 0 0; }
-
-.mast-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 46px;
-  color: var(--ink-faint);
-  font-family: "Geist Mono", monospace;
-  font-size: 11px;
+/* Atlas topbar */
+.topbar {
+  border-bottom: 1px solid var(--line-strong);
+  background: var(--surface);
 }
+
+.topbar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  width: min(1060px, 100%);
+  margin: 0 auto;
+}
+
+.top-cell {
+  padding: 10px 18px 12px;
+  border-right: 1px solid var(--line);
+  font-family: "Geist Mono", monospace;
+}
+
+.top-cell .k { display: block; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+.top-cell .v { display: block; margin-top: 1px; font-size: 15px; color: var(--ink); }
+.top-cell .v small { font-size: 11px; color: var(--ink-soft); }
+
+.top-cell.brand-cell { border-left: 1px solid var(--line); }
+.brand-cell .v { font-family: "Geist", sans-serif; font-weight: 640; letter-spacing: -0.01em; }
+
+.top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 8px 0 8px 12px; }
+
+.btn {
+  font-family: "Geist Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  padding: 6px 11px;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.btn:hover { background: var(--ink); color: var(--page); }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--page); }
 
 .theme-toggle {
   width: 30px;
   height: 30px;
-  margin-left: auto;
   display: grid;
   place-items: center;
   border: 1px solid var(--line-strong);
-  border-radius: 6px;
+  border-radius: 3px;
   background: transparent;
   color: inherit;
   cursor: pointer;
-  transition: border-color 160ms ease;
 }
 
 .theme-toggle:hover { border-color: var(--accent); }
-
 .theme-toggle svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+
+header.masthead { padding: 46px 0 0; }
 
 h1 {
   margin: 0;
@@ -111,39 +160,116 @@ h1 {
 }
 
 .dek {
-  max-width: 62ch;
-  margin: 18px 0 0;
+  max-width: 64ch;
+  margin: 16px 0 0;
   color: var(--ink-soft);
   font-size: 20px;
   line-height: 1.58;
 }
 
-#strip { display: flex; flex-wrap: wrap; gap: 6px; margin: 34px 0 0; min-height: 2rem; align-items: flex-start; }
-
-.chip {
-  display: inline-block;
-  font-family: "Geist Mono", monospace;
-  font-size: 12px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: var(--accent-soft);
-  color: var(--ink);
-  white-space: pre;
+/* The map board */
+.atlas {
+  margin: 36px 0 0;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
 }
 
-.chip.warm { background: var(--gold-soft); }
+.atlas-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--line-strong);
+  background: repeating-linear-gradient(-45deg, transparent 0 4px, var(--hatch) 4px 5px);
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
 
-main { padding: 40px 0 0; }
+.atlas-head .tag { color: var(--ink-faint); }
+
+.atlas-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; }
+
+.map-scroll { overflow-x: auto; }
+
+#map { display: block; width: 100%; min-width: 680px; height: auto; }
+
+.side-panel {
+  border-left: 1px solid var(--line-strong);
+  padding: 18px 18px 16px;
+  min-height: 300px;
+}
+
+.side-panel .kicker {
+  margin: 0 0 4px;
+  font-family: "Geist Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.side-panel h2 { margin: 0 0 10px; color: var(--ink); font-size: 20px; font-weight: 640; line-height: 1.25; }
+.side-panel p { margin: 0 0 12px; font-size: 15px; line-height: 1.6; color: var(--ink-body); }
+
+.side-panel .open-link {
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+
+.side-panel .open-link:hover { color: var(--ink); }
+
+.atlas-foot {
+  padding: 8px 14px;
+  border-top: 1px solid var(--line);
+  font-family: "Geist Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+/* SVG map pieces */
+.blk { cursor: pointer; }
+.blk .face-top { fill: var(--surface); stroke: var(--ink); stroke-width: 1.1; }
+.blk .face-left { fill: url(#hatch-pat); stroke: var(--ink); stroke-width: 1.1; }
+.blk .face-right { fill: var(--face-shade); stroke: var(--ink); stroke-width: 1.1; }
+.blk.hot .face-top, .blk:hover .face-top, a:focus-visible .blk .face-top { fill: var(--gold-soft); }
+.blk .blk-name { font-family: "Geist Mono", monospace; font-size: 13px; letter-spacing: 0.06em; fill: var(--ink); text-anchor: middle; }
+.blk .blk-sub { font-family: "Geist Mono", monospace; font-size: 10.5px; letter-spacing: 0.03em; fill: var(--ink-soft); text-anchor: middle; }
+
+.edge { stroke: var(--line-strong); stroke-width: 1.1; fill: none; }
+.edge.dashed { stroke-dasharray: 4 3; stroke-width: 1; }
+.edge-label { font-family: "Geist Mono", monospace; font-size: 10px; letter-spacing: 0.04em; fill: var(--ink-faint); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
+.ext-label { font-family: "Geist Mono", monospace; font-size: 11px; letter-spacing: 0.06em; fill: var(--ink-soft); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
+.flow-dot { fill: var(--accent); }
+.grid-line { stroke: var(--grid-line); stroke-width: 1; }
+
+/* Cards */
+main { padding: 44px 0 0; }
+
+.section-kicker {
+  margin: 0 0 14px;
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--ink-faint);
+}
 
 .toc { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; list-style: none; }
 
-.toc a.card {
+.toc a.card, .toc .card.pending {
   display: block;
   text-decoration: none;
   color: inherit;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 3px;
   padding: 18px 20px;
   transition: border-color 0.25s;
 }
@@ -151,18 +277,41 @@ main { padding: 40px 0 0; }
 .toc a.card:hover { border-color: var(--accent); }
 .toc a.card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.card-no { font-family: "Geist Mono", monospace; font-size: 11px; color: var(--ink-faint); }
+.card-no { font-family: "Geist Mono", monospace; font-size: 11px; color: var(--ink-faint); letter-spacing: 0.06em; }
 
 .card h2 { font-size: 19px; font-weight: 630; color: var(--ink); margin: 5px 0 6px; line-height: 1.3; }
 
 .card p { margin: 0; color: var(--ink-soft); font-size: 15px; line-height: 1.6; }
 
+a.card.featured {
+  border: 1px solid var(--line-strong);
+  position: relative;
+}
+
+a.card.featured::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 6px;
+  background: repeating-linear-gradient(-45deg, transparent 0 4px, var(--hatch) 4px 5px);
+}
+
+a.card.featured .card-no { color: var(--accent); }
+
+.card .go {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: "Geist Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
 .card.pending {
   opacity: 0.65;
   background: none;
-  padding: 18px 20px;
   border: 1px dashed var(--line-strong);
-  border-radius: 6px;
 }
 
 footer.site {
@@ -179,13 +328,19 @@ footer.site a:hover { color: var(--accent); }
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
+@media (max-width: 940px) {
+  .atlas-grid { grid-template-columns: 1fr; }
+  .side-panel { border-left: 0; border-top: 1px solid var(--line-strong); min-height: 0; }
+}
+
 @media (max-width: 680px) {
   body { font-size: 17px; }
-  .col { width: min(740px, calc(100% - 32px)); }
-  header.masthead { padding-top: 28px; }
-  .mast-row { margin-bottom: 34px; }
+  .col, .col-narrow { width: calc(100% - 32px); }
+  header.masthead { padding-top: 30px; }
   h1 { font-size: clamp(30px, 9vw, 36px); }
   .dek { font-size: 18px; }
+  .top-cell { padding: 8px 12px 10px; }
+  .top-cell.hide-s { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
@@ -193,55 +348,99 @@ footer.site a:hover { color: var(--accent); }
 </head>
 <body>
 
-<header class="masthead">
-  <div class="col">
-    <div class="mast-row">
-      <span>A field guide, in four parts and counting</span>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="top-cell brand-cell"><span class="k">Field guide</span><span class="v">Model Mechanics</span></div>
+    <div class="top-cell"><span class="k">Stations</span><span class="v">8 <small>mapped</small></span></div>
+    <div class="top-cell hide-s"><span class="k">Playground</span><span class="v">1 <small>hands-on</small></span></div>
+    <div class="top-cell hide-s"><span class="k">Deep dives</span><span class="v">4 <small>animated</small></span></div>
+    <div class="top-actions">
+      <button class="btn" id="flow-toggle" type="button" aria-pressed="false">Pause the flow</button>
       <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle color theme">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
       </button>
     </div>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="col">
     <h1>Model Mechanics</h1>
-    <p class="dek">How large language models work and how to work with them.</p>
-    <div id="strip" aria-hidden="true"></div>
+    <p class="dek">A field guide to large language models (LLMs), for engineers who use them every day but never look inside. Below is the whole machine. Hover a station to read what it does. Click it to open its explainer. The tokenizer is yours to operate by hand.</p>
+
+    <figure class="atlas" role="group" aria-label="Interactive map of a language model">
+      <div class="atlas-head"><span>THE MACHINE, MAPPED</span><span class="tag">one prompt, one loop</span></div>
+      <div class="atlas-grid">
+        <div class="map-scroll">
+          <svg id="map" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Isometric map: corpus, pre-training, and checkpoint above; tokenizer, embeddings, transformer, logits, and sampler on the run path, with a loop back from sampler to tokenizer">
+            <defs>
+              <pattern id="hatch-pat" width="5" height="5" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+                <rect width="5" height="5" fill="var(--surface)"></rect>
+                <line x1="0" y1="0" x2="0" y2="5" stroke="var(--hatch)" stroke-width="1.6"></line>
+              </pattern>
+            </defs>
+          </svg>
+        </div>
+        <aside class="side-panel" id="panel" aria-live="polite">
+          <p class="kicker" id="panel-kicker">The system</p>
+          <h2 id="panel-title">One loop, two lives</h2>
+          <p id="panel-body">Everything above the run path happens once, during training: text goes in; weights come out. Everything on the run path happens every time you press enter. Your prompt becomes tokens, tokens become a prediction, and the prediction becomes one more token. Then the loop runs again.</p>
+          <a class="open-link" id="panel-link" href="articles/tokenizer.html">Start at the tokenizer</a>
+        </aside>
+      </div>
+      <div class="atlas-foot">HOVER A STATION TO READ IT · CLICK TO OPEN ITS EXPLAINER · MOVING ◆ MARKS ARE TOKENS IN FLIGHT</div>
+    </figure>
   </div>
 </header>
 
 <main>
-  <div class="col">
+  <div class="col-narrow">
+    <p class="section-kicker">Play first</p>
+    <ol class="toc" style="margin-bottom:40px">
+      <li>
+        <a class="card featured" href="articles/tokenizer.html">
+          <span class="card-no">PLAYGROUND</span>
+          <h2>The tokenizer playground</h2>
+          <p>Train a real byte-pair tokenizer in your browser and watch the vocabulary assemble itself. Cut your own text into tokens, guess the counts, race a live next-token predictor, and roll the temperature dice.</p>
+          <span class="go">Open the playground →</span>
+        </a>
+      </li>
+    </ol>
+
+    <p class="section-kicker">Then go deeper</p>
     <ol class="toc">
       <li>
         <a class="card" href="articles/how-llms-work.html">
           <span class="card-no">1</span>
-          <h2>Inside an LLM: Corpus to Next Token</h2>
-          <p>Follow the full lifecycle: corpus and tokenizer, learned vectors and the transformer block, the pre-training that chooses the numbers, and one-token-at-a-time decoding.</p>
+          <h2>Inside an LLM: corpus to next token</h2>
+          <p>Follow the full lifecycle: corpus and tokenizer, embeddings and the transformer block, the pre-training that chooses the numbers, and one-token-at-a-time decoding.</p>
         </a>
       </li>
       <li>
         <a class="card" href="articles/effort-levels.html">
           <span class="card-no">2</span>
-          <h2>Reasoning Effort</h2>
+          <h2>Reasoning effort</h2>
           <p>The knob buys serial compute. Its returns are concave and task-dependent. How to set it without superstition.</p>
         </a>
       </li>
       <li>
         <a class="card" href="articles/orchestration-and-subagents.html">
           <span class="card-no">3</span>
-          <h2>Orchestration and Subagents</h2>
+          <h2>Orchestration and subagents</h2>
           <p>One context window is the wrong shape for big work. Fan-out, pipelines, and verification with a return contract.</p>
         </a>
       </li>
       <li>
         <a class="card" href="articles/loops-and-skills.html">
           <span class="card-no">4</span>
-          <h2>Loops and Skills</h2>
-          <p>The while-loop that turns a text predictor into a worker, and procedure packaged as files an agent loads on demand.</p>
+          <h2>Loops and skills</h2>
+          <p>The while-loop that turns a next-token predictor into a worker, and procedure packaged as files an agent loads on demand.</p>
         </a>
       </li>
       <li>
         <div class="card pending">
           <span class="card-no">5</span>
-          <h2>Harness Engineering</h2>
+          <h2>Harness engineering</h2>
           <p>The software around the model: tools, permissions, context budgets, and feedback design. In preparation.</p>
         </div>
       </li>
@@ -274,38 +473,206 @@ footer.site a:hover { color: var(--accent); }
 <script>
 (function () {
 'use strict';
-if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  var strip = document.getElementById('strip');
-  ['A', ' language', ' model', ' is', ' a', ' function', ' run', ' in', ' a', ' loop', '.'].forEach(function (w, i) {
-    var s = document.createElement('span');
-    s.className = 'chip' + (i > 5 ? ' warm' : '');
-    s.textContent = w;
-    strip.appendChild(s);
-  });
-  return;
+
+var SVG = "http://www.w3.org/2000/svg";
+var K1 = 30, K2 = 16, K3 = 26;
+
+function px(gx, gy, h) { return (gx - gy) * K1; }
+function py(gx, gy, h) { return (gx + gy) * K2 - (h || 0) * K3; }
+function pt(gx, gy, h) { return px(gx, gy, h) + "," + py(gx, gy, h); }
+
+var STATIONS = [
+  { id: "corpus", name: "CORPUS", sub: "a mountain of text", gx: 4.6, gy: 0.4, w: 3.6, d: 2, h: 0.6,
+    kicker: "Build lane · station A", title: "The corpus",
+    body: "Billions of pages of raw text. No one labels it by hand. The text itself is the teacher, because every position in it hides a next token to guess.",
+    link: "articles/how-llms-work.html#corpus", linkLabel: "Read: the corpus" },
+  { id: "pretrain", name: "PRE-TRAINING", sub: "guess · grade · nudge", gx: 11.6, gy: 0.4, w: 4, d: 2, h: 1.3,
+    kicker: "Build lane · station B", title: "Pre-training",
+    body: "The guessing game at industrial scale: predict the next token, grade the guess, and nudge billions of weights a tiny step. Repeat for months of GPU time.",
+    link: "articles/how-llms-work.html#training", linkLabel: "Read: pre-training" },
+  { id: "checkpoint", name: "CHECKPOINT", sub: "frozen weights", gx: 18.1, gy: 0.4, w: 3, d: 2, h: 0.8,
+    kicker: "Build lane · station C", title: "The checkpoint",
+    body: "The finished weights in one large file. Everything the model will ever know sits frozen in these numbers before you type a single word. Inference only reads them.",
+    link: "articles/how-llms-work.html#overview", linkLabel: "Read: the lifecycle" },
+  { id: "tokenizer", name: "TOKENIZER", sub: "text → IDs", gx: 0.8, gy: 6, w: 2.8, d: 2.2, h: 1.4,
+    kicker: "Run path · station 1", title: "The tokenizer",
+    body: "The tokenizer cuts your text into tokens and looks up an integer ID for each. It learned its rules from data. No one designed it by hand. This is the station you can operate yourself.",
+    link: "articles/tokenizer.html", linkLabel: "Play: the tokenizer" },
+  { id: "embeddings", name: "EMBEDDINGS", sub: "IDs → vectors", gx: 6.25, gy: 6, w: 2.8, d: 2.2, h: 1.1,
+    kicker: "Run path · station 2", title: "Embeddings",
+    body: "Each token ID selects one row of a giant learned table: a vector of a few thousand numbers. From here on the model computes with geometry, not letters.",
+    link: "articles/how-llms-work.html#geometry", linkLabel: "Read: embeddings" },
+  { id: "transformer", name: "TRANSFORMER ×N", sub: "attention + MLP", gx: 11.7, gy: 6, w: 3.4, d: 2.2, h: 2.6,
+    kicker: "Run path · station 3", title: "The transformer stack",
+    body: "Dozens of identical layers. In each one, every position looks back at the tokens before it (attention), then thinks on its own (the multilayer perceptron, or MLP). This is where the checkpoint's weights do their work.",
+    link: "articles/how-llms-work.html#transformer", linkLabel: "Read: the transformer" },
+  { id: "logits", name: "LOGITS", sub: "a score per token", gx: 17.75, gy: 6, w: 3.2, d: 2.2, h: 0.9,
+    kicker: "Run path · station 4", title: "Logits",
+    body: "One raw score for every token in the vocabulary, tens of thousands of them. A softmax turns the scores into a probability distribution over what comes next.",
+    link: "articles/how-llms-work.html#generation", linkLabel: "Read: generation" },
+  { id: "sampler", name: "SAMPLER", sub: "dice + temperature", gx: 23.6, gy: 6, w: 3.6, d: 2.2, h: 1.2,
+    kicker: "Run path · station 5", title: "The sampler",
+    body: "The sampler rolls the dice on that distribution. Temperature reshapes the odds before the roll. The chosen token joins the context, and the whole run path executes again.",
+    link: "articles/tokenizer.html#sample", linkLabel: "Play: temperature and dice", loop: true }
+];
+
+var EDGES = [
+  { pts: [[8.2, 1.4], [11.6, 1.4]], dashed: true, label: "text batches", lx: 9.7, ly: 1.3 },
+  { pts: [[15.6, 1.4], [18.1, 1.4]], dashed: true, label: "weights", lx: 16.85, ly: 1.4 },
+  { pts: [[5.2, 2.4], [5.2, 4.3], [2.2, 4.3], [2.2, 6]], dashed: true, label: "text sample", lx: 3.7, ly: 3.7 },
+  { pts: [[18.5, 2.4], [18.5, 4.3], [13.4, 4.3], [13.4, 6]], dashed: true, label: "frozen weights", lx: 16.4, ly: 3.7 },
+  { pts: [[3.6, 7.1], [6.25, 7.1]] },
+  { pts: [[9.05, 7.1], [11.7, 7.1]] },
+  { pts: [[15.1, 7.1], [17.75, 7.1]] },
+  { pts: [[20.95, 7.1], [23.6, 7.1]] },
+  { pts: [[26.2, 8.2], [26.2, 10.6], [2.2, 10.6], [2.2, 8.2]], label: "append token · run it again", lx: 14.2, ly: 11.1 }
+];
+
+var CIRCUIT = [[2.2, 7.1], [26.2, 7.1], [26.2, 10.6], [2.2, 10.6], [2.2, 7.1]];
+
+var EXTERNALS = [
+  { text: "YOUR PROMPT", anchor: [0.8, 7.1], label: [-0.7, 5.2], align: "end" },
+  { text: "OUTPUT TEXT", anchor: [27.2, 7.1], label: [28.8, 8.8], align: "start" }
+];
+
+var svg = document.getElementById("map");
+
+function mk(tag, attrs, cls) {
+  var n = document.createElementNS(SVG, tag);
+  for (var k in attrs) n.setAttribute(k, attrs[k]);
+  if (cls) n.setAttribute("class", cls);
+  return n;
 }
-var PROMPT = ['A', ' language', ' model', ' is'];
-var GEN = [' a', ' function', ' run', ' in', ' a', ' loop', '.'];
-var strip = document.getElementById('strip');
-function reset() {
-  strip.innerHTML = '';
-  PROMPT.forEach(function (w) {
-    var s = document.createElement('span');
-    s.className = 'chip';
-    s.textContent = w;
-    strip.appendChild(s);
-  });
+
+/* ground grid */
+var gridG = mk("g", {});
+for (var gi = -1; gi <= 29; gi += 1) {
+  gridG.appendChild(mk("line", { x1: px(gi, -1), y1: py(gi, -1), x2: px(gi, 12), y2: py(gi, 12) }, "grid-line"));
 }
-function emit(i) {
-  if (i >= GEN.length) { setTimeout(function () { reset(); emit(0); }, 3200); return; }
-  var s = document.createElement('span');
-  s.className = 'chip warm';
-  s.textContent = GEN[i];
-  strip.appendChild(s);
-  setTimeout(function () { emit(i + 1); }, 420);
+for (var gj = -1; gj <= 12; gj += 1) {
+  gridG.appendChild(mk("line", { x1: px(-1, gj), y1: py(-1, gj), x2: px(29, gj), y2: py(29, gj) }, "grid-line"));
 }
-reset();
-emit(0);
+svg.appendChild(gridG);
+
+/* edges (ground level, under blocks); labels go in a group drawn above blocks */
+var labelsG = mk("g", {});
+EDGES.forEach(function (e) {
+  var d = e.pts.map(function (p, i) { return (i ? "L" : "M") + pt(p[0], p[1], 0); }).join(" ");
+  svg.appendChild(mk("path", { d: d }, "edge" + (e.dashed ? " dashed" : "")));
+  if (e.label) {
+    var t = mk("text", { x: px(e.lx, e.ly), y: py(e.lx, e.ly), "text-anchor": "middle" }, "edge-label");
+    t.textContent = e.label;
+    labelsG.appendChild(t);
+  }
+});
+
+/* the animated circuit path (invisible, dots ride it) */
+var circuitPath = mk("path", { d: CIRCUIT.map(function (p, i) { return (i ? "L" : "M") + pt(p[0], p[1], 0); }).join(" "), fill: "none", stroke: "none" });
+svg.appendChild(circuitPath);
+
+var dotsG = mk("g", {});
+svg.appendChild(dotsG);
+
+/* externals */
+EXTERNALS.forEach(function (x) {
+  svg.appendChild(mk("path", { d: "M" + pt(x.label[0], x.label[1], 0) + " L" + pt(x.anchor[0], x.anchor[1], 0) }, "edge dashed"));
+  var t = mk("text", { x: px(x.label[0], x.label[1]), y: py(x.label[0], x.label[1]) - 4, "text-anchor": x.align }, "ext-label");
+  t.textContent = x.text;
+  svg.appendChild(t);
+});
+
+/* blocks, painter-sorted */
+var panel = {
+  kicker: document.getElementById("panel-kicker"),
+  title: document.getElementById("panel-title"),
+  body: document.getElementById("panel-body"),
+  link: document.getElementById("panel-link")
+};
+var defaultPanel = {
+  kicker: panel.kicker.textContent,
+  title: panel.title.textContent,
+  body: panel.body.textContent,
+  link: panel.link.getAttribute("href"),
+  linkLabel: panel.link.textContent
+};
+
+function setPanel(s) {
+  panel.kicker.textContent = s.kicker;
+  panel.title.textContent = s.title;
+  panel.body.textContent = s.body;
+  panel.link.setAttribute("href", s.link);
+  panel.link.textContent = s.linkLabel;
+}
+
+STATIONS.slice().sort(function (a, b) { return (a.gx + a.gy) - (b.gx + b.gy); }).forEach(function (s) {
+  var a = mk("a", { href: s.link });
+  var g = mk("g", {}, "blk");
+  var x0 = s.gx, y0 = s.gy, x1 = s.gx + s.w, y1 = s.gy + s.d, h = s.h;
+
+  g.appendChild(mk("polygon", { points: [pt(x0, y1, h), pt(x1, y1, h), pt(x1, y1, 0), pt(x0, y1, 0)].join(" ") }, "face-left"));
+  g.appendChild(mk("polygon", { points: [pt(x1, y0, h), pt(x1, y1, h), pt(x1, y1, 0), pt(x1, y0, 0)].join(" ") }, "face-right"));
+  g.appendChild(mk("polygon", { points: [pt(x0, y0, h), pt(x1, y0, h), pt(x1, y1, h), pt(x0, y1, h)].join(" ") }, "face-top"));
+
+  var cx = px((x0 + x1) / 2, (y0 + y1) / 2, h);
+  var cy = py((x0 + x1) / 2, (y0 + y1) / 2, h);
+  var name = mk("text", { x: cx, y: cy - 5 }, "blk-name");
+  name.textContent = s.name;
+  g.appendChild(name);
+  var sub = mk("text", { x: cx, y: cy + 9 }, "blk-sub");
+  sub.textContent = s.sub;
+  g.appendChild(sub);
+
+  a.appendChild(g);
+  a.addEventListener("mouseenter", function () { setPanel(s); g.classList.add("hot"); });
+  a.addEventListener("mouseleave", function () { g.classList.remove("hot"); });
+  a.addEventListener("focus", function () { setPanel(s); });
+  a.addEventListener("blur", function () { setPanel(defaultPanel); });
+  svg.appendChild(a);
+});
+
+svg.appendChild(labelsG);
+
+/* fit viewBox to content, ignoring the ground grid */
+gridG.style.display = "none";
+var bb = svg.getBBox();
+gridG.style.display = "";
+svg.setAttribute("viewBox", (bb.x - 16) + " " + (bb.y - 16) + " " + (bb.width + 32) + " " + (bb.height + 32));
+
+/* flow dots */
+var REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var totalLen = circuitPath.getTotalLength();
+var DOTS = 6;
+var dots = [];
+for (var i = 0; i < DOTS; i++) {
+  var d = mk("rect", { width: 6, height: 6 }, "flow-dot");
+  dotsG.appendChild(d);
+  dots.push(d);
+}
+var paused = false;
+var offset = 0;
+function place() {
+  for (var i = 0; i < DOTS; i++) {
+    var l = (offset + (i / DOTS) * totalLen) % totalLen;
+    var p = circuitPath.getPointAtLength(l);
+    dots[i].setAttribute("transform", "translate(" + p.x + "," + p.y + ") rotate(45) translate(-3,-3)");
+  }
+}
+var last = null;
+function tick(ts) {
+  if (last !== null && !paused) offset = (offset + (ts - last) * 0.045) % totalLen;
+  last = ts;
+  place();
+  if (!REDUCED) requestAnimationFrame(tick);
+}
+if (REDUCED) { place(); } else { requestAnimationFrame(tick); }
+
+var flowBtn = document.getElementById("flow-toggle");
+flowBtn.addEventListener("click", function () {
+  paused = !paused;
+  flowBtn.setAttribute("aria-pressed", String(paused));
+  flowBtn.textContent = paused ? "Resume the flow" : "Pause the flow";
+  if (REDUCED && !paused) { offset = (offset + 40) % totalLen; place(); paused = true; flowBtn.setAttribute("aria-pressed", "true"); flowBtn.textContent = "Resume the flow"; }
+});
 })();
 </script>
 </body>

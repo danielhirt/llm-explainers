@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Orchestration and Subagents</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%3Crect%20width=%2232%22%20height=%2232%22%20rx=%228%22%20fill=%22%230a1020%22/%3E%3Ccircle%20cx=%2210%22%20cy=%2216%22%20r=%223%22%20fill=%22%235d7cff%22/%3E%3Ccircle%20cx=%2218%22%20cy=%2210%22%20r=%223%22%20fill=%22%23ee755f%22/%3E%3Ccircle%20cx=%2222%22%20cy=%2221%22%20r=%223%22%20fill=%22%23efb44d%22/%3E%3Cpath%20d=%22M12%2015L16%2012M19%2013L21%2018M13%2018L19%2020%22%20stroke=%22%23f7f5ef%22%20stroke-width=%221.5%22/%3E%3C/svg%3E">
+<title>Orchestration and subagents</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%3Crect%20width=%2232%22%20height=%2232%22%20fill=%22%23eae7da%22/%3E%3Crect%20x=%221%22%20y=%221%22%20width=%2230%22%20height=%2230%22%20fill=%22none%22%20stroke=%22%231e1d12%22%20stroke-width=%222%22/%3E%3Crect%20x=%226%22%20y=%2218%22%20width=%228%22%20height=%228%22%20fill=%22%233b55c4%22/%3E%3Crect%20x=%2218%22%20y=%2218%22%20width=%228%22%20height=%228%22%20fill=%22%23a8801c%22/%3E%3Cpath%20d=%22M16%206l5%205-5%205-5-5z%22%20fill=%22%23b23b2b%22/%3E%3C/svg%3E">
 <meta name="description" content="Why one context window is the wrong shape for big work, and the fan-out, pipeline, and verification patterns that fix it.">
 <style>
 @font-face { font-family: "Geist"; src: url("../fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
@@ -13,70 +13,79 @@
 
 :root,
 [data-theme="light"] {
-  --page: #f7f6f2;
-  --surface: #ffffff;
-  --ink: #111a31;
-  --ink-body: #2b3550;
-  --ink-soft: #4e5b76;
-  --ink-faint: #78839a;
-  --line: rgba(17, 26, 49, 0.12);
-  --line-strong: rgba(17, 26, 49, 0.24);
-  --accent: #4e6ff2;
-  --accent-soft: rgba(78, 111, 242, 0.11);
-  --coral: #df6756;
-  --gold: #d9982d;
-  --gold-soft: rgba(217, 152, 45, 0.13);
-  --code-bg: rgba(17, 26, 49, 0.06);
-  --stage: #0a101f;
-  --stage-ink: #f5f6fb;
-  --stage-muted: #9eaac3;
-  --stage-line: rgba(215, 224, 248, 0.14);
-  --panel-shadow: 0 1px 3px rgba(19, 28, 55, 0.10);
+  --page: #eae7da;
+  --surface: #f3f1e6;
+  --ink: #1e1d12;
+  --ink-body: #3b392a;
+  --ink-soft: #6b6955;
+  --ink-faint: #8c8a75;
+  --line: rgba(30, 29, 18, 0.16);
+  --line-strong: rgba(30, 29, 18, 0.34);
+  --accent: #b23b2b;
+  --accent-soft: rgba(178, 59, 43, 0.10);
+  --coral: #c9503a;
+  --gold: #b9871f;
+  --gold-soft: rgba(185, 135, 31, 0.14);
+  --code-bg: rgba(30, 29, 18, 0.07);
+  --stage: #f3f1e6;
+  --stage-ink: #1e1d12;
+  --stage-muted: #6b6955;
+  --stage-line: rgba(30, 29, 18, 0.16);
+  --cobalt: #3b55c4;
+  --cobalt-soft: rgba(59, 85, 196, 0.12);
+  --hatch: rgba(30, 29, 18, 0.10);
+  --panel-shadow: none;
 }
 
 [data-theme="dark"] {
-  --page: #0d1322;
-  --surface: #161f34;
-  --ink: #f4f4ef;
-  --ink-body: #ced3e2;
-  --ink-soft: #b2bace;
-  --ink-faint: #8792aa;
-  --line: rgba(234, 239, 255, 0.10);
-  --line-strong: rgba(234, 239, 255, 0.20);
-  --accent: #7f98ff;
-  --accent-soft: rgba(127, 152, 255, 0.13);
+  --page: #14130d;
+  --surface: #1d1c14;
+  --ink: #ece9d8;
+  --ink-body: #cdcab6;
+  --ink-soft: #a3a08b;
+  --ink-faint: #7f7d69;
+  --line: rgba(236, 233, 216, 0.13);
+  --line-strong: rgba(236, 233, 216, 0.30);
+  --accent: #e06a50;
+  --accent-soft: rgba(224, 106, 80, 0.13);
   --coral: #ff8a74;
   --gold: #f0b64d;
   --gold-soft: rgba(240, 182, 77, 0.13);
-  --code-bg: rgba(234, 239, 255, 0.08);
-  --stage: #080d1b;
-  --stage-ink: #f7f6f0;
-  --stage-muted: #aab5cc;
-  --stage-line: rgba(220, 228, 250, 0.14);
-  --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  --code-bg: rgba(236, 233, 216, 0.09);
+  --stage: #1d1c14;
+  --stage-ink: #ece9d8;
+  --stage-muted: #a3a08b;
+  --stage-line: rgba(236, 233, 216, 0.14);
+  --cobalt: #8fa2ff;
+  --cobalt-soft: rgba(143, 162, 255, 0.14);
+  --hatch: rgba(236, 233, 216, 0.10);
+  --panel-shadow: none;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    --page: #0d1322;
-    --surface: #161f34;
-    --ink: #f4f4ef;
-    --ink-body: #ced3e2;
-    --ink-soft: #b2bace;
-    --ink-faint: #8792aa;
-    --line: rgba(234, 239, 255, 0.10);
-    --line-strong: rgba(234, 239, 255, 0.20);
-    --accent: #7f98ff;
-    --accent-soft: rgba(127, 152, 255, 0.13);
+    --page: #14130d;
+    --surface: #1d1c14;
+    --ink: #ece9d8;
+    --ink-body: #cdcab6;
+    --ink-soft: #a3a08b;
+    --ink-faint: #7f7d69;
+    --line: rgba(236, 233, 216, 0.13);
+    --line-strong: rgba(236, 233, 216, 0.30);
+    --accent: #e06a50;
+    --accent-soft: rgba(224, 106, 80, 0.13);
     --coral: #ff8a74;
     --gold: #f0b64d;
     --gold-soft: rgba(240, 182, 77, 0.13);
-    --code-bg: rgba(234, 239, 255, 0.08);
-    --stage: #080d1b;
-    --stage-ink: #f7f6f0;
-    --stage-muted: #aab5cc;
-    --stage-line: rgba(220, 228, 250, 0.14);
-    --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+    --code-bg: rgba(236, 233, 216, 0.09);
+    --stage: #1d1c14;
+    --stage-ink: #ece9d8;
+    --stage-muted: #a3a08b;
+    --stage-line: rgba(236, 233, 216, 0.14);
+    --cobalt: #8fa2ff;
+    --cobalt-soft: rgba(143, 162, 255, 0.14);
+    --hatch: rgba(236, 233, 216, 0.10);
+    --panel-shadow: none;
   }
 }
 
@@ -236,8 +245,8 @@ figure.instrument {
   margin: 30px auto;
   padding: 0;
   background: var(--stage);
-  border: 1px solid var(--stage-line);
-  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
   overflow: hidden;
   box-shadow: var(--panel-shadow);
   color: var(--stage-ink);
@@ -249,7 +258,8 @@ figure.instrument {
   gap: 12px;
   min-height: 50px;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--stage-line);
+  border-bottom: 1px solid var(--line-strong);
+  background: repeating-linear-gradient(-45deg, transparent 0 4px, var(--hatch) 4px 5px);
   font-family: "Geist Mono", monospace;
   font-size: 11px;
   color: var(--stage-muted);
@@ -268,14 +278,14 @@ button.fig-btn {
   font-family: "Geist Mono", monospace;
   font-size: 11px;
   color: var(--stage-muted);
-  background: rgba(225, 232, 255, 0.05);
-  border: 1px solid rgba(225, 232, 255, 0.22);
-  border-radius: 5px;
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
   cursor: pointer;
   transition: color 160ms ease, border-color 160ms ease;
 }
 
-button.fig-btn:hover { color: var(--stage-ink); border-color: rgba(141, 162, 255, 0.65); }
+button.fig-btn:hover { color: var(--page); border-color: var(--ink); background: var(--ink); }
 
 .instrument-body { padding: 20px 18px; }
 .instrument-body.scrollx { overflow-x: auto; }
@@ -306,29 +316,29 @@ footer.series a { color: var(--ink-soft); }
 
 /* orchestration svg */
 #orch-svg { display: block; width: 100%; height: auto; }
-#orch-svg text { font-family: "Geist Mono", monospace; font-size: 11px; fill: #9eaac3; }
-#orch-svg .node { fill: rgba(225, 232, 255, 0.06); stroke: rgba(215, 224, 248, 0.20); rx: 2; transition: stroke 0.4s, fill 0.4s; }
-#orch-svg .node.busy { stroke: #6f89ff; }
-#orch-svg .node.done { stroke: #efb44d; }
+#orch-svg text { font-family: "Geist Mono", monospace; font-size: 11px; fill: var(--stage-muted); }
+#orch-svg .node { fill: var(--code-bg); stroke: var(--line-strong); rx: 2; transition: stroke 0.4s, fill 0.4s; }
+#orch-svg .node.busy { stroke: var(--cobalt); }
+#orch-svg .node.done { stroke: var(--gold); }
 #orch-svg .node.dead { opacity: 0.3; }
-#orch-svg .edge { stroke: rgba(215, 224, 248, 0.16); stroke-width: 1.5; fill: none; transition: stroke 0.4s; }
-#orch-svg .edge.hot { stroke: #6f89ff; }
-#orch-svg .edge.back { stroke: #efb44d; }
-#orch-svg .meter-track { fill: rgba(4, 8, 18, 0.6); stroke: rgba(215, 224, 248, 0.18); }
-#orch-svg .meter { fill: #6f89ff; opacity: 0.6; }
-#orch-svg .payload { fill: #efb44d; }
+#orch-svg .edge { stroke: var(--line-strong); stroke-width: 1.5; fill: none; transition: stroke 0.4s; }
+#orch-svg .edge.hot { stroke: var(--cobalt); }
+#orch-svg .edge.back { stroke: var(--gold); }
+#orch-svg .meter-track { fill: var(--code-bg); stroke: var(--line-strong); }
+#orch-svg .meter { fill: var(--cobalt); opacity: 0.6; }
+#orch-svg .payload { fill: var(--gold); }
 #orch-svg .verdict-x { stroke: #ee755f; stroke-width: 2; }
-#orch-svg .nodelabel { fill: #f5f6fb; font-size: 11.5px; }
+#orch-svg .nodelabel { fill: var(--stage-ink); font-size: 11.5px; }
 #orch-status { text-align: center; font-family: "Geist Mono", monospace; font-size: 11px; color: var(--stage-muted); min-height: 1.2em; margin-top: 8px; }
 /* ledger */
 #ledger { display: grid; grid-template-columns: 1fr 1.6fr; gap: 40px; align-items: end; }
 .ledger-col h4 { font-family: "Geist Mono", monospace; font-size: 11px; color: var(--stage-muted); font-weight: 600; margin: 0 0 12px; }
 .ctx-stack { display: flex; gap: 14px; align-items: flex-end; }
 .ctx-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.ctx-bar { width: 44px; height: 180px; border: 1px solid rgba(215, 224, 248, 0.20); border-radius: 3px; background: rgba(4, 8, 18, 0.5); position: relative; overflow: hidden; }
-.ctx-fill { position: absolute; bottom: 0; left: 0; right: 0; height: 0%; background: #6f89ff; opacity: 0.55; transition: height 0.3s linear, opacity 0.6s; }
+.ctx-bar { width: 44px; height: 180px; border: 1px solid var(--line-strong); border-radius: 3px; background: var(--code-bg); position: relative; overflow: hidden; }
+.ctx-fill { position: absolute; bottom: 0; left: 0; right: 0; height: 0%; background: var(--cobalt); opacity: 0.55; transition: height 0.3s linear, opacity 0.6s; }
 .ctx-fill.junk { background: #65718a; opacity: 0.5; }
-.ctx-bar .keep { position: absolute; bottom: 0; left: 0; right: 0; height: 0%; background: #efb44d; opacity: 0.9; transition: height 0.4s; }
+.ctx-bar .keep { position: absolute; bottom: 0; left: 0; right: 0; height: 0%; background: var(--gold); opacity: 0.9; transition: height 0.4s; }
 .ctx-bar-wrap.faded .ctx-bar { opacity: 0.25; transition: opacity 0.8s; }
 .ctx-label { font-family: "Geist Mono", monospace; font-size: 10px; color: var(--stage-muted); text-align: center; line-height: 1.4; }
 .ctx-pct { font-family: "Geist Mono", monospace; font-size: 10.5px; color: var(--stage-ink); font-variant-numeric: tabular-nums; }
@@ -361,15 +371,15 @@ footer.series a { color: var(--ink-soft); }
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
       </button>
     </div>
-    <h1>Orchestration and Subagents</h1>
+    <h1>Orchestration and subagents</h1>
     <p class="dek">One context window is the wrong shape for big work. The fix is delegation with a return contract.</p>
   </div>
 </header>
 
 <main>
   <div class="col">
-    <p>An agent doing real work accumulates debris. Every file it reads, every search that comes back empty, every test log and dead end lands in the context window and stays there, because <a href="how-llms-work.html">the window is the model's only memory</a>. On a large task the debris wins: a context meant for reasoning fills with raw material, retrieval from the middle of it degrades, and eventually the harness has to summarize the history to make room, which throws detail away at exactly the moment detail might matter.</p>
-    <p>A <strong>subagent</strong> is the escape hatch. Spawn a fresh model instance with its own empty window, hand it one scoped job, and take back a distilled result. The subagent reads the fifty files and burns its context doing so; the parent, usually called the <strong>orchestrator</strong>, receives three sentences of conclusion. Its window carries decisions and findings while the process that produced them gets thrown away with the worker.</p>
+    <p>An agent doing real work accumulates debris. Every file it reads, every search that comes back empty, every test log and dead end lands in the context window and stays there. It all stays because <a href="how-llms-work.html">the context window is the model's only memory</a>. On a large task the debris wins. A context meant for reasoning fills with raw material, and retrieval from the middle of it degrades. Eventually the harness must summarize the history to make room, which throws away detail at exactly the moment detail might matter.</p>
+    <p>A <strong>subagent</strong> is the escape hatch. Spawn a fresh model instance, a worker, with its own empty context window. Hand it one scoped job and take back a distilled result. The worker reads the 50 files and burns its own context. The parent, usually called the <strong>orchestrator</strong>, receives three sentences of conclusion. The parent's window carries the decisions and findings; the process that produced them disappears with the worker.</p>
   </div>
 
   <figure class="instrument" id="fig-orch">
@@ -378,7 +388,7 @@ footer.series a { color: var(--ink-soft); }
       <button class="fig-btn" data-ctl aria-label="Pause animation">Pause</button>
     </figcaption>
     <div class="instrument-body scrollx">
-      <svg id="orch-svg" viewBox="0 0 720 364" role="img" aria-label="An orchestrator node dispatches four scoped workers in parallel; their compact results return, pass through verification where one finding is rejected, and the survivors are integrated"></svg>
+      <svg id="orch-svg" viewBox="0 0 720 364" role="img" aria-label="An orchestrator node dispatches four scoped workers in parallel; their compact results return, verification rejects one finding, and the orchestrator integrates the survivors"></svg>
       <div id="orch-status"></div>
     </div>
     <figcaption class="below">Each worker fills its own context (blue meters) and returns only a compact result (gold). Verification kills one finding before integration. Wall-clock time is the slowest worker, not the sum.</figcaption>
@@ -386,7 +396,7 @@ footer.series a { color: var(--ink-soft); }
 
   <div class="col">
     <h2>The economics</h2>
-    <p>Delegation costs more tokens in total and less of everything that matters. Four workers reading 40,000 tokens each spend four times what one agent would to read the same material serially, and finish in roughly the wall-clock time of the slowest one. Meanwhile the orchestrator's window, the scarce resource on a long-running task, stays almost empty: it holds the plan and four short results instead of 160,000 tokens of raw reading. You are trading money for the two things a single context cannot buy: parallel wall-clock time and headroom to keep reasoning at full quality.</p>
+    <p>Delegation costs more tokens in total and less of everything that matters. Four workers reading 40,000 tokens each spend four times what one agent would spend to read the same material serially. They finish in roughly the wall-clock time of the slowest worker. Meanwhile the orchestrator's window, the scarce resource on a long-running task, stays almost empty. It holds the plan and four short results instead of 160,000 tokens of raw reading. You trade money for the two things one context cannot buy: parallel wall-clock time and headroom to keep reasoning at full quality.</p>
   </div>
 
   <figure class="instrument" id="fig-ledger">
@@ -411,7 +421,7 @@ footer.series a { color: var(--ink-soft); }
           <div class="ctx-stack" id="orch-stack">
             <div class="ctx-bar-wrap" id="boss-wrap">
               <span class="ctx-pct" id="boss-pct">0%</span>
-              <div class="ctx-bar"><div class="ctx-fill" id="boss-fill" style="background: #efb44d; opacity: 0.85;"></div></div>
+              <div class="ctx-bar"><div class="ctx-fill" id="boss-fill" style="background: var(--gold); opacity: 0.85;"></div></div>
               <span class="ctx-label">Orchestrator<br>plan + results</span>
             </div>
           </div>
@@ -419,38 +429,38 @@ footer.series a { color: var(--ink-soft); }
       </div>
       <div id="ledger-note"></div>
     </div>
-    <figcaption class="below">Grey is raw material: file dumps, search noise, dead ends. Gold is conclusions. Workers are disposable, so their grey never crowds the window that makes the decisions.</figcaption>
+    <figcaption class="below">Gray is raw material: file dumps, search noise, dead ends. Gold is conclusions. Workers are disposable, so their gray never crowds the window that makes the decisions.</figcaption>
   </figure>
 
   <div class="col">
-    <p>The corollary is that a subagent's prompt carries unusual weight. A worker wakes up with no conversation history, no idea what you have already tried, no access to the reasoning that scoped its task. The prompt is its entire world. Orchestration failures trace back to underspecified delegation more often than to any model limitation: say what the worker should return, in what form, and what it should not bother doing, or plan to pay for the round trip twice.</p>
+    <p>The consequence is that a subagent's prompt carries unusual weight. A worker wakes up with no conversation history, no idea what you already tried, and no access to the reasoning that scoped its task. The prompt is its entire world. Orchestration failures trace back to underspecified delegation more often than to any model limitation. Say what the worker should return, in what form, and what it should not do. Otherwise, plan to pay for the round trip twice.</p>
 
     <h2>The patterns</h2>
     <p>A handful of shapes cover nearly everything people build with subagents.</p>
 
     <h3>Fan-out</h3>
-    <p>Independent shards of the same job run in parallel: one worker per module in an audit, or per search angle in a research sweep. Fan-out is the default and the least fragile, because workers never need to know about each other. The orchestrator's job is picking shard boundaries so that stays true.</p>
+    <p>Independent shards of the same job run in parallel: one worker per module in an audit, or per search angle in a research sweep. Fan-out is the default and the least fragile, because workers never need to know about each other. The orchestrator's job is to pick shard boundaries that keep workers independent.</p>
 
     <h3>Pipeline</h3>
-    <p>Each item flows through stages, find, then fix, then check, with no barrier between stages: item A can be in review while item B is still being searched for. Pipelines beat staged batches on wall-clock time whenever stage durations vary, which is always. The orchestrator only forces a barrier when a stage needs every prior result at once, to deduplicate findings, say, or to stop early if there is nothing to do.</p>
+    <p>Each item flows through stages: find, then fix, then check, with no barrier between them. Item A can sit in review while item B is still in the find stage. Pipelines beat staged batches on wall-clock time whenever stage durations vary, which is always. The orchestrator forces a barrier only when a stage needs every prior result at once. For example, one stage might deduplicate findings, and another might stop the run early when there is nothing to do.</p>
 
     <h3>Judge and jury</h3>
-    <p>Verification as its own delegation. Each finding from the discovery stage goes to one or more fresh skeptics prompted to refute it, and only claims that survive get integrated. Independent contexts are the point: a verifier that watched the discovery happen inherits its blind spots, while a fresh one has to reconstruct the evidence, and plausible-but-wrong findings die in the reconstruction. For expensive claims, several skeptics vote.</p>
+    <p>Verification runs as its own delegation. Each finding from the discovery stage goes to one or more fresh skeptics prompted to refute it. The orchestrator integrates only the claims that survive. Independent contexts are the point: a verifier that watched the discovery happen inherits its blind spots. A fresh one must reconstruct the evidence, and plausible-but-wrong findings die in the reconstruction. For expensive claims, several skeptics vote.</p>
 
     <h3>Loop until dry</h3>
-    <p>For discovery jobs with unknown size, bug hunts, dependency audits, keep dispatching finder waves until a couple of consecutive waves come back empty. A fixed worker count encodes a guess about how much there is to find; the loop replaces the guess with evidence.</p>
+    <p>For discovery jobs with unknown size (bug hunts, dependency audits), dispatch finder waves until two consecutive waves come back empty. A fixed worker count encodes a guess about how much there is to find; the loop replaces the guess with evidence.</p>
 
     <h2>What goes wrong</h2>
     <ul>
       <li><strong>Workers collide.</strong> Two subagents editing the same file produce garbage merges. Either shard by disjoint scope or give each worker an isolated copy of the workspace and reconcile afterward.</li>
-      <li><strong>Findings get trusted raw.</strong> A worker's confident summary is a claim, and claims from a context you cannot inspect deserve the judge treatment before they drive decisions.</li>
-      <li><strong>The orchestrator micromanages.</strong> If the parent re-reads everything a worker read to check its work, the ledger collapses back to one fat context that cost four times as much.</li>
-      <li><strong>Everything gets orchestrated.</strong> A task that fits comfortably in one window with room to think is cheaper, simpler, and easier to debug as a single agent. Orchestration pays off past a threshold of scale or required confidence, and below it, it is pure overhead.</li>
+      <li><strong>You trust findings raw.</strong> A worker's confident summary is a claim, and claims from a context you cannot inspect deserve the judge treatment before they drive decisions.</li>
+      <li><strong>The orchestrator micromanages.</strong> If the parent re-reads everything a worker read to check its work, the ledger collapses. You are back to one fat context that costs four times as much.</li>
+      <li><strong>You orchestrate everything.</strong> A task that fits comfortably in one window with room to think is cheaper, simpler, and easier to debug as one agent. Orchestration pays off past a threshold of scale or required confidence; below that threshold it is pure overhead.</li>
     </ul>
 
     <h2>When to reach for it</h2>
-    <p>Three signals, any one of which is sufficient. The reading exceeds the window, as in audits and codebase-wide questions. The work shards into independent units whose results are easy to state compactly. Or the answer needs confidence that one perspective cannot provide, so you buy independent perspectives and let them disagree. Absent all three, stay in one context, which is cheaper and easier to debug.</p>
-    <p>Effort levels compose with all of this: <a href="effort-levels.html">the previous piece</a> covered spending serial compute within one agent, and orchestration spends across agents. Mechanical shards run cheap and low; the judge that decides what ships runs high. The knobs are orthogonal, and mature setups turn both.</p>
+    <p>Three signals point to orchestration, and any one of them is enough. The reading exceeds the window, as in audits and codebase-wide questions. The work shards into independent units whose results are easy to state compactly. Or the answer needs confidence that one perspective cannot provide, so you buy independent perspectives and let them disagree. If none of the three applies, stay in one context, which is cheaper and easier to debug.</p>
+    <p>Effort levels compose with all of this: <a href="effort-levels.html">the reasoning effort piece</a> covers how one agent spends serial compute, and orchestration spends compute across agents. Mechanical shards run cheap and low; the judge that decides what ships runs high. The knobs are orthogonal, and mature setups turn both.</p>
   </div>
 </main>
 
@@ -458,9 +468,10 @@ footer.series a { color: var(--ink-soft); }
   <div class="col">
     <span>Model Mechanics · A field guide to working with LLMs</span>
     <nav aria-label="series">
-      <a href="how-llms-work.html">1 · How a Language Model Works</a>
-      <a href="effort-levels.html">2 · Reasoning Effort</a>
-      <a href="loops-and-skills.html">4 · Loops and Skills</a>
+      <a href="tokenizer.html">Playground · The tokenizer</a>
+      <a href="how-llms-work.html">1 · How a language model works</a>
+      <a href="effort-levels.html">2 · Reasoning effort</a>
+      <a href="loops-and-skills.html">4 · Loops and skills</a>
     </nav>
   </div>
 </footer>
@@ -564,7 +575,7 @@ function timerBag() {
   }
   function run() {
     build();
-    status.textContent = 'Decompose: four scoped prompts, dispatched in parallel';
+    status.textContent = 'Decompose: the orchestrator sends four scoped prompts in parallel';
     parts.edges.forEach(function (e) { e.classList.add('hot'); });
     var progress = [0, 0, 0, 0], finished = [false, false, false, false];
     t.after(600, function () {
@@ -599,7 +610,7 @@ function timerBag() {
             document.getElementById('judge-node').classList.add('done');
             t.after(1000, function () {
               document.getElementById('orch-out').textContent = '→ 3 verified findings, ~600 tokens total';
-              status.textContent = 'Integrate: conclusions enter the orchestrator, the process is discarded';
+              status.textContent = 'Integrate: conclusions enter the orchestrator; the process disappears';
               t.after(3200, run);
             });
           });
@@ -621,7 +632,7 @@ function timerBag() {
       parts.meters.forEach(function (m, i) { m.setAttribute('width', ((WW - 24) * [1, 1, 0.7, 0.9][i]).toFixed(1)); });
       parts.nodes[0].classList.add('done');
       parts.nodes[1].classList.add('dead');
-      status.textContent = 'Workers in parallel; results verified, one rejected, three integrated';
+      status.textContent = 'Workers run in parallel; one result fails verification, and three enter the orchestrator';
     }
   });
 })();
@@ -669,12 +680,12 @@ function timerBag() {
       });
       if (p >= 1) {
         t.clear();
-        note.textContent = 'Workers return ~150 tokens each and are discarded · their contexts stop existing';
+        note.textContent = 'Workers return ~150 tokens each and disappear · their contexts stop existing';
         workerEls.forEach(function (w) { w.wrap.classList.add('faded'); });
         bossFill.style.height = '14%';
         bossPct.textContent = '14%';
         t.after(1400, function () {
-          note.textContent = 'The solo agent now reasons in its last 4% of headroom; the orchestrator has 86%.';
+          note.textContent = 'One agent now reasons in its last 4% of headroom; the orchestrator has 86%.';
           t.after(3000, run);
         });
       }
@@ -695,7 +706,7 @@ function timerBag() {
         w.pct.textContent = [58, 44, 60, 50][i] + '%';
         w.wrap.classList.add('faded');
       });
-      document.getElementById('ledger-note').textContent = 'End state: the solo window is 96% raw material; the orchestrator keeps 86% headroom.';
+      document.getElementById('ledger-note').textContent = 'End state: the one-agent window is 96% raw material; the orchestrator keeps 86% headroom.';
     }
   });
 })();

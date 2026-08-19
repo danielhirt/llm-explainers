@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Loops and Skills</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%3Crect%20width=%2232%22%20height=%2232%22%20rx=%228%22%20fill=%22%230a1020%22/%3E%3Ccircle%20cx=%2210%22%20cy=%2216%22%20r=%223%22%20fill=%22%235d7cff%22/%3E%3Ccircle%20cx=%2218%22%20cy=%2210%22%20r=%223%22%20fill=%22%23ee755f%22/%3E%3Ccircle%20cx=%2222%22%20cy=%2221%22%20r=%223%22%20fill=%22%23efb44d%22/%3E%3Cpath%20d=%22M12%2015L16%2012M19%2013L21%2018M13%2018L19%2020%22%20stroke=%22%23f7f5ef%22%20stroke-width=%221.5%22/%3E%3C/svg%3E">
+<title>Loops and skills</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%3Crect%20width=%2232%22%20height=%2232%22%20fill=%22%23eae7da%22/%3E%3Crect%20x=%221%22%20y=%221%22%20width=%2230%22%20height=%2230%22%20fill=%22none%22%20stroke=%22%231e1d12%22%20stroke-width=%222%22/%3E%3Crect%20x=%226%22%20y=%2218%22%20width=%228%22%20height=%228%22%20fill=%22%233b55c4%22/%3E%3Crect%20x=%2218%22%20y=%2218%22%20width=%228%22%20height=%228%22%20fill=%22%23a8801c%22/%3E%3Cpath%20d=%22M16%206l5%205-5%205-5-5z%22%20fill=%22%23b23b2b%22/%3E%3C/svg%3E">
 <meta name="description" content="The agentic loop that turns a text predictor into a worker, and skills: procedure packaged as loadable files.">
 <style>
 @font-face { font-family: "Geist"; src: url("../fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
@@ -13,70 +13,79 @@
 
 :root,
 [data-theme="light"] {
-  --page: #f7f6f2;
-  --surface: #ffffff;
-  --ink: #111a31;
-  --ink-body: #2b3550;
-  --ink-soft: #4e5b76;
-  --ink-faint: #78839a;
-  --line: rgba(17, 26, 49, 0.12);
-  --line-strong: rgba(17, 26, 49, 0.24);
-  --accent: #4e6ff2;
-  --accent-soft: rgba(78, 111, 242, 0.11);
-  --coral: #df6756;
-  --gold: #d9982d;
-  --gold-soft: rgba(217, 152, 45, 0.13);
-  --code-bg: rgba(17, 26, 49, 0.06);
-  --stage: #0a101f;
-  --stage-ink: #f5f6fb;
-  --stage-muted: #9eaac3;
-  --stage-line: rgba(215, 224, 248, 0.14);
-  --panel-shadow: 0 1px 3px rgba(19, 28, 55, 0.10);
+  --page: #eae7da;
+  --surface: #f3f1e6;
+  --ink: #1e1d12;
+  --ink-body: #3b392a;
+  --ink-soft: #6b6955;
+  --ink-faint: #8c8a75;
+  --line: rgba(30, 29, 18, 0.16);
+  --line-strong: rgba(30, 29, 18, 0.34);
+  --accent: #b23b2b;
+  --accent-soft: rgba(178, 59, 43, 0.10);
+  --coral: #c9503a;
+  --gold: #b9871f;
+  --gold-soft: rgba(185, 135, 31, 0.14);
+  --code-bg: rgba(30, 29, 18, 0.07);
+  --stage: #f3f1e6;
+  --stage-ink: #1e1d12;
+  --stage-muted: #6b6955;
+  --stage-line: rgba(30, 29, 18, 0.16);
+  --cobalt: #3b55c4;
+  --cobalt-soft: rgba(59, 85, 196, 0.12);
+  --hatch: rgba(30, 29, 18, 0.10);
+  --panel-shadow: none;
 }
 
 [data-theme="dark"] {
-  --page: #0d1322;
-  --surface: #161f34;
-  --ink: #f4f4ef;
-  --ink-body: #ced3e2;
-  --ink-soft: #b2bace;
-  --ink-faint: #8792aa;
-  --line: rgba(234, 239, 255, 0.10);
-  --line-strong: rgba(234, 239, 255, 0.20);
-  --accent: #7f98ff;
-  --accent-soft: rgba(127, 152, 255, 0.13);
+  --page: #14130d;
+  --surface: #1d1c14;
+  --ink: #ece9d8;
+  --ink-body: #cdcab6;
+  --ink-soft: #a3a08b;
+  --ink-faint: #7f7d69;
+  --line: rgba(236, 233, 216, 0.13);
+  --line-strong: rgba(236, 233, 216, 0.30);
+  --accent: #e06a50;
+  --accent-soft: rgba(224, 106, 80, 0.13);
   --coral: #ff8a74;
   --gold: #f0b64d;
   --gold-soft: rgba(240, 182, 77, 0.13);
-  --code-bg: rgba(234, 239, 255, 0.08);
-  --stage: #080d1b;
-  --stage-ink: #f7f6f0;
-  --stage-muted: #aab5cc;
-  --stage-line: rgba(220, 228, 250, 0.14);
-  --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  --code-bg: rgba(236, 233, 216, 0.09);
+  --stage: #1d1c14;
+  --stage-ink: #ece9d8;
+  --stage-muted: #a3a08b;
+  --stage-line: rgba(236, 233, 216, 0.14);
+  --cobalt: #8fa2ff;
+  --cobalt-soft: rgba(143, 162, 255, 0.14);
+  --hatch: rgba(236, 233, 216, 0.10);
+  --panel-shadow: none;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    --page: #0d1322;
-    --surface: #161f34;
-    --ink: #f4f4ef;
-    --ink-body: #ced3e2;
-    --ink-soft: #b2bace;
-    --ink-faint: #8792aa;
-    --line: rgba(234, 239, 255, 0.10);
-    --line-strong: rgba(234, 239, 255, 0.20);
-    --accent: #7f98ff;
-    --accent-soft: rgba(127, 152, 255, 0.13);
+    --page: #14130d;
+    --surface: #1d1c14;
+    --ink: #ece9d8;
+    --ink-body: #cdcab6;
+    --ink-soft: #a3a08b;
+    --ink-faint: #7f7d69;
+    --line: rgba(236, 233, 216, 0.13);
+    --line-strong: rgba(236, 233, 216, 0.30);
+    --accent: #e06a50;
+    --accent-soft: rgba(224, 106, 80, 0.13);
     --coral: #ff8a74;
     --gold: #f0b64d;
     --gold-soft: rgba(240, 182, 77, 0.13);
-    --code-bg: rgba(234, 239, 255, 0.08);
-    --stage: #080d1b;
-    --stage-ink: #f7f6f0;
-    --stage-muted: #aab5cc;
-    --stage-line: rgba(220, 228, 250, 0.14);
-    --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+    --code-bg: rgba(236, 233, 216, 0.09);
+    --stage: #1d1c14;
+    --stage-ink: #ece9d8;
+    --stage-muted: #a3a08b;
+    --stage-line: rgba(236, 233, 216, 0.14);
+    --cobalt: #8fa2ff;
+    --cobalt-soft: rgba(143, 162, 255, 0.14);
+    --hatch: rgba(236, 233, 216, 0.10);
+    --panel-shadow: none;
   }
 }
 
@@ -236,8 +245,8 @@ figure.instrument {
   margin: 30px auto;
   padding: 0;
   background: var(--stage);
-  border: 1px solid var(--stage-line);
-  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
   overflow: hidden;
   box-shadow: var(--panel-shadow);
   color: var(--stage-ink);
@@ -249,7 +258,8 @@ figure.instrument {
   gap: 12px;
   min-height: 50px;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--stage-line);
+  border-bottom: 1px solid var(--line-strong);
+  background: repeating-linear-gradient(-45deg, transparent 0 4px, var(--hatch) 4px 5px);
   font-family: "Geist Mono", monospace;
   font-size: 11px;
   color: var(--stage-muted);
@@ -268,14 +278,14 @@ button.fig-btn {
   font-family: "Geist Mono", monospace;
   font-size: 11px;
   color: var(--stage-muted);
-  background: rgba(225, 232, 255, 0.05);
-  border: 1px solid rgba(225, 232, 255, 0.22);
-  border-radius: 5px;
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
   cursor: pointer;
   transition: color 160ms ease, border-color 160ms ease;
 }
 
-button.fig-btn:hover { color: var(--stage-ink); border-color: rgba(141, 162, 255, 0.65); }
+button.fig-btn:hover { color: var(--page); border-color: var(--ink); background: var(--ink); }
 
 .instrument-body { padding: 20px 18px; }
 .instrument-body.scrollx { overflow-x: auto; }
@@ -306,38 +316,38 @@ footer.series a { color: var(--ink-soft); }
 
 /* loop svg */
 #loop-svg { display: block; width: 100%; height: auto; }
-#loop-svg text { font-family: "Geist Mono", monospace; font-size: 11px; fill: #9eaac3; }
-#loop-svg .node { fill: rgba(225, 232, 255, 0.06); stroke: rgba(215, 224, 248, 0.20); transition: stroke 0.35s; }
-#loop-svg .node.hot { stroke: #6f89ff; stroke-width: 1.8; }
+#loop-svg text { font-family: "Geist Mono", monospace; font-size: 11px; fill: var(--stage-muted); }
+#loop-svg .node { fill: var(--code-bg); stroke: var(--line-strong); transition: stroke 0.35s; }
+#loop-svg .node.hot { stroke: var(--cobalt); stroke-width: 1.8; }
 #loop-svg .node.exit { stroke-dasharray: 4 4; }
-#loop-svg .node.exit.hot { stroke: #efb44d; stroke-dasharray: none; }
-#loop-svg .arc { stroke: rgba(215, 224, 248, 0.16); stroke-width: 1.5; fill: none; transition: stroke 0.35s; }
-#loop-svg .arc.hot { stroke: #6f89ff; stroke-width: 2; }
-#loop-svg .arc.exitarc.hot { stroke: #efb44d; }
-#loop-svg .nodelabel { fill: #f5f6fb; font-size: 12px; }
+#loop-svg .node.exit.hot { stroke: var(--gold); stroke-dasharray: none; }
+#loop-svg .arc { stroke: var(--line-strong); stroke-width: 1.5; fill: none; transition: stroke 0.35s; }
+#loop-svg .arc.hot { stroke: var(--cobalt); stroke-width: 2; }
+#loop-svg .arc.exitarc.hot { stroke: var(--gold); }
+#loop-svg .nodelabel { fill: var(--stage-ink); font-size: 12px; }
 #loop-svg .detail { fill: #9cb0ff; font-size: 11px; }
 #loop-meter-wrap { display: flex; align-items: center; gap: 12px; font-family: "Geist Mono", monospace; font-size: 10.5px; color: var(--stage-muted); margin-top: 10px; }
-#loop-meter { flex: 1; height: 8px; background: rgba(225, 232, 255, 0.10); border-radius: 2px; overflow: hidden; }
-#loop-meter-fill { height: 100%; width: 4%; background: #6f89ff; opacity: 0.65; border-radius: 2px; transition: width 0.5s; }
+#loop-meter { flex: 1; height: 8px; background: var(--code-bg); border-radius: 2px; overflow: hidden; }
+#loop-meter-fill { height: 100%; width: 4%; background: var(--cobalt); opacity: 0.65; border-radius: 2px; transition: width 0.5s; }
 #loop-status { text-align: center; font-family: "Geist Mono", monospace; font-size: 11px; color: var(--stage-muted); min-height: 1.2em; margin-top: 10px; }
 /* skills fig */
 #skill-wrap { display: grid; grid-template-columns: 15rem 1fr; gap: 24px; align-items: start; }
 #skill-shelf { display: flex; flex-direction: column; gap: 8px; }
-.skill-card { border: 1px solid rgba(215, 224, 248, 0.18); border-radius: 5px; padding: 7px 11px; font-family: "Geist Mono", monospace; transition: border-color 0.3s, background 0.3s; }
-.skill-card .sk-name { font-size: 11.5px; color: #f5f6fb; }
-.skill-card .sk-desc { font-size: 10px; color: #9eaac3; line-height: 1.45; margin-top: 2px; }
-.skill-card.scan { border-color: #9eaac3; }
-.skill-card.match { border-color: #6f89ff; background: rgba(111, 137, 255, 0.14); }
+.skill-card { border: 1px solid var(--line-strong); border-radius: 5px; padding: 7px 11px; font-family: "Geist Mono", monospace; transition: border-color 0.3s, background 0.3s; }
+.skill-card .sk-name { font-size: 11.5px; color: var(--stage-ink); }
+.skill-card .sk-desc { font-size: 10px; color: var(--stage-muted); line-height: 1.45; margin-top: 2px; }
+.skill-card.scan { border-color: var(--stage-muted); }
+.skill-card.match { border-color: var(--cobalt); background: var(--cobalt-soft); }
 #skill-right { display: flex; flex-direction: column; gap: 14px; min-height: 16rem; }
-#skill-task { font-family: "Geist Mono", monospace; font-size: 12px; padding: 8px 12px; border: 1px solid rgba(239, 180, 77, 0.65); background: rgba(239, 180, 77, 0.10); border-radius: 5px; min-height: 2.4rem; color: #f5f6fb; }
-#skill-task .tlabel { font-size: 9.5px; color: #9eaac3; display: block; }
+#skill-task { font-family: "Geist Mono", monospace; font-size: 12px; padding: 8px 12px; border: 1px solid var(--gold); background: var(--gold-soft); border-radius: 5px; min-height: 2.4rem; color: var(--stage-ink); }
+#skill-task .tlabel { font-size: 9.5px; color: var(--stage-muted); display: block; }
 #skill-steps { display: flex; flex-direction: column; gap: 6px; }
-.skill-step { font-family: "Geist Mono", monospace; font-size: 11px; color: #f5f6fb; background: rgba(225, 232, 255, 0.08); border-radius: 4px; padding: 5px 10px; opacity: 0; transform: translateY(4px); transition: opacity 0.35s, transform 0.35s; }
+.skill-step { font-family: "Geist Mono", monospace; font-size: 11px; color: var(--stage-ink); background: var(--code-bg); border-radius: 4px; padding: 5px 10px; opacity: 0; transform: translateY(4px); transition: opacity 0.35s, transform 0.35s; }
 .skill-step.on { opacity: 1; transform: none; }
-#skill-ctx-wrap { font-family: "Geist Mono", monospace; font-size: 10.5px; color: #9eaac3; margin-top: auto; }
-#skill-ctx { height: 8px; background: rgba(225, 232, 255, 0.10); border-radius: 2px; overflow: hidden; margin-top: 5px; }
-#skill-ctx-fill { height: 100%; width: 3%; background: #6f89ff; opacity: 0.65; border-radius: 2px; transition: width 0.6s; }
-#skill-status { font-family: "Geist Mono", monospace; font-size: 11px; color: #9eaac3; margin-top: 10px; min-height: 1.1em; }
+#skill-ctx-wrap { font-family: "Geist Mono", monospace; font-size: 10.5px; color: var(--stage-muted); margin-top: auto; }
+#skill-ctx { height: 8px; background: var(--code-bg); border-radius: 2px; overflow: hidden; margin-top: 5px; }
+#skill-ctx-fill { height: 100%; width: 3%; background: var(--cobalt); opacity: 0.65; border-radius: 2px; transition: width 0.6s; }
+#skill-status { font-family: "Geist Mono", monospace; font-size: 11px; color: var(--stage-muted); margin-top: 10px; min-height: 1.1em; }
 
 @media (max-width: 680px) {
   body { font-size: 17px; }
@@ -366,14 +376,14 @@ footer.series a { color: var(--ink-soft); }
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
       </button>
     </div>
-    <h1>Loops and Skills</h1>
+    <h1>Loops and skills</h1>
     <p class="dek">The while-loop that turns a text predictor into a worker, and procedure packaged as files it can load.</p>
   </div>
 </header>
 
 <main>
   <div class="col">
-    <p>Nothing in <a href="how-llms-work.html">the transformer</a> acts. It reads tokens and emits tokens, once, and stops. Everything agentic about an "agent", the file edits and the test runs, comes from a plain while-loop wrapped around that function by a piece of ordinary software called the harness. The loop is small enough to sketch in full:</p>
+    <p>Nothing in <a href="how-llms-work.html">the transformer</a> acts. It reads tokens and emits tokens, once, and stops. Everything agentic about an "agent", the file edits and the test runs, comes from a plain while-loop around that function. A piece of ordinary software called the harness runs that loop. The loop is small enough to sketch in full:</p>
     <pre><code>context = [system_prompt, tools_schema, user_request]
 while True:
     output = model(context)          # one forward pass per token
@@ -381,7 +391,7 @@ while True:
         return output                # the model chose to stop
     result = execute(output.tool_call)
     context += [output, result]      # both are just tokens</code></pre>
-    <p>Two things about this loop repay attention. The model never executes anything: it emits a tool call as text, the harness runs it, and the result comes back as more text. And the context grows every lap, which means a long-running loop inherits every property of the context window covered in the first piece: the cost of re-reading grows, retrieval degrades in the middle, and eventually compaction throws away detail. Loops do not escape the window; they run inside it.</p>
+    <p>Two things about this loop repay attention. The model never executes anything: it emits a tool call as text, the harness runs it, and the result comes back as more text. And the context grows every lap, so a long-running loop inherits every property of the context window from the first piece. The cost of re-reading grows, retrieval degrades in the middle, and eventually compaction throws away detail. Loops do not escape the window; they run inside it.</p>
   </div>
 
   <figure class="instrument" id="fig-loop">
@@ -390,7 +400,7 @@ while True:
       <button class="fig-btn" data-ctl aria-label="Pause animation">Pause</button>
     </figcaption>
     <div class="instrument-body scrollx">
-      <svg id="loop-svg" viewBox="0 0 720 356" role="img" aria-label="A cycle: the context feeds the model, the model emits a tool call, the harness executes it, the result appends to the context, until the model exits with an answer"></svg>
+      <svg id="loop-svg" viewBox="0 0 720 356" role="img" aria-label="A cycle: the context feeds the model, the model emits a tool call, the harness executes it, and the result appends to the context. The loop ends when the model answers."></svg>
       <div id="loop-meter-wrap"><span>Context</span><div id="loop-meter"><div id="loop-meter-fill"></div></div><span id="loop-meter-pct">4%</span></div>
       <div id="loop-status"></div>
     </div>
@@ -398,16 +408,16 @@ while True:
   </figure>
 
   <div class="col">
-    <p>The difference between a loop that converges and one that thrashes is mostly the lap body. Verification belongs inside it: an agent that runs the tests after each edit gets steered by real feedback every lap, while one that edits five files and tests at the end has spent four laps guessing. The result tokens are the only steering input the model gets. Make them informative and the loop self-corrects; leave them silent and it drifts.</p>
-    <p>Loops also need a reason to stop. Well-behaved harnesses enforce step caps and token budgets on top of the model's own judgment, because a model that keeps finding one more thing to check will happily spend your budget being diligent. The stop condition is part of the task definition, so state it explicitly.</p>
+    <p>The difference between a loop that converges and one that thrashes is mostly the lap body. Verification belongs inside it. An agent that runs the tests after each edit gets real feedback every lap. An agent that edits five files and tests at the end spends four laps guessing. The result tokens are the only steering input the model gets. Make them informative and the loop self-corrects; leave them silent and it drifts.</p>
+    <p>Loops also need a reason to stop. Well-behaved harnesses enforce step caps and token budgets on top of the model's own judgment. A model that keeps finding one more thing to check will happily spend your budget being diligent. The stop condition is part of the task definition, so state it explicitly.</p>
 
     <h2>Loops that outlive the session</h2>
-    <p>Some loops run longer than any single context: the nightly dependency triage, the agent that watches CI and files issues, the recurring cleanup pass. Two mechanics change at that scale. Scheduling moves to the harness, either a cron-style trigger that starts a fresh agent on a timer or a self-paced loop where the agent finishes a pass and schedules its own wake-up. And state must live outside the model, in files it re-reads on every wake: the weights are frozen, the old context is gone, and whatever the loop learned last night exists only if it was written down. A recurring agent without externalized state re-derives the world from scratch every morning.</p>
-    <p>The rule of thumb for pacing came up in the effort piece in another form: match the spend to the signal. A loop polling every minute for a state that changes daily burns budget observing nothing. When the harness can notify on events, event-driven beats polling outright.</p>
+    <p>Some loops run longer than any single context: the nightly dependency triage, the agent that watches CI and files issues, and the recurring cleanup pass. Two mechanics change at that scale. Scheduling moves to the harness. Either a cron-style trigger starts a fresh agent on a timer, or the agent runs self-paced: it finishes a pass and schedules its own wake-up. And state must live outside the model, in files it re-reads on every wake. The weights are frozen and the old context is gone. Whatever the loop learned last night exists only if the loop wrote it down. A recurring agent without externalized state re-derives the world from scratch every morning.</p>
+    <p>The rule of thumb for pacing came up in the effort piece in another form: match the spend to the signal. A loop that polls every minute for a state that changes daily burns budget and observes nothing. When the harness can notify on events, an event-driven loop beats polling outright.</p>
 
     <h2>Skills: procedure as files</h2>
-    <p>Once agents run in loops, the same instructions start getting retyped. How this team deploys. How to run this repo's flaky test suite. The incident checklist. The obvious fix, pasting all of it into the system prompt, works and then quietly gets expensive: every request pays tokens for every procedure, relevant or never, and the pile grows until it competes with the task for the model's attention.</p>
-    <p>A <strong>skill</strong> is the packaged alternative: a named file of instructions, optionally with reference docs and scripts alongside, registered with the harness under a one-line description. The economics are progressive disclosure. The index of descriptions rides along in every context at a few tokens per skill; the full instructions load only when a task matches. A library of forty procedures costs a few hundred always-on tokens instead of forty thousand.</p>
+    <p>Once agents run in loops, you start retyping the same instructions. How this team deploys. How to run this repo's flaky test suite. The incident checklist. The obvious fix, pasting all of it into the system prompt, works and then quietly gets expensive. Every request pays tokens for every procedure, relevant or not. The pile grows until it competes with the task for the model's attention.</p>
+    <p>A <strong>skill</strong> is the packaged alternative: a named file of instructions, optionally with reference docs and scripts alongside. The harness registers it under a one-line description. The economics are progressive disclosure. The index of descriptions rides along in every context at a few tokens per skill; the full instructions load only when a task matches. A library of 40 procedures costs a few hundred always-on tokens instead of 40,000.</p>
   </div>
 
   <figure class="instrument" id="fig-skill">
@@ -426,20 +436,20 @@ while True:
         </div>
       </div>
     </div>
-    <figcaption class="below">The shelf's one-line descriptions are always in context; the procedure itself loads only when a task matches it. The description is all the model sees when routing.</figcaption>
+    <figcaption class="below">The shelf's one-line descriptions are always in context; the procedure itself loads only when a task matches it. The description is all the model sees when it routes a task.</figcaption>
   </figure>
 
   <div class="col">
-    <p>Because a skill is a file, it inherits everything files already do well. It lives in a repo, versioned and reviewable in a pull request. Editing it changes the agent's behavior on the next run, with no retraining and no deploy. A teammate's hard-won procedure becomes your agent's procedure by copying a directory. Compare the alternatives: fine-tuning bakes procedure into weights where nobody can read or patch it, and prompt-stuffing pays rent on every request. Files sit in the sweet spot, cheap to change and auditable by anyone who can read.</p>
-    <p>It helps to keep the three kinds of instruction distinct, because they fail differently when mixed. The prompt states the task at hand. Memory holds durable facts about this project and this user. A skill holds a reusable procedure for a kind of task. When procedure leaks into memory or tasks get baked into skills, the agent starts applying yesterday's specifics to tomorrow's work.</p>
+    <p>Because a skill is a file, it inherits everything files already do well. It lives in a repo, versioned and reviewable in a pull request. Editing it changes the agent's behavior on the next run, with no retraining and no deploy. Copy a directory, and a teammate's hard-won procedure becomes your agent's procedure. Compare the alternatives: fine-tuning bakes procedure into weights where nobody can read or patch it, and prompt-stuffing pays rent on every request. Files sit in the sweet spot, cheap to change and auditable by anyone who can read.</p>
+    <p>It helps to keep the three kinds of instruction distinct, because they fail differently when you mix them. The prompt states the task at hand. Memory holds durable facts about this project and this user. A skill holds a reusable procedure for a kind of task. When procedure leaks into memory or you bake tasks into skills, the agent starts applying yesterday's specifics to tomorrow's work.</p>
 
     <h2>Loops and skills compose</h2>
-    <p>The two ideas meet in the recurring agent: a scheduled loop whose body is a skill. The cron entry says "every night at two, run the dependency triage skill" and the skill says what triage means here: which manifests to check, what counts as urgent, where to file what it finds, what to write down for tomorrow's run. The schedule is configuration and the procedure is prose, both in version control and both editable in thirty seconds. A surprising amount of operational automation reduces to this shape.</p>
+    <p>The two ideas meet in the recurring agent: a scheduled loop whose body is a skill. The cron entry says "every night at 2:00, run the dependency triage skill". The skill says what triage means here: which manifests to check, what counts as urgent, where to file findings, and what to write down for tomorrow's run. The schedule is configuration and the procedure is prose, both in version control and both editable in 30 seconds. A surprising amount of operational automation reduces to this shape.</p>
 
     <h2>Working defaults</h2>
     <ul>
       <li>Write the skill the second time you type the same instructions. The first time is a task; the second is a pattern with a third occurrence coming.</li>
-      <li>Spend effort on the description line. It is the only part the model sees when deciding whether to load the skill, so a vague description is an unreachable skill.</li>
+      <li>Spend effort on the description line. It is the only part the model sees when it decides whether to load the skill, so a vague description is an unreachable skill.</li>
       <li>Give every loop a budget and a stop condition, and put verification inside the lap rather than after it.</li>
       <li>For anything recurring, decide what the loop writes down for its future self. That file is the loop's memory, so give its format the same care as the schedule.</li>
     </ul>
@@ -451,9 +461,10 @@ while True:
   <div class="col">
     <span>Model Mechanics · A field guide to working with LLMs</span>
     <nav aria-label="series">
-      <a href="how-llms-work.html">1 · How a Language Model Works</a>
-      <a href="effort-levels.html">2 · Reasoning Effort</a>
-      <a href="orchestration-and-subagents.html">3 · Orchestration and Subagents</a>
+      <a href="tokenizer.html">Playground · The tokenizer</a>
+      <a href="how-llms-work.html">1 · How a language model works</a>
+      <a href="effort-levels.html">2 · Reasoning effort</a>
+      <a href="orchestration-and-subagents.html">3 · Orchestration and subagents</a>
     </nav>
   </div>
 </footer>
@@ -575,7 +586,7 @@ function timerBag() {
     t.after(1100, function () {
       setHot(['model', 'arc:mt', 'tool']);
       labels.detail.textContent = L.tool;
-      status.textContent = 'A tool call is emitted as tokens · the harness executes it';
+      status.textContent = 'The model emits a tool call as tokens · the harness executes it';
       t.after(1300, function () {
         setHot(['tool', 'arc:tr', 'result']);
         labels.detail.textContent = L.result;

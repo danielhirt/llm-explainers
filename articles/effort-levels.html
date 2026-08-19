@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Reasoning Effort</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%3Crect%20width=%2232%22%20height=%2232%22%20rx=%228%22%20fill=%22%230a1020%22/%3E%3Ccircle%20cx=%2210%22%20cy=%2216%22%20r=%223%22%20fill=%22%235d7cff%22/%3E%3Ccircle%20cx=%2218%22%20cy=%2210%22%20r=%223%22%20fill=%22%23ee755f%22/%3E%3Ccircle%20cx=%2222%22%20cy=%2221%22%20r=%223%22%20fill=%22%23efb44d%22/%3E%3Cpath%20d=%22M12%2015L16%2012M19%2013L21%2018M13%2018L19%2020%22%20stroke=%22%23f7f5ef%22%20stroke-width=%221.5%22/%3E%3C/svg%3E">
+<title>Reasoning effort</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%3Crect%20width=%2232%22%20height=%2232%22%20fill=%22%23eae7da%22/%3E%3Crect%20x=%221%22%20y=%221%22%20width=%2230%22%20height=%2230%22%20fill=%22none%22%20stroke=%22%231e1d12%22%20stroke-width=%222%22/%3E%3Crect%20x=%226%22%20y=%2218%22%20width=%228%22%20height=%228%22%20fill=%22%233b55c4%22/%3E%3Crect%20x=%2218%22%20y=%2218%22%20width=%228%22%20height=%228%22%20fill=%22%23a8801c%22/%3E%3Cpath%20d=%22M16%206l5%205-5%205-5-5z%22%20fill=%22%23b23b2b%22/%3E%3C/svg%3E">
 <meta name="description" content="What a model's effort knob turns, why its returns are concave, and how to pick a level.">
 <style>
 @font-face { font-family: "Geist"; src: url("../fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
@@ -13,70 +13,79 @@
 
 :root,
 [data-theme="light"] {
-  --page: #f7f6f2;
-  --surface: #ffffff;
-  --ink: #111a31;
-  --ink-body: #2b3550;
-  --ink-soft: #4e5b76;
-  --ink-faint: #78839a;
-  --line: rgba(17, 26, 49, 0.12);
-  --line-strong: rgba(17, 26, 49, 0.24);
-  --accent: #4e6ff2;
-  --accent-soft: rgba(78, 111, 242, 0.11);
-  --coral: #df6756;
-  --gold: #d9982d;
-  --gold-soft: rgba(217, 152, 45, 0.13);
-  --code-bg: rgba(17, 26, 49, 0.06);
-  --stage: #0a101f;
-  --stage-ink: #f5f6fb;
-  --stage-muted: #9eaac3;
-  --stage-line: rgba(215, 224, 248, 0.14);
-  --panel-shadow: 0 1px 3px rgba(19, 28, 55, 0.10);
+  --page: #eae7da;
+  --surface: #f3f1e6;
+  --ink: #1e1d12;
+  --ink-body: #3b392a;
+  --ink-soft: #6b6955;
+  --ink-faint: #8c8a75;
+  --line: rgba(30, 29, 18, 0.16);
+  --line-strong: rgba(30, 29, 18, 0.34);
+  --accent: #b23b2b;
+  --accent-soft: rgba(178, 59, 43, 0.10);
+  --coral: #c9503a;
+  --gold: #b9871f;
+  --gold-soft: rgba(185, 135, 31, 0.14);
+  --code-bg: rgba(30, 29, 18, 0.07);
+  --stage: #f3f1e6;
+  --stage-ink: #1e1d12;
+  --stage-muted: #6b6955;
+  --stage-line: rgba(30, 29, 18, 0.16);
+  --cobalt: #3b55c4;
+  --cobalt-soft: rgba(59, 85, 196, 0.12);
+  --hatch: rgba(30, 29, 18, 0.10);
+  --panel-shadow: none;
 }
 
 [data-theme="dark"] {
-  --page: #0d1322;
-  --surface: #161f34;
-  --ink: #f4f4ef;
-  --ink-body: #ced3e2;
-  --ink-soft: #b2bace;
-  --ink-faint: #8792aa;
-  --line: rgba(234, 239, 255, 0.10);
-  --line-strong: rgba(234, 239, 255, 0.20);
-  --accent: #7f98ff;
-  --accent-soft: rgba(127, 152, 255, 0.13);
+  --page: #14130d;
+  --surface: #1d1c14;
+  --ink: #ece9d8;
+  --ink-body: #cdcab6;
+  --ink-soft: #a3a08b;
+  --ink-faint: #7f7d69;
+  --line: rgba(236, 233, 216, 0.13);
+  --line-strong: rgba(236, 233, 216, 0.30);
+  --accent: #e06a50;
+  --accent-soft: rgba(224, 106, 80, 0.13);
   --coral: #ff8a74;
   --gold: #f0b64d;
   --gold-soft: rgba(240, 182, 77, 0.13);
-  --code-bg: rgba(234, 239, 255, 0.08);
-  --stage: #080d1b;
-  --stage-ink: #f7f6f0;
-  --stage-muted: #aab5cc;
-  --stage-line: rgba(220, 228, 250, 0.14);
-  --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  --code-bg: rgba(236, 233, 216, 0.09);
+  --stage: #1d1c14;
+  --stage-ink: #ece9d8;
+  --stage-muted: #a3a08b;
+  --stage-line: rgba(236, 233, 216, 0.14);
+  --cobalt: #8fa2ff;
+  --cobalt-soft: rgba(143, 162, 255, 0.14);
+  --hatch: rgba(236, 233, 216, 0.10);
+  --panel-shadow: none;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    --page: #0d1322;
-    --surface: #161f34;
-    --ink: #f4f4ef;
-    --ink-body: #ced3e2;
-    --ink-soft: #b2bace;
-    --ink-faint: #8792aa;
-    --line: rgba(234, 239, 255, 0.10);
-    --line-strong: rgba(234, 239, 255, 0.20);
-    --accent: #7f98ff;
-    --accent-soft: rgba(127, 152, 255, 0.13);
+    --page: #14130d;
+    --surface: #1d1c14;
+    --ink: #ece9d8;
+    --ink-body: #cdcab6;
+    --ink-soft: #a3a08b;
+    --ink-faint: #7f7d69;
+    --line: rgba(236, 233, 216, 0.13);
+    --line-strong: rgba(236, 233, 216, 0.30);
+    --accent: #e06a50;
+    --accent-soft: rgba(224, 106, 80, 0.13);
     --coral: #ff8a74;
     --gold: #f0b64d;
     --gold-soft: rgba(240, 182, 77, 0.13);
-    --code-bg: rgba(234, 239, 255, 0.08);
-    --stage: #080d1b;
-    --stage-ink: #f7f6f0;
-    --stage-muted: #aab5cc;
-    --stage-line: rgba(220, 228, 250, 0.14);
-    --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+    --code-bg: rgba(236, 233, 216, 0.09);
+    --stage: #1d1c14;
+    --stage-ink: #ece9d8;
+    --stage-muted: #a3a08b;
+    --stage-line: rgba(236, 233, 216, 0.14);
+    --cobalt: #8fa2ff;
+    --cobalt-soft: rgba(143, 162, 255, 0.14);
+    --hatch: rgba(236, 233, 216, 0.10);
+    --panel-shadow: none;
   }
 }
 
@@ -236,8 +245,8 @@ figure.instrument {
   margin: 30px auto;
   padding: 0;
   background: var(--stage);
-  border: 1px solid var(--stage-line);
-  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
   overflow: hidden;
   box-shadow: var(--panel-shadow);
   color: var(--stage-ink);
@@ -249,7 +258,8 @@ figure.instrument {
   gap: 12px;
   min-height: 50px;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--stage-line);
+  border-bottom: 1px solid var(--line-strong);
+  background: repeating-linear-gradient(-45deg, transparent 0 4px, var(--hatch) 4px 5px);
   font-family: "Geist Mono", monospace;
   font-size: 11px;
   color: var(--stage-muted);
@@ -268,14 +278,14 @@ button.fig-btn {
   font-family: "Geist Mono", monospace;
   font-size: 11px;
   color: var(--stage-muted);
-  background: rgba(225, 232, 255, 0.05);
-  border: 1px solid rgba(225, 232, 255, 0.22);
-  border-radius: 5px;
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
   cursor: pointer;
   transition: color 160ms ease, border-color 160ms ease;
 }
 
-button.fig-btn:hover { color: var(--stage-ink); border-color: rgba(141, 162, 255, 0.65); }
+button.fig-btn:hover { color: var(--page); border-color: var(--ink); background: var(--ink); }
 
 .instrument-body { padding: 20px 18px; }
 .instrument-body.scrollx { overflow-x: auto; }
@@ -312,28 +322,28 @@ footer.series a { color: var(--ink-soft); }
   font-family: "Geist Mono", monospace;
   font-size: 11px;
   color: var(--stage-muted);
-  background: rgba(225, 232, 255, 0.05);
-  border: 1px solid rgba(225, 232, 255, 0.22);
-  border-radius: 5px;
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
   cursor: pointer;
   transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
 }
-.task-btn:hover { color: var(--stage-ink); border-color: rgba(141, 162, 255, 0.65); }
-.task-btn[aria-pressed="true"] { color: #ffffff; border-color: #6c86f7; background: rgba(78, 111, 242, 0.72); }
+.task-btn:hover { color: var(--page); border-color: var(--ink); background: var(--ink); }
+.task-btn[aria-pressed="true"] { color: var(--page); border-color: var(--ink); background: var(--ink); }
 #effort-svg { display: block; width: 100%; height: auto; }
-#effort-svg text { font-family: "Geist Mono", monospace; font-size: 11px; fill: #9eaac3; }
-#effort-svg .grid { stroke: rgba(215, 224, 248, 0.10); stroke-width: 1; }
-#effort-svg .axis { stroke: #9eaac3; stroke-width: 1; }
-#effort-svg .curve { stroke: #6f89ff; stroke-width: 2; fill: none; }
-#effort-svg .curvefill { fill: rgba(111, 137, 255, 0.14); }
-#effort-svg .guide { stroke: #9eaac3; stroke-width: 1; stroke-dasharray: 2 4; opacity: 0.55; }
-#effort-svg .marker { fill: #efb44d; stroke: #0a101f; stroke-width: 2; }
-#effort-svg .marker-line { stroke: #efb44d; stroke-width: 1; stroke-dasharray: 3 3; }
+#effort-svg text { font-family: "Geist Mono", monospace; font-size: 11px; fill: var(--stage-muted); }
+#effort-svg .grid { stroke: var(--code-bg); stroke-width: 1; }
+#effort-svg .axis { stroke: var(--stage-muted); stroke-width: 1; }
+#effort-svg .curve { stroke: var(--cobalt); stroke-width: 2; fill: none; }
+#effort-svg .curvefill { fill: var(--cobalt-soft); }
+#effort-svg .guide { stroke: var(--stage-muted); stroke-width: 1; stroke-dasharray: 2 4; opacity: 0.55; }
+#effort-svg .marker { fill: var(--gold); stroke: var(--stage); stroke-width: 2; }
+#effort-svg .marker-line { stroke: var(--gold); stroke-width: 1; stroke-dasharray: 3 3; }
 #effort-controls { display: flex; align-items: center; gap: 12px; font-family: "Geist Mono", monospace; font-size: 11px; color: var(--stage-muted); margin: 14px 0 6px; flex-wrap: wrap; }
-#effort-controls input[type=range] { flex: 1; min-width: 10rem; accent-color: #6f89ff; }
+#effort-controls input[type=range] { flex: 1; min-width: 10rem; accent-color: var(--cobalt); }
 #effort-reads { display: flex; gap: 22px; font-family: "Geist Mono", monospace; font-size: 11px; color: var(--stage-muted); flex-wrap: wrap; margin-top: 10px; }
 #effort-reads b { color: var(--stage-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-#effort-reads .warmread b { color: #ffd989; }
+#effort-reads .warmread b { color: var(--gold); }
 
 @media (max-width: 680px) {
   body { font-size: 17px; }
@@ -361,23 +371,23 @@ footer.series a { color: var(--ink-soft); }
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
       </button>
     </div>
-    <h1>Reasoning Effort</h1>
+    <h1>Reasoning effort</h1>
     <p class="dek">What the effort knob turns, why its returns flatten, and how to pick a level.</p>
   </div>
 </header>
 
 <main>
   <div class="col">
-    <p>Most frontier models now ship with a version of the same knob. Claude exposes extended thinking with a token budget, and coding harnesses wrap it in levels with names like <code>low</code>, <code>medium</code>, <code>high</code>, and <code>max</code>; OpenAI models take a <code>reasoning_effort</code> parameter. Behind every one of these labels sits the same quantity: how much private scratch work the model may do before it starts the answer you see.</p>
-    <p>Engineers tend to treat the knob superstitiously, either pinned at max "to be safe" or left untouched. It deserves better, because it maps to something mechanical, its returns have a knowable shape, and misjudging it is either money and minutes wasted or a wrong answer delivered confidently.</p>
+    <p>Most frontier models now ship with a version of the same knob. Claude exposes extended thinking with a token budget, and coding harnesses wrap it in levels with names like <code>low</code>, <code>medium</code>, <code>high</code>, and <code>max</code>. OpenAI models take a <code>reasoning_effort</code> parameter. Behind each label sits the same quantity: how much private scratch work the model can do before it starts the answer you see.</p>
+    <p>Engineers tend to treat the knob superstitiously: they pin it at max "to be safe" or never touch it. It deserves better. The knob maps to something mechanical, and its returns have a knowable shape. Misjudge it, and you waste money and minutes, or the model delivers a wrong answer with confidence.</p>
 
     <h2>What the knob turns</h2>
-    <p><a href="how-llms-work.html">The first piece in this series</a> covered the constraint that makes effort interesting: a transformer spends a fixed amount of compute per token. One forward pass through the stack, roughly two FLOPs per parameter, whether the token completes boilerplate or carries the crux of a proof. There is no loop inside the architecture where a model could quietly think harder about a hard token. Depth is fixed at inference; width is fixed; one pass is one pass.</p>
-    <p>The only way to give a model more computation is to give it more tokens, and that is the entire mechanism. Raising effort raises the budget of <strong>thinking tokens</strong>: text the model generates for itself, conditioned on like any other output, but held back from the visible reply. Each thinking token is one more forward pass whose result lands back in the context, available to every pass that follows. Intermediate conclusions become inputs. A model working through a race condition can name the interleaving, check it against the lock order, discard it, and try another, and each of those steps is real computation the answer-so-far gets to build on.</p>
+    <p><a href="how-llms-work.html">The first piece in this series</a> covered the constraint that makes effort interesting: a transformer spends a fixed amount of compute per token. One forward pass through the stack costs roughly two floating-point operations (FLOPs) per parameter, whether the token completes boilerplate or carries the crux of a proof. There is no loop inside the architecture where a model can quietly think harder about a hard token. Depth is fixed at inference; width is fixed; one pass is one pass.</p>
+    <p>The only way to give a model more compute is to give it more tokens, and that is the entire mechanism. Raising effort raises the budget of <strong>thinking tokens</strong>: text the model generates for itself, conditions on like any other output, but holds back from the visible reply. Each thinking token is one more forward pass whose result lands back in the context, available to every pass that follows. Intermediate conclusions become inputs. A model working through a race condition can name the interleaving, check it against the lock order, discard it, and try another. Each of those steps is real compute that every later pass builds on.</p>
     <p>Nothing else changes. Same weights, same knowledge, same context. Effort buys serial depth, one extra step at a time.</p>
 
     <h2>The shape of the returns</h2>
-    <p>Spending is linear: token cost and wall-clock latency grow in direct proportion to the budget. The return is anything but. Quality as a function of thinking budget is concave, it climbs steeply while the model still has genuine steps to work through and flattens once it runs out of them. Where the flattening happens depends on the task, and that dependence is the entire skill of setting the knob.</p>
+    <p>Spending is linear: token cost and wall-clock latency grow in direct proportion to the budget. The return is not linear. Quality as a function of thinking budget is concave. It climbs steeply while the model still has genuine steps to work through, and it flattens once it runs out of them. Where the flattening happens depends on the task, and that dependence is the entire skill of setting the knob.</p>
   </div>
 
   <figure class="instrument" id="fig-effort">
@@ -403,43 +413,43 @@ footer.series a { color: var(--ink-soft); }
         <span class="warmread">Marginal gain of next 1k tokens <b id="read-marginal">…</b></span>
       </div>
     </div>
-    <figcaption class="below">Curves are illustrative; the shape is the point. Dashed verticals mark where typical effort levels land. Note how the saturation point moves with the task while cost stays linear in the budget.</figcaption>
+    <figcaption class="below">Curves are illustrative; the shape is the point. Dashed verticals mark where typical effort levels land. The saturation point moves with the task while cost stays linear in the budget.</figcaption>
   </figure>
 
   <div class="col">
     <p>Three regimes show up in practice, and the figure sketches one task from each:</p>
     <ul>
-      <li><strong>Flat from the start.</strong> A mechanical rename has no multi-step structure. The model's first read of the problem contains the answer, and additional thinking mostly restates it. Extra budget here buys latency, and occasionally worse: models given room to deliberate on trivial questions sometimes talk themselves out of a correct first take.</li>
+      <li><strong>Flat from the start.</strong> A mechanical rename has no multi-step structure. The model's first read of the problem contains the answer, and additional thinking mostly restates it. Extra budget here buys latency, and occasionally worse: models with room to deliberate on trivial questions sometimes talk themselves out of a correct first take.</li>
       <li><strong>Steep, then saturating.</strong> A mid-size feature rewards enough thinking to plan the change, check the interfaces it touches, and catch one or two interactions. Past that, the plan stops improving before the tokens stop flowing.</li>
-      <li><strong>Steep for a long time.</strong> A concurrency bug, a cross-cutting design decision, a security review: tasks whose answer sits behind a chain of dependent deductions keep paying for depth, because each thinking pass extends the chain instead of rephrasing it.</li>
+      <li><strong>Steep for a long time.</strong> A concurrency bug, a cross-cutting design decision, a security review: tasks whose answer sits behind a chain of dependent deductions keep paying for depth. Each thinking pass extends the chain instead of rephrasing it.</li>
     </ul>
-    <p>One more property matters: effort cannot add what the weights and the context lack. If the model has never seen your internal framework, no thinking budget will derive it. When a failure looks like missing knowledge, the fix is context or a different model, and when it looks like skipped steps, the fix is effort. Learning to tell those two failure smells apart pays for itself quickly.</p>
+    <p>One more property matters: effort cannot add what the weights and the context lack. If the model never saw your internal framework, no thinking budget will derive it. When a failure looks like missing knowledge, the fix is context or a different model. When it looks like skipped steps, the fix is effort. Learning to tell those two failure smells apart pays for itself quickly.</p>
 
     <h2>Picking a level</h2>
-    <p>Two questions do most of the work: how long is the chain of dependent steps between the problem and the answer, and what does a wrong answer cost net of how cheaply you can catch it? Shallow, self-verifying tasks go low. Deep ones, and any task expensive to be wrong about, go high. Everything else sits in the middle, which is why the middle is the default.</p>
+    <p>Two questions do most of the work. How long is the chain of dependent steps between the problem and the answer? What does a wrong answer cost once you account for how cheaply you can catch it? Shallow, self-verifying tasks go low. Deep ones, and any task expensive to be wrong about, go high. Everything else sits in the middle, which is why the middle is the default.</p>
     <div class="tablewrap">
     <table>
       <thead><tr><th>Level</th><th>Reach for it when</th><th>Examples</th></tr></thead>
       <tbody>
-        <tr><td>low</td><td>the task is mechanical, reversible, and its output is checked by tooling anyway</td><td>renames, formatting, boilerplate, config edits, summarizing a diff</td></tr>
+        <tr><td>low</td><td>the task is mechanical, reversible, and tooling checks its output anyway</td><td>renames, formatting, boilerplate, config edits, summarizing a diff</td></tr>
         <tr><td>medium</td><td>ordinary engineering work with a few interacting parts; the daily default</td><td>a scoped feature, a straightforward bug, test writing, code review of a small change</td></tr>
         <tr><td>high</td><td>the answer sits behind several dependent deductions, or spans systems</td><td>debugging heisenbugs, API design, performance work, security review</td></tr>
         <tr><td>max</td><td>one shot at a correctness-critical answer, and verification is expensive</td><td>migration plans, concurrency invariants, incident root-cause under pressure</td></tr>
       </tbody>
     </table>
     </div>
-    <p>Calibrate against the transcript. When the visible reasoning mostly restates the prompt, the budget is too high for the task; when an answer arrives fast with an unexamined assumption in the middle of it, the budget was too low. Both smells are easier to read than any rule of thumb.</p>
+    <p>Calibrate against the transcript. When the visible reasoning mostly restates the prompt, the budget is too high for the task. When an answer arrives fast with an unexamined assumption in the middle of it, the budget was too low. Both smells are easier to read than any rule of thumb.</p>
 
     <h2>Effort is not the same axis as model choice</h2>
-    <p>Raising effort and upgrading the model both cost more, so they get conflated, and they should not be. Effort scales <em>serial</em> compute: more dependent steps on the same machinery. A stronger model improves the machinery itself: better priors and better judgment at every step. A small model at max effort will diligently explore a chain of wrong turns; a strong model at low effort will make one excellent snap judgment and miss an interaction it never looked for.</p>
-    <p>A third option competes with both: sampling. For tasks whose answers are cheap to verify, several low-effort attempts plus a checker can beat one max-effort attempt on both cost and reliability, since independent samples fail differently while one long deliberation fails as a unit. That pattern, spending tokens across attempts rather than within one, is where <a href="orchestration-and-subagents.html">orchestration</a> starts.</p>
+    <p>Raising effort and upgrading the model both cost more, so engineers conflate them, and they should not. Effort scales <em>serial</em> compute: more dependent steps on the same machinery. A stronger model improves the machinery itself: better priors and better judgment at every step. A small model at max effort will diligently explore a chain of wrong turns. A strong model at low effort will make one excellent snap judgment and miss an interaction it never looked for.</p>
+    <p>A third option competes with both: sampling. For tasks whose answers are cheap to verify, several low-effort attempts plus a checker can beat one max-effort attempt on both cost and reliability. Independent samples fail differently, while one long deliberation fails as a unit. That pattern, spending tokens across attempts rather than within one, is where <a href="orchestration-and-subagents.html">orchestration</a> starts.</p>
 
     <h2>Defaults that hold up</h2>
     <ul>
       <li>Set the session default to medium and deviate per task, in either direction, on the two-question test above.</li>
       <li>Spend effort where verification is weak. If a test suite will catch failure in seconds, low effort plus the suite outperforms max effort without it.</li>
       <li>Treat a max-effort run whose thinking you never sampled as unreviewed work product.</li>
-      <li>When a high-effort answer still misses, stop raising effort. The bottleneck has moved to context or model, and more budget will explore the same gaps more thoroughly.</li>
+      <li>When a high-effort answer still misses, stop raising effort. The bottleneck moved to context or model, and more budget will explore the same gaps more thoroughly.</li>
     </ul>
   </div>
 </main>
@@ -448,9 +458,10 @@ footer.series a { color: var(--ink-soft); }
   <div class="col">
     <span>Model Mechanics · A field guide to working with LLMs</span>
     <nav aria-label="series">
-      <a href="how-llms-work.html">1 · How a Language Model Works</a>
-      <a href="orchestration-and-subagents.html">3 · Orchestration and Subagents</a>
-      <a href="loops-and-skills.html">4 · Loops and Skills</a>
+      <a href="tokenizer.html">Playground · The tokenizer</a>
+      <a href="how-llms-work.html">1 · How a language model works</a>
+      <a href="orchestration-and-subagents.html">3 · Orchestration and subagents</a>
+      <a href="loops-and-skills.html">4 · Loops and skills</a>
     </nav>
   </div>
 </footer>
@@ -514,7 +525,7 @@ function draw() {
   mk('path', { d: d + ' L ' + x(XMAX) + ' ' + y(0) + ' L ' + x(0) + ' ' + y(0) + ' Z', 'class': 'curvefill', stroke: 'none' });
   mk('path', { d: d, 'class': 'curve' });
   var qe = q(current, XMAX);
-  mk('circle', { cx: x(XMAX), cy: y(qe), r: 3.5, fill: '#6f89ff' });
+  mk('circle', { cx: x(XMAX), cy: y(qe), r: 3.5, fill: 'var(--cobalt)' });
   mk('text', { x: x(XMAX) + 8, y: y(qe) + 4 }, TASKS[current].label);
   var b = +range.value;
   var qb = q(current, b);

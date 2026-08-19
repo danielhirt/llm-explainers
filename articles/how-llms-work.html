@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="A technical visual explanation of a decoder-only language model, covering corpus construction, tokenization, embeddings, transformers, pre-training, and generation.">
 <meta name="color-scheme" content="light dark">
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%3Crect%20width=%2232%22%20height=%2232%22%20rx=%228%22%20fill=%22%230a1020%22/%3E%3Ccircle%20cx=%2210%22%20cy=%2216%22%20r=%223%22%20fill=%22%235d7cff%22/%3E%3Ccircle%20cx=%2218%22%20cy=%2210%22%20r=%223%22%20fill=%22%23ee755f%22/%3E%3Ccircle%20cx=%2222%22%20cy=%2221%22%20r=%223%22%20fill=%22%23efb44d%22/%3E%3Cpath%20d=%22M12%2015L16%2012M19%2013L21%2018M13%2018L19%2020%22%20stroke=%22%23f7f5ef%22%20stroke-width=%221.5%22/%3E%3C/svg%3E">
-<title>Inside an LLM: Corpus to Next Token</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%3Crect%20width=%2232%22%20height=%2232%22%20fill=%22%23eae7da%22/%3E%3Crect%20x=%221%22%20y=%221%22%20width=%2230%22%20height=%2230%22%20fill=%22none%22%20stroke=%22%231e1d12%22%20stroke-width=%222%22/%3E%3Crect%20x=%226%22%20y=%2218%22%20width=%228%22%20height=%228%22%20fill=%22%233b55c4%22/%3E%3Crect%20x=%2218%22%20y=%2218%22%20width=%228%22%20height=%228%22%20fill=%22%23a8801c%22/%3E%3Cpath%20d=%22M16%206l5%205-5%205-5-5z%22%20fill=%22%23b23b2b%22/%3E%3C/svg%3E">
+<title>Inside an LLM: corpus to next token</title>
 <style>
 @font-face {
   font-family: "Geist";
@@ -25,61 +25,76 @@
 
 :root,
 [data-theme="light"] {
-  --page: #f7f6f2;
-  --surface: #ffffff;
-  --ink: #111a31;
-  --ink-body: #2b3550;
-  --ink-soft: #4e5b76;
-  --ink-faint: #78839a;
-  --line: rgba(17, 26, 49, 0.12);
-  --line-strong: rgba(17, 26, 49, 0.24);
-  --accent: #4e6ff2;
-  --coral: #df6756;
-  --gold: #d9982d;
-  --stage: #0c1428;
-  --stage-ink: #f5f6fb;
-  --stage-muted: #a3aecf;
-  --stage-line: rgba(215, 224, 248, 0.14);
-  --panel-shadow: 0 1px 3px rgba(19, 28, 55, 0.10);
+  --page: #eae7da;
+  --surface: #f3f1e6;
+  --ink: #1e1d12;
+  --ink-body: #3b392a;
+  --ink-soft: #6b6955;
+  --ink-faint: #8c8a75;
+  --line: rgba(30, 29, 18, 0.16);
+  --line-strong: rgba(30, 29, 18, 0.34);
+  --accent: #b23b2b;
+  --coral: #c9503a;
+  --gold: #b9871f;
+  --stage: #f3f1e6;
+  --stage-ink: #1e1d12;
+  --stage-muted: #6b6955;
+  --stage-line: rgba(30, 29, 18, 0.16);
+  --cobalt: #3b55c4;
+  --cobalt-soft: rgba(59, 85, 196, 0.10);
+  --cobalt-line: rgba(59, 85, 196, 0.5);
+  --gold-soft: rgba(185, 135, 31, 0.14);
+  --hatch: rgba(30, 29, 18, 0.10);
+  --panel-shadow: none;
 }
 
 [data-theme="dark"] {
-  --page: #0d1322;
-  --surface: #161f34;
-  --ink: #f4f4ef;
-  --ink-body: #ced3e2;
-  --ink-soft: #b2bace;
-  --ink-faint: #8792aa;
-  --line: rgba(234, 239, 255, 0.10);
-  --line-strong: rgba(234, 239, 255, 0.20);
-  --accent: #7f98ff;
+  --page: #14130d;
+  --surface: #1d1c14;
+  --ink: #ece9d8;
+  --ink-body: #cdcab6;
+  --ink-soft: #a3a08b;
+  --ink-faint: #7f7d69;
+  --line: rgba(236, 233, 216, 0.13);
+  --line-strong: rgba(236, 233, 216, 0.30);
+  --accent: #e06a50;
   --coral: #ff8a74;
   --gold: #f0b64d;
-  --stage: #0a1122;
-  --stage-ink: #f7f6f0;
-  --stage-muted: #aab5cc;
-  --stage-line: rgba(220, 228, 250, 0.14);
-  --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  --stage: #1d1c14;
+  --stage-ink: #ece9d8;
+  --stage-muted: #a3a08b;
+  --stage-line: rgba(236, 233, 216, 0.14);
+  --cobalt: #8fa2ff;
+  --cobalt-soft: rgba(143, 162, 255, 0.12);
+  --cobalt-line: rgba(143, 162, 255, 0.5);
+  --gold-soft: rgba(240, 182, 77, 0.13);
+  --hatch: rgba(236, 233, 216, 0.10);
+  --panel-shadow: none;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    --page: #0d1322;
-    --surface: #161f34;
-    --ink: #f4f4ef;
-    --ink-body: #ced3e2;
-    --ink-soft: #b2bace;
-    --ink-faint: #8792aa;
-    --line: rgba(234, 239, 255, 0.10);
-    --line-strong: rgba(234, 239, 255, 0.20);
-    --accent: #7f98ff;
+    --page: #14130d;
+    --surface: #1d1c14;
+    --ink: #ece9d8;
+    --ink-body: #cdcab6;
+    --ink-soft: #a3a08b;
+    --ink-faint: #7f7d69;
+    --line: rgba(236, 233, 216, 0.13);
+    --line-strong: rgba(236, 233, 216, 0.30);
+    --accent: #e06a50;
     --coral: #ff8a74;
     --gold: #f0b64d;
-    --stage: #0a1122;
-    --stage-ink: #f7f6f0;
-    --stage-muted: #aab5cc;
-    --stage-line: rgba(220, 228, 250, 0.14);
-    --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+    --stage: #1d1c14;
+    --stage-ink: #ece9d8;
+    --stage-muted: #a3a08b;
+    --stage-line: rgba(236, 233, 216, 0.14);
+    --cobalt: #8fa2ff;
+    --cobalt-soft: rgba(143, 162, 255, 0.12);
+    --cobalt-line: rgba(143, 162, 255, 0.5);
+    --gold-soft: rgba(240, 182, 77, 0.13);
+    --hatch: rgba(236, 233, 216, 0.10);
+    --panel-shadow: none;
   }
 }
 
@@ -481,8 +496,8 @@ h3 {
   overflow: hidden;
   color: var(--stage-ink);
   background: var(--stage);
-  border: 1px solid var(--stage-line);
-  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
   box-shadow: var(--panel-shadow);
 }
 
@@ -492,7 +507,8 @@ h3 {
   display: flex;
   align-items: center;
   gap: 12px;
-  border-bottom: 1px solid var(--stage-line);
+  border-bottom: 1px solid var(--line-strong);
+  background: repeating-linear-gradient(-45deg, transparent 0 4px, var(--hatch) 4px 5px);
 }
 
 .stage-head > * {
@@ -614,7 +630,7 @@ canvas.scene-canvas.dragging {
   overflow: hidden;
   border: 0;
   border-radius: 2px;
-  background: rgba(225, 232, 255, 0.14);
+  background: var(--code-bg);
   cursor: pointer;
 }
 
@@ -624,7 +640,7 @@ canvas.scene-canvas.dragging {
   width: var(--fill, 0%);
   height: 4px;
   border-radius: inherit;
-  background: var(--step-color, #5d82f8);
+  background: var(--step-color, var(--cobalt));
   transition: width 260ms ease;
 }
 
@@ -640,10 +656,10 @@ canvas.scene-canvas.dragging {
 .example-button {
   min-height: 30px;
   padding: 6px 11px;
-  border: 1px solid rgba(225, 232, 255, 0.22);
-  border-radius: 5px;
-  background: rgba(225, 232, 255, 0.05);
-  color: var(--stage-muted);
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--stage-ink);
   cursor: pointer;
   font-family: "Geist Mono", monospace;
   font-size: 11px;
@@ -653,21 +669,22 @@ canvas.scene-canvas.dragging {
 .control-button:hover,
 .mode-button:hover,
 .example-button:hover {
-  color: var(--stage-ink);
-  border-color: rgba(141, 162, 255, 0.65);
+  color: var(--page);
+  border-color: var(--ink);
+  background: var(--ink);
 }
 
 .control-button.primary {
-  color: #ffffff;
-  border-color: #5f7cf5;
-  background: #4e6ff2;
+  color: var(--page);
+  border-color: var(--ink);
+  background: var(--ink);
 }
 
 .mode-button[aria-pressed="true"],
 .example-button[aria-pressed="true"] {
-  color: #ffffff;
-  border-color: #6c86f7;
-  background: rgba(78, 111, 242, 0.72);
+  color: var(--page);
+  border-color: var(--ink);
+  background: var(--ink);
 }
 
 .control-spacer {
@@ -691,29 +708,28 @@ canvas.scene-canvas.dragging {
 
 .token-chip {
   padding: 5px 8px;
-  border: 1px solid rgba(141, 162, 255, 0.35);
-  border-radius: 4px;
-  background: rgba(93, 130, 248, 0.12);
-  color: #dbe2ff;
+  border: 1px solid var(--cobalt-line);
+  border-radius: 3px;
+  background: var(--cobalt-soft);
+  color: var(--stage-ink);
   font-family: "Geist Mono", monospace;
   font-size: 10.5px;
 }
 
 .token-chip.byte {
-  border-color: rgba(59, 87, 201, 0.8);
-  background: rgba(59, 87, 201, 0.22);
+  border-color: var(--cobalt);
 }
 
 .token-chip.count {
-  border-color: rgba(240, 182, 77, 0.55);
-  background: rgba(240, 182, 77, 0.12);
-  color: #ffd989;
+  border-color: var(--gold);
+  background: var(--gold-soft);
+  color: var(--stage-ink);
 }
 
 .token-chip.new {
-  border-color: rgba(240, 182, 77, 0.65);
-  background: rgba(240, 182, 77, 0.14);
-  color: #ffd989;
+  border-color: var(--gold);
+  background: var(--gold-soft);
+  color: var(--stage-ink);
 }
 
 .range-row {
@@ -728,7 +744,7 @@ canvas.scene-canvas.dragging {
 
 input[type="range"] {
   width: min(180px, 28vw);
-  accent-color: #5d82f8;
+  accent-color: var(--accent);
 }
 
 .range-row.flush {
@@ -1008,9 +1024,9 @@ input[type="range"] {
     </div>
     <p class="eyebrow">Decoder-only language models</p>
     <h1>How an LLM turns text into the next token</h1>
-    <p class="article-lede">A language model has one job: given some text, predict a small piece of what comes next. Everything an LLM produces, from a chat reply to working code, is that prediction repeated. This article follows the full lifecycle in order: the corpus and tokenizer that prepare the data, the transformer block that computes on it, the pre-training that sets the numbers, and the generation loop that turns a prompt into text one token at a time.</p>
-    <p class="article-meta">Reading time: about 18 minutes · Interactive figures can be paused, replayed, and scrubbed</p>
-    <p class="scope-note"><strong>Scope.</strong> The diagrams show a modern decoder-only transformer, the family used by GPT-style language models. The 2017 transformer had an encoder and a decoder. Model widths, layer counts, token IDs, probabilities, and 3D positions here are illustrative; tensor shapes and operation order are stated where they matter.</p>
+    <p class="article-lede">A language model has one job: given some text, predict a small piece of what comes next. Everything an LLM produces, from a chat reply to working code, is that prediction repeated. This article follows the full lifecycle in order. The corpus and tokenizer prepare the data, and the transformer block computes on it. Pre-training sets the numbers, and the generation loop turns a prompt into text one token at a time.</p>
+    <p class="article-meta">Reading time: about 18 minutes · You can pause, replay, and scrub the interactive figures</p>
+    <p class="scope-note"><strong>Scope.</strong> The diagrams show a modern decoder-only transformer, the family used by GPT-style language models. The 2017 transformer had an encoder and a decoder. Model widths, layer counts, token IDs, probabilities, and 3D positions here are illustrative; the article states tensor shapes and operation order where they matter.</p>
     <nav class="contents" aria-label="Article contents">
       <span class="contents-label">Contents</span>
       <ol>
@@ -1030,9 +1046,9 @@ input[type="range"] {
     <div class="chapter-copy">
       <p class="section-label">Section 1 · Lifecycle</p>
       <h2 id="overview-title">A model is built once, then used many times</h2>
-      <p>An LLM has two separate lives. In the build loop, a data pipeline assembles a large collection of text called the corpus, a tokenizer turns that text into token sequences, and pre-training adjusts the model's parameters, often called weights: the billions of learned numbers that determine its behavior. The finished parameters are saved as a checkpoint, one large file the model can be reloaded from.</p>
-      <p>In the use loop, a prompt passes through the frozen tokenizer and checkpoint. The model produces one token, appends it to the sequence, and runs again, once per small piece of generated text. The parameters do not change while an answer is generated.</p>
-      <p>The sections below follow the build order: corpus, tokenizer, vectors and the transformer block, then pre-training, then the generation loop a prompt travels through. Training comes after the block because the update rule is easier to picture once you have seen what the parameters compute. Jay Alammar's <a class="paper-link" href="https://jalammar.github.io/illustrated-transformer/">Illustrated Transformer</a> uses a similar progressive reveal for the original architecture.</p>
+      <p>An LLM has two separate lives. In the build loop, a data pipeline assembles a large collection of text called the corpus, and a tokenizer turns that text into token sequences. Pre-training then adjusts the model's parameters, often called weights: the billions of learned numbers that determine its behavior. Training saves the finished parameters as a checkpoint, one large file you can reload the model from.</p>
+      <p>In the use loop, a prompt passes through the frozen tokenizer and checkpoint. The model produces one token, appends it to the sequence, and runs again, once per small piece of generated text. The parameters do not change while the model generates an answer.</p>
+      <p>The sections below follow the build order: corpus, tokenizer, vectors and the transformer block, then pre-training, then the generation loop a prompt travels through. Training comes after the block because the update rule is easier to picture once you see what the parameters compute. Jay Alammar's <a class="paper-link" href="https://jalammar.github.io/illustrated-transformer/">Illustrated Transformer</a> uses a similar progressive reveal for the original architecture.</p>
     </div>
 
     <figure class="observatory" id="journey-stage">
@@ -1042,7 +1058,7 @@ input[type="range"] {
         <span class="stage-status" id="journey-status">Building the corpus</span>
       </div>
       <div class="canvas-wrap">
-        <canvas class="scene-canvas" id="journey-canvas" role="img" aria-label="Animated two-lane pixel machine. The upper build lane assembles a corpus, trains a tokenizer, and pre-trains a checkpoint. The lower run lane reuses the frozen tokenizer and checkpoint to turn a prompt into one token at a time, with the chosen token looping back into the sequence."></canvas>
+        <canvas class="scene-canvas" id="journey-canvas" role="img" aria-label="Animated two-lane pixel machine. The upper build lane assembles a corpus, trains a tokenizer, and pre-trains a checkpoint. The lower run lane reuses the frozen tokenizer and checkpoint to turn a prompt into one token at a time. The chosen token loops back into the sequence."></canvas>
         <div class="scene-copy" aria-live="polite">
           <strong id="journey-title">Collect and filter a corpus</strong>
           <span id="journey-copy">Selected documents supply the evidence for tokenizer construction and pre-training.</span>
@@ -1068,17 +1084,17 @@ input[type="range"] {
         <p class="section-label">Section 2 · Corpus</p>
         <h2 id="corpus-title">The model's evidence starts as a selected dataset</h2>
         <p>The build loop starts with text. Training text arrives as web crawls, books, code, and papers, and none of it is ready to use. Data pipelines extract the usable text, remove boilerplate and near-duplicates, apply quality and safety filters, choose language and domain mixtures, then split documents into training examples. Those decisions determine what patterns the model can observe and how often it observes them.</p>
-        <p>Engineers usually train the tokenizer, described next in Section 3, on a representative sample of the corpus, then use that frozen tokenizer to encode the much larger training set. The <a class="paper-link" href="https://arxiv.org/abs/2406.17557">FineWeb paper</a> is useful because it publishes concrete filtering and deduplication experiments. Proprietary model reports may disclose only part of the data recipe.</p>
+        <p>Engineers usually train the tokenizer, described next in Section 3, on a representative sample of the corpus. They then use that frozen tokenizer to encode the much larger training set. The <a class="paper-link" href="https://arxiv.org/abs/2406.17557">FineWeb paper</a> is useful because it publishes concrete filtering and deduplication experiments. Proprietary model reports may disclose only part of the data recipe.</p>
         <p class="technical-note"><strong>Accuracy check.</strong> Documents do not flow directly into a transformer during training. They become packed arrays of token IDs, commonly with boundaries or special tokens marking document transitions. Figure 2 compresses storage, shuffling, packing, and distributed loading into one stream.</p>
       </div>
 
       <figure class="visual-stage" id="corpus-stage">
         <div class="stage-head">
           <span class="stage-kicker">Figure 2</span>
-          <span class="stage-title">Documents are filtered, then packed into token batches</span>
+          <span class="stage-title">The pipeline filters documents, then packs them into token batches</span>
           <span class="stage-status" id="corpus-status">Collecting documents</span>
         </div>
-        <canvas class="scene-canvas" id="corpus-canvas" role="img" aria-label="Animated pipeline where pixel document sheets from web, book, code, and paper sources pass through boilerplate removal, duplicate detection, and quality gates, with rejected sheets falling away and survivors packed into fixed-length token batches while a small sample branches toward tokenizer construction"></canvas>
+        <canvas class="scene-canvas" id="corpus-canvas" role="img" aria-label="Animated pipeline. Pixel document sheets from web, book, code, and paper sources pass through boilerplate removal, duplicate detection, and quality gates. Rejected sheets fall away, and the pipeline packs survivors into fixed-length token batches. A small sample branches toward tokenizer construction."></canvas>
         <div class="stage-toolbar">
           <button class="control-button primary" type="button" data-scene-toggle="corpus">Pause</button>
           <button class="control-button" type="button" data-scene-restart="corpus">Replay</button>
@@ -1092,13 +1108,13 @@ input[type="range"] {
       <div class="chapter-copy">
         <p class="section-label">Section 3 · Tokenization</p>
         <h2 id="tokens-title">Text becomes a sequence of vocabulary addresses</h2>
-        <p>The corpus supplies raw strings. A neural network computes with numbers, so text has to become numbers first. A tokenizer segments a string into pieces found in a fixed vocabulary and returns the corresponding integer IDs. A common word may occupy one token. A rare name may split into several subwords or bytes. Spaces, punctuation, and code fragments can be tokens too.</p>
+        <p>The corpus supplies raw strings. A neural network computes with numbers, so text has to become numbers first. A tokenizer segments a string into pieces found in a fixed vocabulary and returns the corresponding integer IDs. A common word may occupy one token. A rare name may split into several subwords or bytes. Spaces, punctuation, and code fragments can be tokens too. To feel this in your hands, <a href="tokenizer.html">train and operate a tokenizer in the playground</a>.</p>
         <div class="formula-block">
           <span class="formula-label">Tokenizer output</span>
           <div class="formula">t₁, …, t<sub>T</sub> = Tokenize(s), &nbsp; t<sub>i</sub> ∈ {0, …, |V| − 1}</div>
           <p class="formula-explain"><strong>s</strong> is the input string, <strong>T</strong> is its token count, and <strong>|V|</strong> is the vocabulary size. A token ID is an address. Its numeric value carries no distance or meaning.</p>
         </div>
-        <p>Byte pair encoding and Unigram tokenization use different algorithms to choose the inventory. <a class="paper-link" href="https://arxiv.org/abs/1808.06226">SentencePiece</a> describes both in a language-independent system that can train from raw sentences. Production tokenizers often add byte fallback and special control tokens.</p>
+        <p>Byte-pair encoding (BPE) and Unigram tokenization use different algorithms to choose the vocabulary. <a class="paper-link" href="https://arxiv.org/abs/1808.06226">SentencePiece</a> describes both in a language-independent system that can train from raw sentences. Production tokenizers often add byte fallback and special control tokens.</p>
         <p class="technical-note"><strong>Keep the artifacts separate.</strong> Tokenizer construction chooses a discrete vocabulary. Pre-training later learns continuous embedding vectors and transformer weights. Once model training begins, changing the token-to-ID map would invalidate the embedding rows tied to those IDs.</p>
       </div>
 
@@ -1108,7 +1124,7 @@ input[type="range"] {
           <span class="stage-title">A typesetter turns strings into addressed tiles</span>
           <span class="stage-status" id="token-status">Scanning a sentence</span>
         </div>
-        <canvas class="scene-canvas" id="token-canvas" role="img" aria-label="Animated typesetter scene where a text strip enters a scanner, segmentation boundaries snap into place, pieces become discrete tiles with integer IDs, and tiles slot into scattered positions of an indexed vocabulary wall"></canvas>
+        <canvas class="scene-canvas" id="token-canvas" role="img" aria-label="Animated typesetter scene. A text strip enters a scanner, and segmentation boundaries snap into place. Pieces become discrete tiles with integer IDs, and the tiles slot into scattered positions on an indexed vocabulary wall."></canvas>
         <div class="stage-toolbar" id="token-examples" role="group" aria-label="Choose tokenizer example">
           <button class="example-button" type="button" data-token-example="sentence" aria-pressed="true">Sentence</button>
           <button class="example-button" type="button" data-token-example="rare" aria-pressed="false">Rare word</button>
@@ -1126,7 +1142,7 @@ input[type="range"] {
       <div class="chapter-copy">
         <p class="section-label">Section 4 · Embeddings and position</p>
         <h2 id="geometry-title">Each token ID selects a learned vector</h2>
-        <p>A token ID by itself is only a catalog number. The embedding table attaches content to it: one learned row per vocabulary entry. Looking up token <em>t<sub>i</sub></em> returns that row, a vector of <em>d<sub>model</sub></em> numbers, and a vector can be pictured as a point in space. Tokens that appear in similar contexts tend to drift toward nearby points during training. The looked-up vector is the initial hidden state, the model's working representation, at position <em>i</em>.</p>
+        <p>A token ID by itself is only a catalog number. The embedding table attaches content to it: one learned row per vocabulary entry. Looking up token <em>t<sub>i</sub></em> returns that row, a vector of <em>d<sub>model</sub></em> numbers, and you can picture a vector as a point in space. Tokens that appear in similar contexts tend to drift toward nearby points during training. The looked-up vector is the initial hidden state, the model's working representation, at position <em>i</em>.</p>
         <div class="formula-block">
           <span class="formula-label">Embedding lookup</span>
           <div class="formula">x<sup>(0)</sup><sub>i</sub> = E[t<sub>i</sub>], &nbsp; E ∈ ℝ<sup>|V| × d<sub>model</sub></sup></div>
@@ -1138,7 +1154,7 @@ input[type="range"] {
           <div class="formula">q′<sub>i</sub> = R(i)q<sub>i</sub>, &nbsp; k′<sub>j</sub> = R(j)k<sub>j</sub></div>
           <p class="formula-explain">R(i) rotates pairs of coordinates by position-dependent angles. The dot product q′<sub>i</sub> · k′<sub>j</sub> then carries information about i − j. See <a href="https://arxiv.org/abs/2104.09864">RoFormer</a>.</p>
         </div>
-        <p class="plain-note">Figure 4 projects a toy set of vectors into three dimensions. A real hidden width may contain thousands of coordinates. Nearby points can suggest similar usage, but this drawing is not a measurement from a trained model, and a contextual hidden state is not a static word meaning.</p>
+        <p class="plain-note">Figure 4 projects a toy set of vectors into three dimensions. A real hidden width may contain thousands of coordinates. Nearby points can suggest similar usage, but this drawing is not a measurement from a trained model. A contextual hidden state is not a static word meaning.</p>
       </div>
 
       <figure class="visual-stage" id="embedding-stage">
@@ -1147,7 +1163,7 @@ input[type="range"] {
           <span class="stage-title">Rows become vectors; position rotates pairs of coordinates</span>
           <span class="stage-status">Drag to rotate</span>
         </div>
-        <canvas class="scene-canvas" id="embedding-canvas" tabindex="0" role="img" aria-label="Interactive scene in three views: a token tile unfolds into a vertical voxel vector selected from an embedding table, several vectors stand in a rotatable three-dimensional projection, and a rotary view shows query and key coordinate pairs rotating by position-dependent angles"></canvas>
+        <canvas class="scene-canvas" id="embedding-canvas" tabindex="0" role="img" aria-label="Interactive scene in three views. A token tile unfolds into a vertical voxel vector selected from an embedding table. Several vectors stand in a rotatable three-dimensional projection. A rotary view shows query and key coordinate pairs rotating by position-dependent angles."></canvas>
         <div class="stage-toolbar" id="embedding-views" role="group" aria-label="Choose embedding view">
           <button class="mode-button" type="button" data-embedding-view="lookup" aria-pressed="true">Lookup</button>
           <button class="mode-button" type="button" data-embedding-view="lattice" aria-pressed="false">Lattice</button>
@@ -1163,7 +1179,7 @@ input[type="range"] {
         <p class="section-label">Section 5 · Transformer block</p>
         <h2 id="transformer-title">Attention mixes positions; the MLP transforms each position</h2>
         <p>A transformer is a stack of near-identical blocks, and each block makes two moves. Attention lets every position read from earlier positions, so the state for "bank" in "the river bank" can absorb "river". The MLP, a small feed-forward network applied to each position on its own, then reworks whatever attention gathered. The rest of this section states both moves precisely.</p>
-        <p>Let <em>X</em> hold the hidden states for a sequence. One attention head makes three linear projections. Queries represent what each position is looking for, keys represent what each position offers for matching, and values carry the information that will be mixed.</p>
+        <p>Let <em>X</em> hold the hidden states for a sequence. One attention head makes three linear projections. Queries represent what each position looks for, keys represent what each position offers for matching, and values carry the information that attention will mix.</p>
         <div class="formula-block">
           <span class="formula-label">One causal attention head</span>
           <div class="formula">Q = XW<sub>Q</sub>, &nbsp; K = XW<sub>K</sub>, &nbsp; V = XW<sub>V</sub></div>
@@ -1171,7 +1187,7 @@ input[type="range"] {
           <div class="formula">Attention(X) = AV</div>
           <p class="formula-explain">Row i of A contains the weights used to update token i. M<sub>causal</sub>[i,j] is −∞ when j &gt; i, so softmax assigns future positions zero probability. The division by √d<sub>head</sub> keeps dot products numerically controlled.</p>
         </div>
-        <p>Multiple heads run in parallel, their results are combined, and an output projection returns to the model width. Grouped-query attention shares key and value heads to reduce memory traffic, but each query still obeys the causal mask.</p>
+        <p>Multiple heads run in parallel, the block combines their results, and an output projection returns to the model width. Grouped-query attention shares key and value heads to reduce memory traffic, but each query still obeys the causal mask.</p>
         <p>A modern pre-normalized block commonly follows this residual pattern:</p>
         <div class="formula-block compact">
           <span class="formula-label">One decoder block, schematic</span>
@@ -1199,7 +1215,7 @@ input[type="range"] {
           <span class="stage-title">One decoder block, exploded for inspection</span>
           <span class="stage-status" id="transformer-status">Following the full block</span>
         </div>
-        <canvas class="scene-canvas" id="transformer-canvas" tabindex="0" role="img" aria-label="Interactive exploded transformer block with stable vertical ordering: normalization, query key and value projections, a triangular causal attention matrix with closed future cells, output projection, a residual merge, normalization again, a per-position gated MLP, and a second residual merge"></canvas>
+        <canvas class="scene-canvas" id="transformer-canvas" tabindex="0" role="img" aria-label="Interactive exploded transformer block with stable vertical ordering. From bottom to top: normalization; query, key, and value projections; a triangular causal attention matrix with closed future cells; an output projection; a residual merge; normalization again; a per-position gated MLP; and a second residual merge."></canvas>
         <div class="stage-toolbar" id="transformer-modes" role="group" aria-label="Choose transformer view">
           <button class="mode-button" type="button" data-transformer-mode="overview" aria-pressed="true">Full block</button>
           <button class="mode-button" type="button" data-transformer-mode="attention" aria-pressed="false">Attention</button>
@@ -1215,7 +1231,7 @@ input[type="range"] {
       <div class="chapter-copy">
         <p class="section-label">Section 6 · Pre-training</p>
         <h2 id="training-title">Every position supplies a next-token training target</h2>
-        <p>With the block defined, the build loop can set its numbers. Pre-training is a guessing game graded at every position. The model reads corpus text and, at each position, must assign high probability to the token that comes next. The causal mask keeps it from peeking at later tokens, yet all positions in a training sequence can be graded in parallel; this setup is often called teacher forcing.</p>
+        <p>With the block defined, the build loop can set its numbers. Pre-training is a guessing game graded at every position. The model reads corpus text and, at each position, must assign high probability to the token that comes next. The causal mask keeps it from peeking at later tokens, yet training can grade all positions in a sequence in parallel. This setup is often called teacher forcing.</p>
         <div class="formula-block">
           <span class="formula-label">Autoregressive model and cross-entropy loss</span>
           <div class="formula">p<sub>θ</sub>(t₁:T) = ∏<sub>i=1</sub><sup>T</sup> p<sub>θ</sub>(t<sub>i</sub> | t<sub>&lt;i</sub>)</div>
@@ -1226,7 +1242,7 @@ input[type="range"] {
         <div class="formula-block compact">
           <span class="formula-label">Optimizer step, schematic</span>
           <div class="formula">θ<sub>k+1</sub> = AdamW(θ<sub>k</sub>, ∇<sub>θ</sub>L, η)</div>
-          <p class="formula-explain">θ contains embeddings, attention projections, MLP weights, normalization scales, and the output projection. η is the learning rate. AdamW's moment estimates and weight decay are suppressed here.</p>
+          <p class="formula-explain">θ contains embeddings, attention projections, MLP weights, normalization scales, and the output projection. η is the learning rate. This schematic omits AdamW's moment estimates and weight decay.</p>
         </div>
         <p>The <a class="paper-link" href="https://arxiv.org/abs/2005.14165">GPT-3 paper</a> is a concrete decoder-only training reference. <a class="paper-link" href="https://arxiv.org/abs/2203.15556">Chinchilla</a> showed that, within its studied compute regime, better results came from balancing parameter count with more training tokens. That scaling result is an empirical recipe, not a law that fixes every model or dataset.</p>
         <p class="technical-note"><strong>After base training.</strong> Instruction tuning and preference optimization adjust the checkpoint again using curated examples and preference signals. They shape behavior, but generation still uses the same autoregressive forward pass. See <a href="https://arxiv.org/abs/2203.02155">InstructGPT</a> for an influential pipeline.</p>
@@ -1238,28 +1254,28 @@ input[type="range"] {
           <span class="stage-title">Score every position in parallel, then walk the error back</span>
           <span class="stage-status" id="training-status">Packing a token batch</span>
         </div>
-        <canvas class="scene-canvas" id="training-canvas" role="img" aria-label="Animated pre-training step: a packed token batch with targets shifted one position runs forward so every position produces logits at once, predictions are compared with observed next tokens, cross-entropy values accumulate into batch loss, a coral gradient signal travels backward through the same blocks, and parameter grids receive small updates that the checkpoint records"></canvas>
+        <canvas class="scene-canvas" id="training-canvas" role="img" aria-label="Animated pre-training step. A packed token batch with targets shifted one position runs forward, so every position produces logits at once. The scene compares predictions with observed next tokens, and cross-entropy values accumulate into batch loss. A coral gradient signal travels backward through the same blocks. Parameter grids receive small updates that the checkpoint records."></canvas>
         <div class="stage-toolbar">
           <button class="control-button primary" type="button" data-scene-toggle="training">Pause</button>
           <button class="control-button" type="button" data-scene-restart="training">Replay batch</button>
           <span class="control-spacer" aria-hidden="true">&#8203;</span>
           <span class="frame-readout" id="training-phase">forward pass</span>
         </div>
-        <figcaption class="stage-caption"><strong>One optimizer step at toy scale.</strong> The targets come from the text itself: the target at each position is the next token. All positions are scored in parallel under the causal mask; nothing here generates one token at a time. Production runs use many sequences and layers, accumulate gradients, synchronize workers, and save checkpoints throughout training.</figcaption>
+        <figcaption class="stage-caption"><strong>One optimizer step at toy scale.</strong> The targets come from the text itself: the target at each position is the next token. The model scores all positions in parallel under the causal mask; nothing here generates one token at a time. Production runs use many sequences and layers, accumulate gradients, synchronize workers, and save checkpoints throughout training.</figcaption>
       </figure>
     </section>
     <section class="chapter reading-section" id="generation" aria-labelledby="generation-title">
       <div class="chapter-copy">
         <p class="section-label">Section 7 · Generation</p>
         <h2 id="generation-title">The last hidden state becomes one score per token</h2>
-        <p>Sections 4 and 5 assembled the block, and Section 6 set its numbers. At request time, the prompt is tokenized and passed through the frozen transformer: the same forward pass used in training, but with no update afterward. A final normalization and linear output projection map the latest hidden state to one logit, an unnormalized score, for every vocabulary entry. Some models tie this output matrix to the input embedding table.</p>
+        <p>Sections 4 and 5 assembled the block, and Section 6 set its numbers. At request time, the tokenizer encodes the prompt, and the frozen transformer runs the same forward pass used in training, but with no update afterward. A final normalization and linear output projection map the latest hidden state to one logit, an unnormalized score, for every vocabulary entry. Some models tie this output matrix to the input embedding table.</p>
         <div class="formula-block">
           <span class="formula-label">Logits and temperature-scaled probabilities</span>
           <div class="formula">z = W<sub>U</sub>h<sub>T</sub> + b</div>
           <div class="formula">p<sub>i</sub> = exp(z<sub>i</sub>/τ) / Σ<sub>j</sub> exp(z<sub>j</sub>/τ)</div>
           <p class="formula-explain">W<sub>U</sub> is the output, or unembedding, matrix; some architectures omit the bias b. Lower positive temperature τ concentrates mass on larger logits. Higher τ flattens the distribution. Greedy decoding chooses the largest logit; top-k and top-p sampling first restrict the candidate set.</p>
         </div>
-        <p>The chosen token is appended and decoding repeats. During the first prompt pass, called prefill, the model computes keys and values for every prompt token. A KV cache keeps those tensors so later decode steps compute the new position while attending over cached keys and values. Systems such as <a class="paper-link" href="https://arxiv.org/abs/2309.06180">PagedAttention</a> focus on managing that cache efficiently.</p>
+        <p>The loop appends the chosen token, and decoding repeats. During the first prompt pass, called prefill, the model computes keys and values for every prompt token. A KV cache keeps those tensors, so later decode steps compute the new position and attend over cached keys and values. Systems such as <a class="paper-link" href="https://arxiv.org/abs/2309.06180">PagedAttention</a> focus on managing that cache efficiently.</p>
         <p class="technical-note"><strong>What remains fixed.</strong> The checkpoint does not learn from the request. The KV cache is temporary sequence state, not durable memory. Randomness enters through the decoding rule; the forward pass for fixed token IDs and weights is deterministic up to numerical implementation details.</p>
       </div>
 
@@ -1269,7 +1285,7 @@ input[type="range"] {
           <span class="stage-title">Score the whole vocabulary, choose one tile, append it</span>
           <span class="stage-status" id="generation-status">Scoring the vocabulary</span>
         </div>
-        <canvas class="scene-canvas" id="generation-canvas" role="img" aria-label="Animated inference scene where the final hidden state enters an output matrix, a dense skyline of vocabulary logits rises, a small set of candidates expands for inspection under a chosen decoding rule and temperature, the selected token appends to the sequence, and per-layer KV cache columns grow by one column per decode step"></canvas>
+        <canvas class="scene-canvas" id="generation-canvas" role="img" aria-label="Animated inference scene. The final hidden state enters an output matrix, and a dense skyline of vocabulary logits rises. A small set of candidates expands for inspection under the chosen decoding rule and temperature. The selected token appends to the sequence, and per-layer KV cache columns grow by one column per decode step."></canvas>
         <div class="stage-toolbar">
           <button class="control-button primary" type="button" id="generate-next">Generate next token</button>
           <button class="control-button" type="button" id="generate-reset">Reset</button>
@@ -1299,7 +1315,7 @@ input[type="range"] {
     <div class="replay-heading">
       <p class="section-label">Section 8 · Complete pass</p>
       <h2 id="replay-title">Put the data, weights, and token loop on one timeline</h2>
-      <p>The upper route builds the artifacts: a corpus supports tokenizer construction and pre-training, then training saves a checkpoint. The lower route uses the fixed tokenizer and checkpoint to map a prompt to one selected token. That token extends the context for the next decode step.</p>
+      <p>The upper lane builds the artifacts: a corpus supports tokenizer construction and pre-training, then training saves a checkpoint. The lower lane uses the frozen tokenizer and checkpoint to map a prompt to one selected token. That token extends the context for the next decode step.</p>
     </div>
 
     <figure class="observatory" id="system-stage">
@@ -1359,9 +1375,10 @@ input[type="range"] {
   <div class="series-inner">
     <span>Model Mechanics · A field guide to working with LLMs</span>
     <nav aria-label="Series">
-      <a href="effort-levels.html">02 · Reasoning Effort</a>
+      <a href="tokenizer.html">Playground · The tokenizer</a>
+      <a href="effort-levels.html">02 · Reasoning effort</a>
       <a href="orchestration-and-subagents.html">03 · Orchestration</a>
-      <a href="loops-and-skills.html">04 · Loops and Skills</a>
+      <a href="loops-and-skills.html">04 · Loops and skills</a>
     </nav>
   </div>
 </footer>
@@ -1388,31 +1405,82 @@ window.MM = (() => {
   /* Semantic on-stage palette. Color is information, never decoration.
      cobalt = data / hidden states · coral = gradients / weight updates
      gold   = targets / selected output · violet = MLP operations
-     paper  = residual paths / annotations                            */
-  const C = {
-    stage:      "#0c1428",
-    panel:      "#131f3a",
-    panelHi:    "#1a2a4e",
-    edge:       "#28395f",
-    edgeSoft:   "#1d2b4b",
-    ink:        "#eef1fb",
-    soft:       "#a3aecf",
-    faint:      "#66719b",
-    cobalt:     "#5d82f8",
-    cobaltDeep: "#3b57c9",
-    cobaltPale: "#9db3fb",
-    coral:      "#ef6f5c",
-    coralDeep:  "#c74a39",
-    coralPale:  "#f7a191",
-    gold:       "#f0b44c",
-    goldDeep:   "#c98e2e",
-    goldPale:   "#f7d08d",
-    violet:     "#a97ef0",
-    violetDeep: "#8358cf",
-    violetPale: "#c9abf7",
-    paper:      "#e9edf8",
-    reject:     "#4a5475"
+     paper  = residual paths / annotations · sheet = document cards
+     Two variants of the drafting-board look: paper (light) and night ink
+     (dark). C is mutated in place on theme change; the render loop then
+     repaints every scene at its held time. */
+  const PALETTES = {
+    light: {
+      stage:      "#f3f1e6",
+      panel:      "#e9e6d6",
+      panelHi:    "#dfdbc8",
+      edge:       "#b8b49e",
+      edgeSoft:   "#d0ccb8",
+      ink:        "#1e1d12",
+      soft:       "#6b6955",
+      faint:      "#98957f",
+      cobalt:     "#3b55c4",
+      cobaltDeep: "#2c3f96",
+      cobaltPale: "#7e91e0",
+      coral:      "#b8422e",
+      coralDeep:  "#8f2f1e",
+      coralPale:  "#d67f6e",
+      gold:       "#a8801c",
+      goldDeep:   "#815f0e",
+      goldPale:   "#c6a24a",
+      violet:     "#7a4fd0",
+      violetDeep: "#5c37a8",
+      violetPale: "#a486dd",
+      paper:      "#33321f",
+      reject:     "#b5b29c",
+      sheet:      "#fbfaf0",
+      sheetInk:   "#3a3828",
+      tileInk:    "#f9f7ec",
+      grid:       "rgba(30, 29, 18, 0.05)",
+      tileSide:   "rgba(30, 29, 18, 0.20)",
+      shadow:     "rgba(30, 29, 18, 0.16)"
+    },
+    dark: {
+      stage:      "#1d1c14",
+      panel:      "#26251a",
+      panelHi:    "#312f20",
+      edge:       "#4a4835",
+      edgeSoft:   "#383627",
+      ink:        "#ece9d8",
+      soft:       "#a3a08b",
+      faint:      "#7f7d69",
+      cobalt:     "#8fa2ff",
+      cobaltDeep: "#5d74d8",
+      cobaltPale: "#b9c4ff",
+      coral:      "#e06a50",
+      coralDeep:  "#b34a34",
+      coralPale:  "#f09a86",
+      gold:       "#d9a83c",
+      goldDeep:   "#a97f24",
+      goldPale:   "#ecc878",
+      violet:     "#a97ef0",
+      violetDeep: "#8358cf",
+      violetPale: "#c9abf7",
+      paper:      "#ece9d8",
+      reject:     "#5c5a48",
+      sheet:      "#ece9d8",
+      sheetInk:   "#26251a",
+      tileInk:    "#14130d",
+      grid:       "rgba(236, 233, 216, 0.05)",
+      tileSide:   "rgba(0, 0, 0, 0.30)",
+      shadow:     "rgba(0, 0, 0, 0.30)"
+    }
   };
+
+  function themeIsDark() {
+    const t = document.documentElement.getAttribute("data-theme");
+    if (t === "dark") return true;
+    if (t === "light") return false;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+
+  const C = {};
+  Object.assign(C, PALETTES[themeIsDark() ? "dark" : "light"]);
 
   /* ---- math / easing ---------------------------------------------------- */
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -1631,6 +1699,16 @@ window.MM = (() => {
     document.fonts.ready.then(() => order.forEach((sc) => (sc.dirty = true)));
   }
 
+  /* Swap the canvas palette in place and repaint every scene at its held
+     time. Called by the page theme toggle and on system-theme changes. */
+  function applyTheme() {
+    Object.assign(C, PALETTES[themeIsDark() ? "dark" : "light"]);
+    order.forEach((sc) => {
+      sc.dirty = true;
+    });
+  }
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
+
   /* ---- controls ------------------------------------------------------------ */
   function syncToggle(scene) {
     document
@@ -1675,7 +1753,10 @@ window.MM = (() => {
     const root = document.documentElement;
     const key = "model-mechanics-theme";
     const saved = localStorage.getItem(key);
-    if (saved) root.setAttribute("data-theme", saved);
+    if (saved) {
+      root.setAttribute("data-theme", saved);
+      applyTheme();
+    }
     btn.addEventListener("click", () => {
       const cur = root.getAttribute("data-theme");
       const sys = window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -1684,6 +1765,7 @@ window.MM = (() => {
       const next = (cur || sys) === "dark" ? "light" : "dark";
       root.setAttribute("data-theme", next);
       localStorage.setItem(key, next);
+      applyTheme();
     });
   })();
 
@@ -1696,7 +1778,7 @@ window.MM = (() => {
     g.fillStyle = C.stage;
     g.fillRect(0, 0, W, H);
     if (!opts || opts.grid !== false) {
-      g.strokeStyle = "rgba(139, 161, 224, 0.055)";
+      g.strokeStyle = C.grid;
       g.lineWidth = 1;
       g.beginPath();
       for (let x = 0; x <= W; x += 32) {
@@ -1728,7 +1810,7 @@ window.MM = (() => {
   function tile(g, x, y, w, h, top, side) {
     rect(g, x, y, w, h, top);
     const sh = Math.min(GRID, s4(h) / 4);
-    g.fillStyle = side || "rgba(6, 10, 24, 0.42)";
+    g.fillStyle = side || C.tileSide;
     g.fillRect(s4(x), s4(y) + s4(h) - sh, s4(w), sh);
   }
 
@@ -1983,6 +2065,7 @@ window.MM = (() => {
     REDUCED,
     GRID,
     C,
+    applyTheme,
     clamp,
     clamp01,
     lerp,
@@ -2045,7 +2128,7 @@ window.MM = (() => {
     {
       t: 2.4,
       title: "Train the tokenizer on a sample",
-      copy: "A discrete vocabulary is chosen from corpus text, then frozen.",
+      copy: "Training picks a discrete vocabulary from corpus text, then freezes it.",
       status: "Training the tokenizer"
     },
     {
@@ -2130,8 +2213,8 @@ window.MM = (() => {
 
   /* ---- station glyphs ------------------------------------------------------ */
   function sheet(g, x, y, w, h, lines) {
-    rect(g, x, y, w, h, C.paper);
-    g.fillStyle = "#101a33";
+    rect(g, x, y, w, h, C.sheet);
+    g.fillStyle = C.sheetInk;
     const n = lines || 4;
     for (let i = 0; i < n; i++) {
       g.fillRect(s4(x + 5), s4(y + 6 + i * ((h - 12) / n)), s4(w - 10 - (i % 2) * w * 0.2), 2);
@@ -2158,7 +2241,7 @@ window.MM = (() => {
     const sp = seg(fillP, 0, 0.5);
     if (sp > 0) {
       const sw = w * 0.62;
-      rect(g, x + (w - sw) / 2, lerp(y - 14, y + h * 0.16, easeOut(sp)), sw, 12, C.paper);
+      rect(g, x + (w - sw) / 2, lerp(y - 14, y + h * 0.16, easeOut(sp)), sw, 12, C.sheet);
     }
     /* wall slots fill */
     const cols = 3;
@@ -2220,7 +2303,7 @@ window.MM = (() => {
       tile(g, x + i * (tw + 4), y, tw, 22, gold ? C.gold : C.cobalt, gold ? C.goldDeep : C.cobaltDeep);
       if (tw >= 22) {
         g.font = MM.mono(8.5, 620);
-        g.fillStyle = "#ffffff";
+        g.fillStyle = C.tileInk;
         g.textAlign = "center";
         g.fillText(tiles[i], s4(x + i * (tw + 4)) + tw / 2, s4(y) + 14);
         g.textAlign = "left";
@@ -2638,18 +2721,18 @@ window.MM = (() => {
 
   /* ---- sheet appearance -------------------------------------------------------- */
   function drawSheet(g, x, y, w, h, kind, gray) {
-    const body = gray ? C.reject : C.paper;
+    const body = gray ? C.reject : C.sheet;
     rect(g, x, y, w, h, body);
     if (gray) return;
     if (kind === "sparse") {
-      g.fillStyle = "#101a33";
+      g.fillStyle = C.sheetInk;
       for (let i = 0; i < 3; i++) {
         g.fillRect(s4(x + 4), s4(y + 6 + i * 9), s4((w - 8) * (0.3 + hash(i, 7) * 0.3)), 2);
       }
       return;
     }
     if (kind === "alt") {
-      g.fillStyle = "#101a33";
+      g.fillStyle = C.sheetInk;
       for (let i = 0; i < 3; i++) {
         for (let k = 0; k < 3; k++) {
           g.fillRect(s4(x + 4 + k * 7), s4(y + 5 + i * 8), 3, 3);
@@ -2657,7 +2740,7 @@ window.MM = (() => {
       }
       return;
     }
-    g.fillStyle = "#101a33";
+    g.fillStyle = C.sheetInk;
     const n = 4;
     for (let i = 0; i < n; i++) {
       const indent = kind === "code" ? (i % 2) * 8 : 0;
@@ -2827,7 +2910,7 @@ window.MM = (() => {
       const y = lerp(P.y, ty, easeInOut(p));
       const wpx = lerp(L.sw, cell * 4 - 4, p);
       const hpx = lerp(L.sh, (c.h - 16) / 4 - 6, p);
-      tile(g, x, y, wpx, hpx, MM.mixc(C.paper, C.cobalt, p), C.cobaltDeep);
+      tile(g, x, y, wpx, hpx, MM.mixc(C.sheet, C.cobalt, p), C.cobaltDeep);
       /* cell ticks appear once landed */
       if (p >= 1) {
         g.fillStyle = fade(C.stage, 0.5);
@@ -2838,7 +2921,7 @@ window.MM = (() => {
     });
     /* document divider + labels */
     if (t > B.seal) {
-      g.fillStyle = C.paper;
+      g.fillStyle = C.tileInk;
       g.fillRect(s4(c.x + 8 + 4 * cell), s4(c.y + 8), 2, s4(c.h - 16));
       if (!L.mobile) {
         label(g, "packed batches → Section 6", c.x - 4, c.y + c.h + 18, { size: 9.5, color: C.soft });
@@ -3069,14 +3152,14 @@ window.MM = (() => {
 
     /* paper card behind the text */
     const cardPad = 10;
-    g.fillStyle = C.paper;
+    g.fillStyle = C.sheet;
     g.fillRect(
       s4(stripX - cardPad),
       s4(stripY - cardPad),
       s4(totalW + cardPad * 2),
       s4(24 + cardPad * 2)
     );
-    g.fillStyle = "rgba(6,10,24,0.35)";
+    g.fillStyle = C.tileSide;
     g.fillRect(s4(stripX - cardPad), s4(stripY - cardPad) + s4(24 + cardPad * 2) - 4, s4(totalW + cardPad * 2), 4);
 
     /* scanner frame */
@@ -3088,7 +3171,7 @@ window.MM = (() => {
     g.rect(stripX - cardPad, stripY - cardPad, totalW + cardPad * 2, 24 + cardPad * 2);
     g.clip();
     let gx = stripX;
-    g.fillStyle = "#101a33";
+    g.fillStyle = C.sheetInk;
     g.textBaseline = "middle";
     pieces.forEach((p, i) => {
       g.fillText(p.byte ? "🚀" : p.text, gx, stripY + 12.5);
@@ -3160,9 +3243,9 @@ window.MM = (() => {
 
       const landed = flyP >= 1;
       const fill = p.byte
-        ? mixc(C.paper, C.cobaltDeep, morphP)
-        : mixc(C.paper, C.cobalt, morphP);
-      const glyphColor = mixc("#101a33", "#ffffff", morphP);
+        ? mixc(C.sheet, C.cobaltDeep, morphP)
+        : mixc(C.sheet, C.cobalt, morphP);
+      const glyphColor = mixc(C.sheetInk, C.tileInk, morphP);
       const tw = lerp(TILE_W, slot.w, flyP);
       const th = lerp(TILE_H, slot.h, flyP);
 
@@ -3571,7 +3654,7 @@ window.MM = (() => {
     g.globalAlpha = a;
     tile(g, cx - 20, cy - 13, 40, 26, C.cobalt);
     g.font = MM.mono(9, 620);
-    g.fillStyle = "#ffffff";
+    g.fillStyle = C.tileInk;
     g.textAlign = "center";
     g.textBaseline = "middle";
     g.fillText(TOKEN.text, cx, cy - 1);
@@ -3732,7 +3815,7 @@ window.MM = (() => {
     const base = P(w.x, w.y, 0);
     const top = P(w.x, w.y, h);
     /* ground shadow */
-    g.fillStyle = "rgba(3, 6, 16, 0.35)";
+    g.fillStyle = C.shadow;
     quad(g, [P(w.x - u * 1.5, w.y - u * 1.5, 0), P(w.x + u * 1.5, w.y - u * 1.5, 0),
       P(w.x + u * 1.5, w.y + u * 1.5, 0), P(w.x - u * 1.5, w.y + u * 1.5, 0)]);
     /* front faces (two-tone for the voxel read) */
@@ -5123,7 +5206,7 @@ window.MM = (() => {
       const gold = i === n - 1 && i >= PROMPT.length;
       tile(g, L.seq.x + i * (L.seq.tw + 5), L.seq.y, L.seq.tw, L.seq.th, gold ? C.gold : C.cobalt, gold ? C.goldDeep : C.cobaltDeep);
       g.font = MM.mono(9, 620);
-      g.fillStyle = "#ffffff";
+      g.fillStyle = C.tileInk;
       g.textAlign = "center";
       g.fillText(w.trim(), s4(L.seq.x + i * (L.seq.tw + 5)) + L.seq.tw / 2, s4(L.seq.y) + 14);
       g.textAlign = "left";
@@ -5428,11 +5511,11 @@ window.MM = (() => {
 
   const STEPS = [
     ["Corpus selected", "Filtered documents supply the evidence for everything downstream.", "Selecting the corpus"],
-    ["Tokenizer trained", "A representative sample teaches the typesetter its inventory; then it freezes.", "Training the tokenizer"],
+    ["Tokenizer trained", "A representative sample teaches the typesetter its vocabulary; then it freezes.", "Training the tokenizer"],
     ["Corpus encoded", "Documents become packed arrays of token IDs with document boundaries marked.", "Encoding the corpus"],
-    ["Forward pass", "Every position is scored in parallel under the causal mask.", "Running the batch forward"],
+    ["Forward pass", "The model scores every position in parallel under the causal mask.", "Running the batch forward"],
     ["Loss and backward", "Cross-entropy at each position sums into batch loss; coral gradients walk back.", "Backpropagating the loss"],
-    ["Checkpoint saved", "The updated parameters are recorded as a new checkpoint version.", "Saving the checkpoint"],
+    ["Checkpoint saved", "Training records the updated parameters as a new checkpoint version.", "Saving the checkpoint"],
     ["Artifacts locked", "Tokenizer and checkpoint bridge to the run lane. Their geometry never changes again.", "Locking the artifacts"],
     ["Prompt tokenized", "The frozen tokenizer maps the prompt to the same kind of tiles seen in training.", "Tokenizing the prompt"],
     ["Embeddings and RoPE", "Each ID selects a learned row; position rotates query and key coordinates.", "Looking up vectors"],
@@ -5496,8 +5579,8 @@ window.MM = (() => {
 
   /* ---- shared glyph bits ----------------------------------------------------- */
   function sheet(g, x, y, w, h) {
-    rect(g, x, y, w, h, C.paper);
-    g.fillStyle = "#101a33";
+    rect(g, x, y, w, h, C.sheet);
+    g.fillStyle = C.sheetInk;
     for (let i = 0; i < 3; i++) {
       g.fillRect(s4(x + 4), s4(y + 5 + i * ((h - 10) / 3)), s4(w - 8 - (i % 2) * w * 0.22), 2);
     }
@@ -5564,7 +5647,7 @@ window.MM = (() => {
       const x = L.cx(1) - w / 2;
       portal(g, x, y, w, h * 0.52, p1 >= 1 ? C.cobalt : C.edge, 2);
       const feed = seg(p1, 0, 0.5);
-      if (feed > 0) rect(g, x + w * 0.2, lerp(y - 12, y + h * 0.14, easeOut(feed)), w * 0.6, 10, C.paper);
+      if (feed > 0) rect(g, x + w * 0.2, lerp(y - 12, y + h * 0.14, easeOut(feed)), w * 0.6, 10, C.sheet);
       for (let i = 0; i < 6; i++) {
         const q = seg(p1, 0.4 + i * 0.09, 0.16);
         const sx = x + 6 + (i % 3) * ((w - 12) / 3);
@@ -5588,7 +5671,7 @@ window.MM = (() => {
       }, 3);
       /* document dividers */
       if (p2 >= 1) {
-        g.fillStyle = C.paper;
+        g.fillStyle = C.tileInk;
         g.fillRect(s4(x + 8 + 2 * (9 * u + 3) + 4), s4(y + 8), 2, s4(3 * (9 * u + 3) - 3));
       }
     }
