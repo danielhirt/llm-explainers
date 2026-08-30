@@ -164,7 +164,129 @@ h1 {
   line-height: 1.58;
 }
 
-main { padding: 30px 0 0; }
+.decision-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 28px;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.decision-cell {
+  min-width: 0;
+  padding: 12px 14px 13px 0;
+  border-right: 1px solid var(--line);
+}
+
+.decision-cell + .decision-cell { padding-left: 14px; }
+.decision-cell:last-child { border-right: 0; }
+
+.decision-cell .k {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.decision-cell .v {
+  display: block;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.activity-guide {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 12px 16px;
+  align-items: center;
+  margin: 30px 0 16px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  background: var(--surface);
+}
+
+.activity-number {
+  color: var(--accent);
+  font-family: "Geist Mono", monospace;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.activity-guide strong { display: block; color: var(--ink); font-size: 15px; }
+.activity-guide p { margin: 2px 0 0; color: var(--ink-soft); font-size: 15px; line-height: 1.45; }
+.activity-time { color: var(--ink-faint); font-family: "Geist Mono", monospace; font-size: 10.5px; white-space: nowrap; }
+
+.cost-note,
+.takeaway {
+  margin: 18px 0 30px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+  color: var(--ink-body);
+  font-size: 15.5px;
+  line-height: 1.55;
+}
+
+.takeaway { margin-top: 44px; border-left-color: var(--gold); }
+.takeaway .label { display: block; margin-bottom: 6px; color: var(--ink-faint); font-family: "Geist Mono", monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; }
+.takeaway ul { margin-bottom: 0; }
+
+.choice-exercise {
+  margin: 18px 0 46px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+}
+
+.choice-exercise .exercise-head {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line-strong);
+  background: repeating-linear-gradient(-45deg, transparent 0 4px, var(--hatch) 4px 5px);
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+}
+
+.choice-exercise .exercise-body { padding: 16px; }
+.choice-exercise .scenario { min-height: 3.1em; margin-bottom: 14px; color: var(--ink); font-size: 17px; line-height: 1.5; }
+.choice-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.choice-answer {
+  min-height: 46px;
+  padding: 9px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  background: var(--page);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: "Geist Mono", monospace;
+  font-size: 11.5px;
+  text-align: left;
+}
+
+.choice-answer:hover { border-color: var(--accent); }
+.choice-answer[aria-pressed="true"] { border: 2px solid var(--accent); padding: 8px 11px; background: var(--accent-soft); }
+.choice-answer:disabled { cursor: default; }
+
+.choice-result {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.choice-result strong { color: var(--ink); }
+.choice-next { margin-top: 12px; }
+
+main { padding: 38px 0 0; }
 
 h2 {
   margin: 52px 0 16px;
@@ -239,10 +361,11 @@ td {
 td:first-child { font-family: "Geist Mono", monospace; font-size: 12.5px; color: var(--ink); white-space: nowrap; }
 
 .tablewrap { overflow-x: auto; }
+.tablewrap table { min-width: 640px; }
 
 figure.instrument {
   width: min(940px, calc(100% - 40px));
-  margin: 30px auto;
+  margin: 38px auto 52px;
   padding: 0;
   background: var(--stage);
   border: 1px solid var(--line-strong);
@@ -254,6 +377,7 @@ figure.instrument {
 
 .instrument-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   min-height: 50px;
@@ -267,14 +391,14 @@ figure.instrument {
 
 .fig-id { color: var(--stage-muted); font-weight: 620; white-space: nowrap; }
 
-.fig-name { color: var(--stage-ink); font-family: "Geist", sans-serif; font-size: 13.5px; font-weight: 560; }
+.fig-name { flex: 1 1 220px; color: var(--stage-ink); font-family: "Geist", sans-serif; font-size: 13.5px; font-weight: 560; }
 
 .fig-note { margin-left: auto; font-size: 10.5px; text-align: right; }
 
 button.fig-btn {
   margin-left: auto;
-  min-height: 30px;
-  padding: 6px 11px;
+  min-height: 36px;
+  padding: 7px 12px;
   font-family: "Geist Mono", monospace;
   font-size: 11px;
   color: var(--stage-muted);
@@ -286,6 +410,7 @@ button.fig-btn {
 }
 
 button.fig-btn:hover { color: var(--page); border-color: var(--ink); background: var(--ink); }
+button.fig-btn + button.fig-btn { margin-left: -5px; }
 
 .instrument-body { padding: 20px 18px; }
 .instrument-body.scrollx { overflow-x: auto; }
@@ -352,8 +477,15 @@ footer.series a { color: var(--ink-soft); }
   .mast-row { margin-bottom: 36px; }
   h1 { font-size: clamp(29px, 8.5vw, 33px); }
   .dek { font-size: 18px; }
-  figure.instrument { width: calc(100% - 16px); border-radius: 7px; }
+  figure.instrument { width: calc(100% - 24px); margin-top: 30px; margin-bottom: 42px; border-radius: 3px; }
   .instrument-body { padding: 14px 13px; }
+  .decision-strip { grid-template-columns: 1fr; }
+  .decision-cell { padding: 10px 0; border-right: 0; border-bottom: 1px solid var(--line); }
+  .decision-cell + .decision-cell { padding-left: 0; }
+  .decision-cell:last-child { border-bottom: 0; }
+  .activity-guide { grid-template-columns: 36px minmax(0, 1fr); }
+  .activity-time { grid-column: 2; }
+  .choice-actions { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
@@ -372,28 +504,33 @@ footer.series a { color: var(--ink-soft); }
       </button>
     </div>
     <h1>Reasoning effort</h1>
-    <p class="dek">What the effort knob turns, why its returns flatten, and how to pick a level.</p>
+    <p class="dek">Give a model enough time to work the problem, without paying it to circle an answer it already has.</p>
+    <div class="decision-strip" role="group" aria-label="Reasoning effort at a glance">
+      <div class="decision-cell"><span class="k">You choose</span><span class="v">How much thinking the task gets</span></div>
+      <div class="decision-cell"><span class="k">You spend</span><span class="v">More tokens and more time</span></div>
+      <div class="decision-cell"><span class="k">Good default</span><span class="v">Start in the middle, then adjust</span></div>
+    </div>
   </div>
 </header>
 
 <main>
   <div class="col">
-    <p>Most frontier models now ship with a version of the same knob. Claude exposes extended thinking with a token budget, and coding harnesses wrap it in levels with names like <code>low</code>, <code>medium</code>, <code>high</code>, and <code>max</code>. OpenAI models take a <code>reasoning_effort</code> parameter. Behind each label sits the same quantity: how much private scratch work the model can do before it starts the answer you see.</p>
-    <p>Engineers tend to treat the knob superstitiously: they pin it at max "to be safe" or never touch it. It deserves better. The knob maps to something mechanical, and its returns have a knowable shape. Misjudge it, and you waste money and minutes, or the model delivers a wrong answer with confidence.</p>
+    <p>Reasoning effort sets the budget for <strong>thinking tokens</strong>: private scratch work the model generates before it writes the answer you see. Each extra token makes another trip through the same model. The weights and knowledge stay the same.</p>
+    <p>More effort helps when a task has dependent steps, such as tracing a race condition or planning a migration. It adds little to a rename or a formatting change. Token cost and waiting time keep rising even after answer quality stops improving.</p>
 
-    <h2>What the knob turns</h2>
-    <p><a href="how-llms-work.html">The first piece in this series</a> covered the constraint that makes effort interesting: a transformer spends a fixed amount of compute per token. One forward pass through the stack costs roughly two floating-point operations (FLOPs) per parameter, whether the token completes boilerplate or carries the crux of a proof. There is no loop inside the architecture where a model can quietly think harder about a hard token. Depth is fixed at inference; width is fixed; one pass is one pass.</p>
-    <p>The only way to give a model more compute is to give it more tokens, and that is the entire mechanism. Raising effort raises the budget of <strong>thinking tokens</strong>: text the model generates for itself, conditions on like any other output, but holds back from the visible reply. Each thinking token is one more forward pass whose result lands back in the context, available to every pass that follows. Intermediate conclusions become inputs. A model working through a race condition can name the interleaving, check it against the lock order, discard it, and try another. Each of those steps is real compute that every later pass builds on.</p>
-    <p>Nothing else changes. Same weights, same knowledge, same context. Effort buys serial depth, one extra step at a time.</p>
-
-    <h2>The shape of the returns</h2>
-    <p>Spending is linear: token cost and wall-clock latency grow in direct proportion to the budget. The return is not linear. Quality as a function of thinking budget is concave. It climbs steeply while the model still has genuine steps to work through, and it flattens once it runs out of them. Where the flattening happens depends on the task, and that dependence is the entire skill of setting the knob.</p>
+    <h2>Find the useful stopping point</h2>
+    <p>The curve below shows the idea. Quality rises while the model has useful steps left, then levels off. The point where it levels off moves with the task.</p>
+    <div class="activity-guide" aria-label="Reasoning effort activity instructions">
+      <span class="activity-number">1</span>
+      <div><strong>Choose a task, then drag the budget.</strong><p>Stop when the quality line barely moves. Switch tasks and see how the stopping point changes.</p></div>
+      <span class="activity-time">1 minute</span>
+    </div>
   </div>
 
   <figure class="instrument" id="fig-effort">
     <figcaption class="instrument-head">
       <span class="fig-id">Figure 1</span><span class="fig-name">Quality vs. thinking budget</span>
-      <span class="fig-note">Pick a task, drag the budget</span>
+      <span class="fig-note">Choose a task, then drag</span>
     </figcaption>
     <div class="instrument-body">
       <div id="task-picker" role="group" aria-label="task type">
@@ -413,20 +550,21 @@ footer.series a { color: var(--ink-soft); }
         <span class="warmread">Marginal gain of next 1k tokens <b id="read-marginal">…</b></span>
       </div>
     </div>
-    <figcaption class="below">Curves are illustrative; the shape is the point. Dashed verticals mark where typical effort levels land. The saturation point moves with the task while cost stays linear in the budget.</figcaption>
+    <figcaption class="below">The curves are teaching examples. The useful stopping point moves with the task, while every added thinking token still adds cost and waiting time.</figcaption>
   </figure>
 
   <div class="col">
-    <p>Three regimes show up in practice, and the figure sketches one task from each:</p>
+    <div class="cost-note"><strong>Cost link:</strong> thinking tokens are output tokens the model uses before the visible answer. A larger budget can raise both the bill and response time.</div>
+    <p>The three task shapes lead to three different choices:</p>
     <ul>
-      <li><strong>Flat from the start.</strong> A mechanical rename has no multi-step structure. The model's first read of the problem contains the answer, and additional thinking mostly restates it. Extra budget here buys latency, and occasionally worse: models with room to deliberate on trivial questions sometimes talk themselves out of a correct first take.</li>
-      <li><strong>Steep, then saturating.</strong> A mid-size feature rewards enough thinking to plan the change, check the interfaces it touches, and catch one or two interactions. Past that, the plan stops improving before the tokens stop flowing.</li>
-      <li><strong>Steep for a long time.</strong> A concurrency bug, a cross-cutting design decision, a security review: tasks whose answer sits behind a chain of dependent deductions keep paying for depth. Each thinking pass extends the chain instead of rephrasing it.</li>
+      <li><strong>Mechanical work flattens early.</strong> Renames, formatting, and boilerplate usually need little scratch work.</li>
+      <li><strong>Ordinary features need a middle budget.</strong> The model has time to plan the change and check the interfaces it touches.</li>
+      <li><strong>Hard bugs keep paying longer.</strong> A concurrency bug or security review can require a long chain of checks.</li>
     </ul>
-    <p>One more property matters: effort cannot add what the weights and the context lack. If the model never saw your internal framework, no thinking budget will derive it. When a failure looks like missing knowledge, the fix is context or a different model. When it looks like skipped steps, the fix is effort. Learning to tell those two failure smells apart pays for itself quickly.</p>
+    <p>Effort cannot supply missing facts. If the model does not know your internal framework, add context or choose a different model. Raise effort when the model knows the pieces but skips steps between them.</p>
 
     <h2>Picking a level</h2>
-    <p>Two questions do most of the work. How long is the chain of dependent steps between the problem and the answer? What does a wrong answer cost once you account for how cheaply you can catch it? Shallow, self-verifying tasks go low. Deep ones, and any task expensive to be wrong about, go high. Everything else sits in the middle, which is why the middle is the default.</p>
+    <p>Estimate the number of dependent steps and the cost of a wrong answer after tests and review. Short, easy-to-check tasks go low. Long chains or expensive mistakes go high. Use the middle for normal work.</p>
     <div class="tablewrap">
     <table>
       <thead><tr><th>Level</th><th>Reach for it when</th><th>Examples</th></tr></thead>
@@ -438,19 +576,26 @@ footer.series a { color: var(--ink-soft); }
       </tbody>
     </table>
     </div>
-    <p>Calibrate against the transcript. When the visible reasoning mostly restates the prompt, the budget is too high for the task. When an answer arrives fast with an unexamined assumption in the middle of it, the budget was too low. Both smells are easier to read than any rule of thumb.</p>
+    <p>Use the result to tune the next run. Repeated ideas suggest too much budget. A fast answer with an unchecked assumption suggests too little.</p>
 
-    <h2>Effort is not the same axis as model choice</h2>
-    <p>Raising effort and upgrading the model both cost more, so engineers conflate them, and they should not. Effort scales <em>serial</em> compute: more dependent steps on the same machinery. A stronger model improves the machinery itself: better priors and better judgment at every step. A small model at max effort will diligently explore a chain of wrong turns. A strong model at low effort will make one excellent snap judgment and miss an interaction it never looked for.</p>
-    <p>A third option competes with both: sampling. For tasks whose answers are cheap to verify, several low-effort attempts plus a checker can beat one max-effort attempt on both cost and reliability. Independent samples fail differently, while one long deliberation fails as a unit. That pattern, spending tokens across attempts rather than within one, is where <a href="orchestration-and-subagents.html">orchestration</a> starts.</p>
+    <h2>Effort and model choice solve different problems</h2>
+    <p>Effort gives the same model more steps. A stronger model brings better judgment to every step. A smaller model can spend a large budget exploring a bad path; a stronger model can still miss an interaction if it answers too quickly.</p>
+    <p>There is also a third option. When answers are cheap to check, several low-effort attempts plus a verifier can beat one long attempt. That moves the spending across model runs, which is where <a href="orchestration-and-subagents.html">orchestration</a> begins.</p>
 
     <h2>Defaults that hold up</h2>
     <ul>
-      <li>Set the session default to medium and deviate per task, in either direction, on the two-question test above.</li>
-      <li>Spend effort where verification is weak. If a test suite will catch failure in seconds, low effort plus the suite outperforms max effort without it.</li>
-      <li>Treat a max-effort run whose thinking you never sampled as unreviewed work product.</li>
-      <li>When a high-effort answer still misses, stop raising effort. The bottleneck moved to context or model, and more budget will explore the same gaps more thoroughly.</li>
+      <li>Start at medium and move only when the task gives you a reason.</li>
+      <li>Use less effort when tests can catch mistakes quickly.</li>
+      <li>If high effort still misses, add context or change models.</li>
     </ul>
+    <div class="takeaway">
+      <span class="label">Leave with this</span>
+      <ul>
+        <li>Effort buys more thinking tokens, not new knowledge.</li>
+        <li>Quality can flatten while cost and waiting time keep rising.</li>
+        <li>The best level depends on task depth and the cost of a mistake.</li>
+      </ul>
+    </div>
   </div>
 </main>
 

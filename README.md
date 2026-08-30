@@ -12,16 +12,16 @@ The cover page (`index.html`) is an interactive isometric map of the model in th
 |------|-------|
 | `articles/tokenizer.html` | Tokens are the meter: a talk-ready playground for non-technical audiences. It opens with one animated trip through the model, then gives the audience three short activities: see how a sentence splits, choose which of two messages costs more, and lower a sample monthly bill. The page uses one fixed example rate, gives plain instructions before each activity, and hands off the transformer section to the talk's videos. |
 | `articles/tokenizer-v2.html` | The versioned copy used to develop the current tokenizer playground. `articles/tokenizer.html` is the canonical page linked from the home page and the rest of the guide. |
-| `articles/how-llms-work.html` | The flagship: a lifecycle pass from corpus and tokenizer through embeddings and position, a decoder-only transformer block, pre-training, and one-token-at-a-time generation, ending with a controllable full-system replay. Eight interactive figures. |
-| `articles/effort-levels.html` | Model reasoning effort: what it buys, where it saturates, how to pick a level. |
-| `articles/orchestration-and-subagents.html` | Why orchestration exists (context isolation), fan-out, pipelines, verification patterns. |
-| `articles/loops-and-skills.html` | The agentic loop, harness-driven recurrence, and skills as packaged procedure. |
+| `articles/how-llms-work.html` | The full lifecycle from corpus to next token. A four-step route and one-sentence summaries provide the talk path; optional formula disclosures retain the technical reference. Eight guided figures end with a controllable full-system replay. |
+| `articles/effort-levels.html` | Choose a task, move the thinking budget, and find where added tokens stop helping. The page connects effort to token cost, waiting time, task depth, and model choice. |
+| `articles/orchestration-and-subagents.html` | Compare one crowded context with scoped workers, then use a three-round decision exercise to choose which jobs are worth splitting. Covers token cost, elapsed time, verification, and four orchestration patterns. |
+| `articles/loops-and-skills.html` | Follow an agentic tool loop as its context grows, watch a skill load on demand, then decide which instructions belong in a reusable skill. Connects repeat work to token cost, stopping rules, and saved state. |
 
 Planned: a harness-engineering piece (more technical, lighter visuals).
 
 ## Design system
 
-The suite shares its type system and instrument pattern. The 2026-08 overhaul moved the page shells to a drafting-paper language modeled on isometric codebase-atlas maps: cream paper `#eae7da` / surface `#f3f1e6` with an ink-red accent in light mode, a night-ink inversion (`#14130d`) in dark mode, hatched header strips on figure panels, squared mono controls, and black-highlight inline terms. The flagship renders its figures with a pixel/voxel scene engine:
+The suite shares its type system and instrument pattern. Each page now follows the same teaching rhythm: orient the reader, give one action, show the practical or cost result, and end with a short recall block. Header decision strips state the control, gain, and tradeoff before the first activity. The 2026-08 overhaul moved the page shells to a drafting-paper language modeled on isometric codebase-atlas maps: cream paper `#eae7da` / surface `#f3f1e6` with an ink-red accent in light mode, a night-ink inversion (`#14130d`) in dark mode, hatched header strips on figure panels, squared mono controls, and black-highlight inline terms. The flagship renders its figures with a pixel/voxel scene engine:
 
 - Figure stages are drafting boards in the page's theme: paper (`#f3f1e6`) in light mode, night ink (`#1d1c14`) in dark. The canvas engine holds two palettes and swaps them in place on theme change (`MM.applyTheme`), repainting every held scene; satellites route all figure colors through `--stage-*`/`--cobalt`/`--gold` tokens.
 - Cobalt marks data and hidden states, coral marks learning and weight updates, and gold marks prediction targets or selected output. Violet identifies the fixed per-position MLP; residual paths and annotations use the stage's ink color. Document glyphs draw as bright "sheets" with ink lines in both themes. Color is semantic, never decorative.

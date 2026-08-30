@@ -164,7 +164,129 @@ h1 {
   line-height: 1.58;
 }
 
-main { padding: 30px 0 0; }
+.decision-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 28px;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.decision-cell {
+  min-width: 0;
+  padding: 12px 14px 13px 0;
+  border-right: 1px solid var(--line);
+}
+
+.decision-cell + .decision-cell { padding-left: 14px; }
+.decision-cell:last-child { border-right: 0; }
+
+.decision-cell .k {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.decision-cell .v {
+  display: block;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.activity-guide {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 12px 16px;
+  align-items: center;
+  margin: 30px 0 16px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  background: var(--surface);
+}
+
+.activity-number {
+  color: var(--accent);
+  font-family: "Geist Mono", monospace;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.activity-guide strong { display: block; color: var(--ink); font-size: 15px; }
+.activity-guide p { margin: 2px 0 0; color: var(--ink-soft); font-size: 15px; line-height: 1.45; }
+.activity-time { color: var(--ink-faint); font-family: "Geist Mono", monospace; font-size: 10.5px; white-space: nowrap; }
+
+.cost-note,
+.takeaway {
+  margin: 18px 0 30px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+  color: var(--ink-body);
+  font-size: 15.5px;
+  line-height: 1.55;
+}
+
+.takeaway { margin-top: 44px; border-left-color: var(--gold); }
+.takeaway .label { display: block; margin-bottom: 6px; color: var(--ink-faint); font-family: "Geist Mono", monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; }
+.takeaway ul { margin-bottom: 0; }
+
+.choice-exercise {
+  margin: 18px 0 46px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+}
+
+.choice-exercise .exercise-head {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line-strong);
+  background: repeating-linear-gradient(-45deg, transparent 0 4px, var(--hatch) 4px 5px);
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+}
+
+.choice-exercise .exercise-body { padding: 16px; }
+.choice-exercise .scenario { min-height: 3.1em; margin-bottom: 14px; color: var(--ink); font-size: 17px; line-height: 1.5; }
+.choice-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.choice-answer {
+  min-height: 46px;
+  padding: 9px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  background: var(--page);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: "Geist Mono", monospace;
+  font-size: 11.5px;
+  text-align: left;
+}
+
+.choice-answer:hover { border-color: var(--accent); }
+.choice-answer[aria-pressed="true"] { border: 2px solid var(--accent); padding: 8px 11px; background: var(--accent-soft); }
+.choice-answer:disabled { cursor: default; }
+
+.choice-result {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.choice-result strong { color: var(--ink); }
+.choice-next { margin-top: 12px; }
+
+main { padding: 38px 0 0; }
 
 h2 {
   margin: 52px 0 16px;
@@ -213,6 +335,11 @@ pre {
 
 pre code { background: none; padding: 0; font-size: 1em; }
 
+.technical-details { margin: 18px 0 0; border: 1px solid var(--line); background: var(--surface); }
+.technical-details summary { padding: 10px 13px; color: var(--ink); cursor: pointer; font-family: "Geist Mono", monospace; font-size: 11.5px; }
+.technical-details[open] summary { border-bottom: 1px solid var(--line); }
+.technical-details pre { margin: 0; border: 0; border-radius: 0; }
+
 ul { max-width: 66ch; padding-left: 1.2rem; margin: 0 0 1.2em; }
 li { margin-bottom: 0.5em; }
 li::marker { color: var(--ink-faint); }
@@ -242,7 +369,7 @@ td:first-child { font-family: "Geist Mono", monospace; font-size: 12.5px; color:
 
 figure.instrument {
   width: min(940px, calc(100% - 40px));
-  margin: 30px auto;
+  margin: 38px auto 52px;
   padding: 0;
   background: var(--stage);
   border: 1px solid var(--line-strong);
@@ -254,6 +381,7 @@ figure.instrument {
 
 .instrument-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   min-height: 50px;
@@ -267,14 +395,14 @@ figure.instrument {
 
 .fig-id { color: var(--stage-muted); font-weight: 620; white-space: nowrap; }
 
-.fig-name { color: var(--stage-ink); font-family: "Geist", sans-serif; font-size: 13.5px; font-weight: 560; }
+.fig-name { flex: 1 1 220px; color: var(--stage-ink); font-family: "Geist", sans-serif; font-size: 13.5px; font-weight: 560; }
 
 .fig-note { margin-left: auto; font-size: 10.5px; text-align: right; }
 
 button.fig-btn {
   margin-left: auto;
-  min-height: 30px;
-  padding: 6px 11px;
+  min-height: 36px;
+  padding: 7px 12px;
   font-family: "Geist Mono", monospace;
   font-size: 11px;
   color: var(--stage-muted);
@@ -286,6 +414,7 @@ button.fig-btn {
 }
 
 button.fig-btn:hover { color: var(--page); border-color: var(--ink); background: var(--ink); }
+button.fig-btn + button.fig-btn { margin-left: -5px; }
 
 .instrument-body { padding: 20px 18px; }
 .instrument-body.scrollx { overflow-x: auto; }
@@ -356,8 +485,15 @@ footer.series a { color: var(--ink-soft); }
   .mast-row { margin-bottom: 36px; }
   h1 { font-size: clamp(29px, 8.5vw, 33px); }
   .dek { font-size: 18px; }
-  figure.instrument { width: calc(100% - 16px); border-radius: 7px; }
+  figure.instrument { width: calc(100% - 24px); margin-top: 30px; margin-bottom: 42px; border-radius: 3px; }
   .instrument-body { padding: 14px 13px; }
+  .decision-strip { grid-template-columns: 1fr; }
+  .decision-cell { padding: 10px 0; border-right: 0; border-bottom: 1px solid var(--line); }
+  .decision-cell + .decision-cell { padding-left: 0; }
+  .decision-cell:last-child { border-bottom: 0; }
+  .activity-guide { grid-template-columns: 36px minmax(0, 1fr); }
+  .activity-time { grid-column: 2; }
+  .choice-actions { grid-template-columns: 1fr; }
   #skill-wrap { grid-template-columns: 1fr; }
 }
 
@@ -377,53 +513,74 @@ footer.series a { color: var(--ink-soft); }
       </button>
     </div>
     <h1>Loops and skills</h1>
-    <p class="dek">The while-loop that turns a text predictor into a worker, and procedure packaged as files it can load.</p>
+    <p class="dek">A harness lets the model act one step at a time. Skills give that loop the right procedure only when it needs it.</p>
+    <div class="decision-strip" role="group" aria-label="Loops and skills at a glance">
+      <div class="decision-cell"><span class="k">A loop does</span><span class="v">Model, tool, result, repeat</span></div>
+      <div class="decision-cell"><span class="k">Each lap costs</span><span class="v">New tokens plus the context read again</span></div>
+      <div class="decision-cell"><span class="k">A skill saves</span><span class="v">Always-on instructions and rework</span></div>
+    </div>
   </div>
 </header>
 
 <main>
   <div class="col">
-    <p>Nothing in <a href="how-llms-work.html">the transformer</a> acts. It reads tokens and emits tokens, once, and stops. Everything agentic about an "agent", the file edits and the test runs, comes from a plain while-loop around that function. A piece of ordinary software called the harness runs that loop. The loop is small enough to sketch in full:</p>
-    <pre><code>context = [system_prompt, tools_schema, user_request]
+    <p><a href="how-llms-work.html">The language model</a> reads tokens and produces tokens. It does not run a test or edit a file by itself. Software around the model, called the <strong>harness</strong>, reads a requested tool call, runs it, and gives the result back to the model.</p>
+    <p>That cycle turns one prediction into a worker: ask, act, inspect the result, and decide what comes next. The context grows on every lap because the tool call and its result both become more tokens.</p>
+    <details class="technical-details">
+      <summary>See the loop as code</summary>
+      <pre><code>context = [system_prompt, tools_schema, user_request]
 while True:
     output = model(context)          # one forward pass per token
     if output.is_answer:
         return output                # the model chose to stop
     result = execute(output.tool_call)
-    context += [output, result]      # both are just tokens</code></pre>
-    <p>Two things about this loop repay attention. The model never executes anything: it emits a tool call as text, the harness runs it, and the result comes back as more text. And the context grows every lap, so a long-running loop inherits every property of the context window from the first piece. The cost of re-reading grows, retrieval degrades in the middle, and eventually compaction throws away detail. Loops do not escape the window; they run inside it.</p>
+    context += [output, result]      # both are tokens</code></pre>
+    </details>
+    <div class="activity-guide" aria-label="Agent loop animation instructions">
+      <span class="activity-number">1</span>
+      <div><strong>Follow three tool laps.</strong><p>Watch the result return to context each time. Track the meter until the model chooses an answer.</p></div>
+      <span class="activity-time">45 seconds</span>
+    </div>
   </div>
 
   <figure class="instrument" id="fig-loop">
     <figcaption class="instrument-head">
       <span class="fig-id">Figure 1</span><span class="fig-name">The agentic loop</span>
       <button class="fig-btn" data-ctl aria-label="Pause animation">Pause</button>
+      <button class="fig-btn" data-restart aria-label="Replay animation">Replay</button>
     </figcaption>
     <div class="instrument-body scrollx">
       <svg id="loop-svg" viewBox="0 0 720 356" role="img" aria-label="A cycle: the context feeds the model, the model emits a tool call, the harness executes it, and the result appends to the context. The loop ends when the model answers."></svg>
       <div id="loop-meter-wrap"><span>Context</span><div id="loop-meter"><div id="loop-meter-fill"></div></div><span id="loop-meter-pct">4%</span></div>
       <div id="loop-status"></div>
     </div>
-    <figcaption class="below">Each lap appends the tool call and its result to the context, so the window fills as the loop runs. The loop ends when the model answers instead of calling.</figcaption>
+    <figcaption class="below">Each lap adds the tool call and result to the context. The model ends the loop by answering instead of asking for another tool.</figcaption>
   </figure>
 
   <div class="col">
-    <p>The difference between a loop that converges and one that thrashes is mostly the lap body. Verification belongs inside it. An agent that runs the tests after each edit gets real feedback every lap. An agent that edits five files and tests at the end spends four laps guessing. The result tokens are the only steering input the model gets. Make them informative and the loop self-corrects; leave them silent and it drifts.</p>
-    <p>Loops also need a reason to stop. Well-behaved harnesses enforce step caps and token budgets on top of the model's own judgment. A model that keeps finding one more thing to check will happily spend your budget being diligent. The stop condition is part of the task definition, so state it explicitly.</p>
+    <div class="cost-note"><strong>Cost link:</strong> the model rereads the growing context on each lap. A short result and an early test can save tokens on every step that follows.</div>
+    <p>Put verification inside the loop. An agent that tests after each edit gets useful feedback on the next lap. Waiting until five files have changed makes the next step sort through several guesses at once.</p>
+    <p>Give the loop a stop condition and a budget. Without them, a model can keep finding one more check to run.</p>
 
     <h2>Loops that outlive the session</h2>
-    <p>Some loops run longer than any single context: the nightly dependency triage, the agent that watches CI and files issues, and the recurring cleanup pass. Two mechanics change at that scale. Scheduling moves to the harness. Either a cron-style trigger starts a fresh agent on a timer, or the agent runs self-paced: it finishes a pass and schedules its own wake-up. And state must live outside the model, in files it re-reads on every wake. The weights are frozen and the old context is gone. Whatever the loop learned last night exists only if the loop wrote it down. A recurring agent without externalized state re-derives the world from scratch every morning.</p>
-    <p>The rule of thumb for pacing came up in the effort piece in another form: match the spend to the signal. A loop that polls every minute for a state that changes daily burns budget and observes nothing. When the harness can notify on events, an event-driven loop beats polling outright.</p>
+    <p>A scheduled loop starts with a fresh context on each run. It remembers last night only if it wrote useful state to a file and reads that file when it wakes. The harness owns the schedule; the file carries the history.</p>
+    <p>Match the check rate to the signal. Polling every minute for a change that happens daily spends tokens on repeated "nothing changed" results. Use an event trigger when the system can provide one.</p>
 
     <h2>Skills: procedure as files</h2>
-    <p>Once agents run in loops, you start retyping the same instructions. How this team deploys. How to run this repo's flaky test suite. The incident checklist. The obvious fix, pasting all of it into the system prompt, works and then quietly gets expensive. Every request pays tokens for every procedure, relevant or not. The pile grows until it competes with the task for the model's attention.</p>
-    <p>A <strong>skill</strong> is the packaged alternative: a named file of instructions, optionally with reference docs and scripts alongside. The harness registers it under a one-line description. The economics are progressive disclosure. The index of descriptions rides along in every context at a few tokens per skill; the full instructions load only when a task matches. A library of 40 procedures costs a few hundred always-on tokens instead of 40,000.</p>
+    <p>Teams repeat procedures: how to deploy, how to run a difficult test suite, or how to handle an incident. Putting every procedure in every prompt wastes context on instructions the current task does not need.</p>
+    <p>A <strong>skill</strong> stores one procedure in a named file. The model always sees a short description, then loads the full instructions only when the task matches. Forty short descriptions can replace forty full procedures in the starting context.</p>
+    <div class="activity-guide" aria-label="Skill loading animation instructions">
+      <span class="activity-number">2</span>
+      <div><strong>Watch the task choose one skill.</strong><p>Notice what stays small before the match, then watch one full procedure enter the context.</p></div>
+      <span class="activity-time">30 seconds</span>
+    </div>
   </div>
 
   <figure class="instrument" id="fig-skill">
     <figcaption class="instrument-head">
       <span class="fig-id">Figure 2</span><span class="fig-name">A skill loads on demand</span>
       <button class="fig-btn" data-ctl aria-label="Pause animation">Pause</button>
+      <button class="fig-btn" data-restart aria-label="Replay animation">Replay</button>
     </figcaption>
     <div class="instrument-body">
       <div id="skill-wrap">
@@ -436,24 +593,50 @@ while True:
         </div>
       </div>
     </div>
-    <figcaption class="below">The shelf's one-line descriptions are always in context; the procedure itself loads only when a task matches it. The description is all the model sees when it routes a task.</figcaption>
+    <figcaption class="below">Short descriptions stay in context. One full procedure loads after its description matches the incoming task.</figcaption>
   </figure>
 
   <div class="col">
-    <p>Because a skill is a file, it inherits everything files already do well. It lives in a repo, versioned and reviewable in a pull request. Editing it changes the agent's behavior on the next run, with no retraining and no deploy. Copy a directory, and a teammate's hard-won procedure becomes your agent's procedure. Compare the alternatives: fine-tuning bakes procedure into weights where nobody can read or patch it, and prompt-stuffing pays rent on every request. Files sit in the sweet spot, cheap to change and auditable by anyone who can read.</p>
-    <p>It helps to keep the three kinds of instruction distinct, because they fail differently when you mix them. The prompt states the task at hand. Memory holds durable facts about this project and this user. A skill holds a reusable procedure for a kind of task. When procedure leaks into memory or you bake tasks into skills, the agent starts applying yesterday's specifics to tomorrow's work.</p>
+    <p>A skill lives in a repository, so a team can review, version, and change it without retraining the model. The next matching run reads the new file.</p>
+    <p>Keep instructions in the right place. The request states today's job. Memory stores durable facts. A skill stores a reusable procedure.</p>
+
+    <h2>Try the decision</h2>
+    <div class="activity-guide" aria-label="Skill choice activity instructions">
+      <span class="activity-number">3</span>
+      <div><strong>Current request or reusable skill?</strong><p>Choose where each instruction belongs, then check the reveal.</p></div>
+      <span class="activity-time">1 minute</span>
+    </div>
+    <div class="choice-exercise" id="skill-choice" aria-label="Choose when to create a skill">
+      <div class="exercise-head">DECISION 1 OF 3 · REQUEST OR SKILL</div>
+      <div class="exercise-body">
+        <p class="scenario" id="skill-choice-scenario"></p>
+        <div class="choice-actions" role="group" aria-label="Choose where the instruction belongs">
+          <button class="choice-answer" type="button" data-skill-choice="request" aria-pressed="false">Keep in this request</button>
+          <button class="choice-answer" type="button" data-skill-choice="skill" aria-pressed="false">Make a reusable skill</button>
+        </div>
+        <div class="choice-result" id="skill-choice-result" hidden aria-live="polite"></div>
+        <button class="choice-answer choice-next" id="skill-choice-next" type="button" hidden>Next instruction</button>
+      </div>
+    </div>
 
     <h2>Loops and skills compose</h2>
-    <p>The two ideas meet in the recurring agent: a scheduled loop whose body is a skill. The cron entry says "every night at 2:00, run the dependency triage skill". The skill says what triage means here: which manifests to check, what counts as urgent, where to file findings, and what to write down for tomorrow's run. The schedule is configuration and the procedure is prose, both in version control and both editable in 30 seconds. A surprising amount of operational automation reduces to this shape.</p>
+    <p>A recurring agent combines a schedule with a skill. The schedule says when to run. The skill says which files to check, what counts as urgent, and what state to save for the next run.</p>
 
     <h2>Working defaults</h2>
     <ul>
-      <li>Write the skill the second time you type the same instructions. The first time is a task; the second is a pattern with a third occurrence coming.</li>
-      <li>Spend effort on the description line. It is the only part the model sees when it decides whether to load the skill, so a vague description is an unreachable skill.</li>
-      <li>Give every loop a budget and a stop condition, and put verification inside the lap rather than after it.</li>
-      <li>For anything recurring, decide what the loop writes down for its future self. That file is the loop's memory, so give its format the same care as the schedule.</li>
+      <li>Create a skill when the same procedure appears a second time.</li>
+      <li>Write a clear description so the model knows when to load it.</li>
+      <li>Give every loop a budget, a stop condition, and a check inside the lap.</li>
+      <li>For recurring work, decide what the loop must save for its next run.</li>
     </ul>
-    <p>One layer sits under all of this: the harness itself, the software that owns the loop, the tools, the permissions, and the context budget. That piece is next in the series.</p>
+    <div class="takeaway">
+      <span class="label">Leave with this</span>
+      <ul>
+        <li>The harness runs tools; the model chooses the next token or tool call.</li>
+        <li>Each lap grows the context, so verification and stopping rules control cost.</li>
+        <li>Skills keep reusable procedures out of unrelated requests.</li>
+      </ul>
+    </div>
   </div>
 </main>
 
@@ -493,7 +676,13 @@ function makeInstrument(figId, api) {
   var fig = document.getElementById(figId);
   if (!fig) return;
   var btn = fig.querySelector('[data-ctl]');
-  if (REDUCED) { api.renderStatic(); if (btn) btn.style.display = 'none'; return; }
+  var replay = fig.querySelector('[data-restart]');
+  if (REDUCED) {
+    api.renderStatic();
+    if (btn) btn.style.display = 'none';
+    if (replay) replay.style.display = 'none';
+    return;
+  }
   var userPaused = false, visible = false, running = false;
   function sync() {
     var want = visible && !userPaused;
@@ -504,6 +693,14 @@ function makeInstrument(figId, api) {
     userPaused = !userPaused;
     btn.textContent = userPaused ? 'Play' : 'Pause';
     sync();
+  });
+  if (replay) replay.addEventListener('click', function () {
+    api.stop();
+    running = false;
+    userPaused = false;
+    if (btn) btn.textContent = 'Pause';
+    api.start();
+    running = true;
   });
   new IntersectionObserver(function (es) {
     visible = es.some(function (e) { return e.isIntersecting; });
@@ -698,6 +895,75 @@ function timerBag() {
     }
   });
 })();
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  var rounds = [
+    {
+      task: 'Change the heading on this one page and check the result.',
+      answer: 'request',
+      verdict: 'Keep it in this request.',
+      reason: 'This is one specific job, not a procedure the model needs again.'
+    },
+    {
+      task: 'Before every production deploy, run the same gates, canary check, and rollback check.',
+      answer: 'skill',
+      verdict: 'Make a reusable skill.',
+      reason: 'The team repeats the procedure, and the full checklist only belongs in deploy tasks.'
+    },
+    {
+      task: 'Every Tuesday, audit dependencies with the same rules and save a report for the next run.',
+      answer: 'skill',
+      verdict: 'Make a reusable skill.',
+      reason: 'The schedule belongs to the harness. The repeated audit steps belong in a skill.'
+    }
+  ];
+  var round = 0;
+  var head = document.querySelector('#skill-choice .exercise-head');
+  var scenario = document.getElementById('skill-choice-scenario');
+  var result = document.getElementById('skill-choice-result');
+  var next = document.getElementById('skill-choice-next');
+  var choices = Array.prototype.slice.call(document.querySelectorAll('[data-skill-choice]'));
+
+  function show() {
+    var item = rounds[round];
+    head.textContent = 'DECISION ' + (round + 1) + ' OF ' + rounds.length + ' · REQUEST OR SKILL';
+    scenario.textContent = item.task;
+    result.hidden = true;
+    result.textContent = '';
+    next.hidden = true;
+    choices.forEach(function (button) {
+      button.disabled = false;
+      button.setAttribute('aria-pressed', 'false');
+    });
+  }
+
+  choices.forEach(function (button) {
+    button.addEventListener('click', function () {
+      var item = rounds[round];
+      var picked = button.getAttribute('data-skill-choice');
+      choices.forEach(function (choice) {
+        choice.disabled = true;
+        choice.setAttribute('aria-pressed', String(choice === button));
+      });
+      result.hidden = false;
+      var lead = document.createElement('strong');
+      lead.textContent = (picked === item.answer ? 'Yes. ' : 'A better fit: ') + item.verdict + ' ';
+      result.appendChild(lead);
+      result.appendChild(document.createTextNode(item.reason));
+      next.textContent = round + 1 < rounds.length ? 'Next instruction' : 'Start again';
+      next.hidden = false;
+    });
+  });
+
+  next.addEventListener('click', function () {
+    round = (round + 1) % rounds.length;
+    show();
+  });
+
+  show();
 })();
 </script>
 </body>

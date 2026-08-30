@@ -267,9 +267,55 @@ h1 {
   line-height: 1.55;
 }
 
+.machine-route {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 30px;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.machine-route a {
+  min-width: 0;
+  padding: 12px 12px 13px;
+  border-right: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.machine-route a:first-child { padding-left: 0; }
+.machine-route a:last-child { border-right: 0; padding-right: 0; }
+.machine-route a:hover strong { color: var(--accent); }
+.machine-route span { display: block; margin-bottom: 3px; color: var(--ink-faint); font-family: "Geist Mono", monospace; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+.machine-route strong { display: block; color: var(--ink); font-size: 14px; font-weight: 600; line-height: 1.35; }
+
+.talk-note {
+  margin: 20px 0 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.talk-note strong { color: var(--ink); }
+
+.final-takeaway {
+  margin-top: 30px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--gold);
+  background: var(--surface);
+}
+
+.final-takeaway .label { display: block; margin-bottom: 8px; color: var(--ink-faint); font-family: "Geist Mono", monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; }
+.final-takeaway ul { margin: 0; padding-left: 20px; }
+.final-takeaway li { margin-bottom: 7px; }
+.final-takeaway li:last-child { margin-bottom: 0; }
+
 .scope-note {
   margin: 30px 0 0;
-  padding: 14px 0;
+  padding: 0;
   border-top: 1px solid var(--line-strong);
   border-bottom: 1px solid var(--line-strong);
   color: var(--ink-soft);
@@ -277,24 +323,26 @@ h1 {
   line-height: 1.6;
 }
 
-.scope-note strong {
-  color: var(--ink);
-}
+.scope-note summary { padding: 11px 0; color: var(--ink); cursor: pointer; font-family: "Geist Mono", monospace; font-size: 11.5px; }
+.scope-note p { margin: 0; padding: 0 0 14px; }
 
 .contents {
-  margin-top: 34px;
-  padding: 18px 0 20px;
+  margin-top: 18px;
+  padding: 0 0 14px;
   border-bottom: 1px solid var(--line-strong);
 }
 
 .contents-label {
   display: block;
-  margin-bottom: 10px;
+  padding: 11px 0;
   color: var(--ink-faint);
+  cursor: pointer;
   font-family: "Geist Mono", monospace;
   font-size: 11px;
   font-weight: 600;
 }
+
+.contents nav { padding-top: 2px; }
 
 .contents ol {
   margin: 0;
@@ -380,6 +428,18 @@ h3 {
   font-weight: 620;
 }
 
+.plain-step {
+  margin: 0 0 18px !important;
+  padding: 11px 13px;
+  border-left: 3px solid var(--gold);
+  background: var(--surface);
+  color: var(--ink-body);
+  font-size: 16px !important;
+  line-height: 1.55 !important;
+}
+
+.plain-step strong { color: var(--ink); }
+
 .paper-link {
   white-space: nowrap;
 }
@@ -394,6 +454,16 @@ h3 {
 .formula-block.compact {
   margin: 16px 0;
 }
+
+.formula-block summary {
+  color: var(--ink);
+  cursor: pointer;
+  font-family: "Geist Mono", monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.formula-block[open] summary { margin-bottom: 12px; }
 
 .formula-label {
   display: block;
@@ -524,10 +594,21 @@ h3 {
 }
 
 .stage-title {
+  flex: 1 1 280px;
   color: var(--stage-ink);
   font-size: 13.5px;
   font-weight: 560;
 }
+
+.stage-prompt {
+  padding: 9px 16px 10px;
+  border-bottom: 1px solid var(--stage-line);
+  color: var(--stage-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.stage-prompt strong { color: var(--stage-ink); font-weight: 600; }
 
 .stage-status {
   margin-left: auto;
@@ -654,8 +735,8 @@ canvas.scene-canvas.dragging {
 .control-button,
 .mode-button,
 .example-button {
-  min-height: 30px;
-  padding: 6px 11px;
+  min-height: 36px;
+  padding: 7px 12px;
   border: 1px solid var(--line-strong);
   border-radius: 3px;
   background: transparent;
@@ -885,6 +966,14 @@ input[type="range"] {
     grid-template-columns: 1fr;
   }
 
+  .machine-route { grid-template-columns: 1fr 1fr; }
+  .machine-route a:nth-child(2) { border-right: 0; }
+  .machine-route a:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .machine-route a:first-child,
+  .machine-route a:nth-child(3) { padding-left: 0; }
+  .machine-route a:nth-child(2),
+  .machine-route a:last-child { padding-right: 0; }
+
   .reading-section,
   .replay-section {
     padding-top: 60px;
@@ -902,8 +991,8 @@ input[type="range"] {
 
   .observatory,
   .visual-stage {
-    width: calc(100% - 16px);
-    border-radius: 7px;
+    width: calc(100% - 24px);
+    border-radius: 3px;
   }
 
   .stage-head {
@@ -962,6 +1051,7 @@ input[type="range"] {
 
   .stage-footer,
   .stage-toolbar,
+  .stage-prompt,
   .stage-caption,
   .token-output,
   .scrubber-row {
@@ -1024,31 +1114,43 @@ input[type="range"] {
     </div>
     <p class="eyebrow">Decoder-only language models</p>
     <h1>How an LLM turns text into the next token</h1>
-    <p class="article-lede">A language model has one job: given some text, predict a small piece of what comes next. Everything an LLM produces, from a chat reply to working code, is that prediction repeated. This article follows the full lifecycle in order. The corpus and tokenizer prepare the data, and the transformer block computes on it. Pre-training sets the numbers, and the generation loop turns a prompt into text one token at a time.</p>
-    <p class="article-meta">Reading time: about 18 minutes · You can pause, replay, and scrub the interactive figures</p>
-    <p class="scope-note"><strong>Scope.</strong> The diagrams show a modern decoder-only transformer, the family used by GPT-style language models. The 2017 transformer had an encoder and a decoder. Model widths, layer counts, token IDs, probabilities, and 3D positions here are illustrative; the article states tensor shapes and operation order where they matter.</p>
-    <nav class="contents" aria-label="Article contents">
-      <span class="contents-label">Contents</span>
-      <ol>
-        <li><a href="#overview">Lifecycle</a></li>
-        <li><a href="#corpus">Corpus</a></li>
-        <li><a href="#tokens">Tokenization</a></li>
-        <li><a href="#geometry">Embeddings and position</a></li>
-        <li><a href="#transformer">Transformer block</a></li>
-        <li><a href="#training">Pre-training</a></li>
-        <li><a href="#generation">Generation</a></li>
-        <li><a href="#replay">Complete pass</a></li>
-      </ol>
-    </nav>
+    <p class="article-lede">A language model reads tokens and predicts one token that could come next. It adds that token to the message and runs again. The full machine exists to make that repeated prediction useful.</p>
+    <div class="machine-route" role="group" aria-label="One trip through the language model">
+      <a href="#tokens"><span>1 · Cut</span><strong>Text becomes tokens</strong></a>
+      <a href="#geometry"><span>2 · Place</span><strong>Tokens become vectors</strong></a>
+      <a href="#transformer"><span>3 · Mix</span><strong>Context changes each vector</strong></a>
+      <a href="#generation"><span>4 · Choose</span><strong>One token joins the message</strong></a>
+    </div>
+    <div class="talk-note"><strong>Talk path:</strong> use the lifecycle map first, let the transformer videos explain the middle, then return to generation and the complete replay.</div>
+    <p class="article-meta">Full reference: about 18 minutes · Every figure can pause, replay, or scrub</p>
+    <details class="scope-note">
+      <summary>Technical scope</summary>
+      <p>The diagrams show a modern decoder-only transformer, the family used by GPT-style language models. The 2017 transformer had an encoder and a decoder. Model widths, layer counts, token IDs, probabilities, and 3D positions here are teaching examples; the article states tensor shapes and operation order where they matter.</p>
+    </details>
+    <details class="contents">
+      <summary class="contents-label">All 8 sections</summary>
+      <nav aria-label="Article contents">
+        <ol>
+          <li><a href="#overview">Lifecycle</a></li>
+          <li><a href="#corpus">Corpus</a></li>
+          <li><a href="#tokens">Tokenization</a></li>
+          <li><a href="#geometry">Embeddings and position</a></li>
+          <li><a href="#transformer">Transformer block</a></li>
+          <li><a href="#training">Pre-training</a></li>
+          <li><a href="#generation">Generation</a></li>
+          <li><a href="#replay">Complete pass</a></li>
+        </ol>
+      </nav>
+    </details>
   </header>
 
   <section class="reading-section" id="overview" aria-labelledby="overview-title">
     <div class="chapter-copy">
       <p class="section-label">Section 1 · Lifecycle</p>
       <h2 id="overview-title">A model is built once, then used many times</h2>
-      <p>An LLM has two separate lives. In the build loop, a data pipeline assembles a large collection of text called the corpus, and a tokenizer turns that text into token sequences. Pre-training then adjusts the model's parameters, often called weights: the billions of learned numbers that determine its behavior. Training saves the finished parameters as a checkpoint, one large file you can reload the model from.</p>
-      <p>In the use loop, a prompt passes through the frozen tokenizer and checkpoint. The model produces one token, appends it to the sequence, and runs again, once per small piece of generated text. The parameters do not change while the model generates an answer.</p>
-      <p>The sections below follow the build order: corpus, tokenizer, vectors and the transformer block, then pre-training, then the generation loop a prompt travels through. Training comes after the block because the update rule is easier to picture once you see what the parameters compute. Jay Alammar's <a class="paper-link" href="https://jalammar.github.io/illustrated-transformer/">Illustrated Transformer</a> uses a similar progressive reveal for the original architecture.</p>
+      <p class="plain-step"><strong>In one sentence:</strong> training sets the model's numbers; a request reads those frozen numbers to produce one token at a time.</p>
+      <p>The build path collects text, creates a tokenizer, and adjusts billions of learned numbers called weights. Training saves the finished weights in a checkpoint.</p>
+      <p>The run path turns a prompt into tokens, reads the frozen checkpoint, chooses one next token, and repeats. A normal request does not change the checkpoint.</p>
     </div>
 
     <figure class="observatory" id="journey-stage">
@@ -1057,6 +1159,7 @@ input[type="range"] {
         <span class="stage-title">One machine builds artifacts; another runs them frozen</span>
         <span class="stage-status" id="journey-status">Building the corpus</span>
       </div>
+      <div class="stage-prompt"><strong>Try this:</strong> press Next to follow the build path, then the run path. Watch where the tokenizer and checkpoint appear in both.</div>
       <div class="canvas-wrap">
         <canvas class="scene-canvas" id="journey-canvas" role="img" aria-label="Animated two-lane pixel machine. The upper build lane assembles a corpus, trains a tokenizer, and pre-trains a checkpoint. The lower run lane reuses the frozen tokenizer and checkpoint to turn a prompt into one token at a time. The chosen token loops back into the sequence."></canvas>
         <div class="scene-copy" aria-live="polite">
@@ -1083,6 +1186,7 @@ input[type="range"] {
       <div class="chapter-copy">
         <p class="section-label">Section 2 · Corpus</p>
         <h2 id="corpus-title">The model's evidence starts as a selected dataset</h2>
+        <p class="plain-step"><strong>In one sentence:</strong> the model can learn only from patterns that its training data contains.</p>
         <p>The build loop starts with text. Training text arrives as web crawls, books, code, and papers, and none of it is ready to use. Data pipelines extract the usable text, remove boilerplate and near-duplicates, apply quality and safety filters, choose language and domain mixtures, then split documents into training examples. Those decisions determine what patterns the model can observe and how often it observes them.</p>
         <p>Engineers usually train the tokenizer, described next in Section 3, on a representative sample of the corpus. They then use that frozen tokenizer to encode the much larger training set. The <a class="paper-link" href="https://arxiv.org/abs/2406.17557">FineWeb paper</a> is useful because it publishes concrete filtering and deduplication experiments. Proprietary model reports may disclose only part of the data recipe.</p>
         <p class="technical-note"><strong>Accuracy check.</strong> Documents do not flow directly into a transformer during training. They become packed arrays of token IDs, commonly with boundaries or special tokens marking document transitions. Figure 2 compresses storage, shuffling, packing, and distributed loading into one stream.</p>
@@ -1094,6 +1198,7 @@ input[type="range"] {
           <span class="stage-title">The pipeline filters documents, then packs them into token batches</span>
           <span class="stage-status" id="corpus-status">Collecting documents</span>
         </div>
+        <div class="stage-prompt"><strong>Watch for:</strong> documents that leave the pipeline, the small tokenizer sample, and the token batches that continue to training.</div>
         <canvas class="scene-canvas" id="corpus-canvas" role="img" aria-label="Animated pipeline. Pixel document sheets from web, book, code, and paper sources pass through boilerplate removal, duplicate detection, and quality gates. Rejected sheets fall away, and the pipeline packs survivors into fixed-length token batches. A small sample branches toward tokenizer construction."></canvas>
         <div class="stage-toolbar">
           <button class="control-button primary" type="button" data-scene-toggle="corpus">Pause</button>
@@ -1108,12 +1213,14 @@ input[type="range"] {
       <div class="chapter-copy">
         <p class="section-label">Section 3 · Tokenization</p>
         <h2 id="tokens-title">Text becomes a sequence of vocabulary addresses</h2>
+        <p class="plain-step"><strong>In one sentence:</strong> the tokenizer cuts text into pieces and assigns each piece a number.</p>
         <p>The corpus supplies raw strings. A neural network computes with numbers, so text has to become numbers first. A tokenizer segments a string into pieces found in a fixed vocabulary and returns the corresponding integer IDs. A common word may occupy one token. A rare name may split into several subwords or bytes. Spaces, punctuation, and code fragments can be tokens too. To feel this in your hands, <a href="tokenizer.html">train and operate a tokenizer in the playground</a>.</p>
-        <div class="formula-block">
+        <details class="formula-block">
+          <summary>Show tokenizer notation</summary>
           <span class="formula-label">Tokenizer output</span>
           <div class="formula">t₁, …, t<sub>T</sub> = Tokenize(s), &nbsp; t<sub>i</sub> ∈ {0, …, |V| − 1}</div>
           <p class="formula-explain"><strong>s</strong> is the input string, <strong>T</strong> is its token count, and <strong>|V|</strong> is the vocabulary size. A token ID is an address. Its numeric value carries no distance or meaning.</p>
-        </div>
+        </details>
         <p>Byte-pair encoding (BPE) and Unigram tokenization use different algorithms to choose the vocabulary. <a class="paper-link" href="https://arxiv.org/abs/1808.06226">SentencePiece</a> describes both in a language-independent system that can train from raw sentences. Production tokenizers often add byte fallback and special control tokens.</p>
         <p class="technical-note"><strong>Keep the artifacts separate.</strong> Tokenizer construction chooses a discrete vocabulary. Pre-training later learns continuous embedding vectors and transformer weights. Once model training begins, changing the token-to-ID map would invalidate the embedding rows tied to those IDs.</p>
       </div>
@@ -1124,6 +1231,7 @@ input[type="range"] {
           <span class="stage-title">A typesetter turns strings into addressed tiles</span>
           <span class="stage-status" id="token-status">Scanning a sentence</span>
         </div>
+        <div class="stage-prompt"><strong>Try this:</strong> compare Sentence with Rare word or Emoji. Look for the example that needs the most token pieces.</div>
         <canvas class="scene-canvas" id="token-canvas" role="img" aria-label="Animated typesetter scene. A text strip enters a scanner, and segmentation boundaries snap into place. Pieces become discrete tiles with integer IDs, and the tiles slot into scattered positions on an indexed vocabulary wall."></canvas>
         <div class="stage-toolbar" id="token-examples" role="group" aria-label="Choose tokenizer example">
           <button class="example-button" type="button" data-token-example="sentence" aria-pressed="true">Sentence</button>
@@ -1142,18 +1250,21 @@ input[type="range"] {
       <div class="chapter-copy">
         <p class="section-label">Section 4 · Embeddings and position</p>
         <h2 id="geometry-title">Each token ID selects a learned vector</h2>
+        <p class="plain-step"><strong>In one sentence:</strong> each token number selects a list of values the model can compare and change.</p>
         <p>A token ID by itself is only a catalog number. The embedding table attaches content to it: one learned row per vocabulary entry. Looking up token <em>t<sub>i</sub></em> returns that row, a vector of <em>d<sub>model</sub></em> numbers, and you can picture a vector as a point in space. Tokens that appear in similar contexts tend to drift toward nearby points during training. The looked-up vector is the initial hidden state, the model's working representation, at position <em>i</em>.</p>
-        <div class="formula-block">
+        <details class="formula-block">
+          <summary>Show the embedding lookup</summary>
           <span class="formula-label">Embedding lookup</span>
           <div class="formula">x<sup>(0)</sup><sub>i</sub> = E[t<sub>i</sub>], &nbsp; E ∈ ℝ<sup>|V| × d<sub>model</sub></sup></div>
           <p class="formula-explain">The bracket is a row lookup, not a semantic database query. Pre-training adjusts every used row through gradient descent.</p>
-        </div>
+        </details>
         <p>The network also needs token order; "dog bites man" and "man bites dog" contain the same tokens. Many current decoders use rotary position embeddings, or RoPE. RoPE rotates query and key coordinates at each attention layer, so attention scores depend on relative offsets between positions. It is not an extra point appended to the token embedding.</p>
-        <div class="formula-block compact">
+        <details class="formula-block compact">
+          <summary>Show the RoPE notation</summary>
           <span class="formula-label">RoPE, simplified</span>
           <div class="formula">q′<sub>i</sub> = R(i)q<sub>i</sub>, &nbsp; k′<sub>j</sub> = R(j)k<sub>j</sub></div>
           <p class="formula-explain">R(i) rotates pairs of coordinates by position-dependent angles. The dot product q′<sub>i</sub> · k′<sub>j</sub> then carries information about i − j. See <a href="https://arxiv.org/abs/2104.09864">RoFormer</a>.</p>
-        </div>
+        </details>
         <p class="plain-note">Figure 4 projects a toy set of vectors into three dimensions. A real hidden width may contain thousands of coordinates. Nearby points can suggest similar usage, but this drawing is not a measurement from a trained model. A contextual hidden state is not a static word meaning.</p>
       </div>
 
@@ -1163,6 +1274,7 @@ input[type="range"] {
           <span class="stage-title">Rows become vectors; position rotates pairs of coordinates</span>
           <span class="stage-status">Drag to rotate</span>
         </div>
+        <div class="stage-prompt"><strong>Try this:</strong> move from Lookup to Lattice to RoPE. Drag the lattice and watch the labels stay attached to the points.</div>
         <canvas class="scene-canvas" id="embedding-canvas" tabindex="0" role="img" aria-label="Interactive scene in three views. A token tile unfolds into a vertical voxel vector selected from an embedding table. Several vectors stand in a rotatable three-dimensional projection. A rotary view shows query and key coordinate pairs rotating by position-dependent angles."></canvas>
         <div class="stage-toolbar" id="embedding-views" role="group" aria-label="Choose embedding view">
           <button class="mode-button" type="button" data-embedding-view="lookup" aria-pressed="true">Lookup</button>
@@ -1178,23 +1290,26 @@ input[type="range"] {
       <div class="chapter-copy">
         <p class="section-label">Section 5 · Transformer block</p>
         <h2 id="transformer-title">Attention mixes positions; the MLP transforms each position</h2>
+        <p class="plain-step"><strong>In one sentence:</strong> attention pulls useful context from earlier tokens, then the MLP updates each token's working state.</p>
         <p>A transformer is a stack of near-identical blocks, and each block makes two moves. Attention lets every position read from earlier positions, so the state for "bank" in "the river bank" can absorb "river". The MLP, a small feed-forward network applied to each position on its own, then reworks whatever attention gathered. The rest of this section states both moves precisely.</p>
         <p>Let <em>X</em> hold the hidden states for a sequence. One attention head makes three linear projections. Queries represent what each position looks for, keys represent what each position offers for matching, and values carry the information that attention will mix.</p>
-        <div class="formula-block">
+        <details class="formula-block">
+          <summary>Show the attention math</summary>
           <span class="formula-label">One causal attention head</span>
           <div class="formula">Q = XW<sub>Q</sub>, &nbsp; K = XW<sub>K</sub>, &nbsp; V = XW<sub>V</sub></div>
           <div class="formula">A = softmax(QK<sup>T</sup> / √d<sub>head</sub> + M<sub>causal</sub>)</div>
           <div class="formula">Attention(X) = AV</div>
           <p class="formula-explain">Row i of A contains the weights used to update token i. M<sub>causal</sub>[i,j] is −∞ when j &gt; i, so softmax assigns future positions zero probability. The division by √d<sub>head</sub> keeps dot products numerically controlled.</p>
-        </div>
+        </details>
         <p>Multiple heads run in parallel, the block combines their results, and an output projection returns to the model width. Grouped-query attention shares key and value heads to reduce memory traffic, but each query still obeys the causal mask.</p>
         <p>A modern pre-normalized block commonly follows this residual pattern:</p>
-        <div class="formula-block compact">
+        <details class="formula-block compact">
+          <summary>Show the block equations</summary>
           <span class="formula-label">One decoder block, schematic</span>
           <div class="formula">x ← x + Attention(RMSNorm(x))</div>
           <div class="formula">x ← x + MLP(RMSNorm(x))</div>
           <p class="formula-explain">The residual path preserves the current state while each sublayer writes an update. A SwiGLU-style MLP expands, gates, then projects each position back to d<sub>model</sub>. Exact normalization, gating, and bias choices vary by model.</p>
-        </div>
+        </details>
         <p>The original <a class="paper-link" href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a> paper introduced the encoder-decoder transformer with post-normalization. Modern decoder-only implementations often use RMSNorm, RoPE, gated MLPs, and grouped-query attention; <a class="paper-link" href="https://arxiv.org/abs/2404.14619">OpenELM</a> documents one compact example.</p>
 
         <table class="shape-ledger">
@@ -1215,6 +1330,7 @@ input[type="range"] {
           <span class="stage-title">One decoder block, exploded for inspection</span>
           <span class="stage-status" id="transformer-status">Following the full block</span>
         </div>
+        <div class="stage-prompt"><strong>Try this:</strong> start with Full block, then isolate Attention and MLP. The Residual view shows what each part adds to the running state.</div>
         <canvas class="scene-canvas" id="transformer-canvas" tabindex="0" role="img" aria-label="Interactive exploded transformer block with stable vertical ordering. From bottom to top: normalization; query, key, and value projections; a triangular causal attention matrix with closed future cells; an output projection; a residual merge; normalization again; a per-position gated MLP; and a second residual merge."></canvas>
         <div class="stage-toolbar" id="transformer-modes" role="group" aria-label="Choose transformer view">
           <button class="mode-button" type="button" data-transformer-mode="overview" aria-pressed="true">Full block</button>
@@ -1231,19 +1347,22 @@ input[type="range"] {
       <div class="chapter-copy">
         <p class="section-label">Section 6 · Pre-training</p>
         <h2 id="training-title">Every position supplies a next-token training target</h2>
+        <p class="plain-step"><strong>In one sentence:</strong> the model guesses the next token, measures each error, and adjusts its weights.</p>
         <p>With the block defined, the build loop can set its numbers. Pre-training is a guessing game graded at every position. The model reads corpus text and, at each position, must assign high probability to the token that comes next. The causal mask keeps it from peeking at later tokens, yet training can grade all positions in a sequence in parallel. This setup is often called teacher forcing.</p>
-        <div class="formula-block">
+        <details class="formula-block">
+          <summary>Show the training loss</summary>
           <span class="formula-label">Autoregressive model and cross-entropy loss</span>
           <div class="formula">p<sub>θ</sub>(t₁:T) = ∏<sub>i=1</sub><sup>T</sup> p<sub>θ</sub>(t<sub>i</sub> | t<sub>&lt;i</sub>)</div>
           <div class="formula">L(θ) = −(1/N) Σ<sub>i</sub> log p<sub>θ</sub>(t<sub>i</sub> | t<sub>&lt;i</sub>)</div>
           <p class="formula-explain">If the model assigns the observed token probability 0.80, that position contributes −log(0.80) ≈ 0.223. Probability 0.05 contributes about 2.996. Confident mistakes cost more.</p>
-        </div>
+        </details>
         <p>Backpropagation computes the gradient of the batch loss: for every participating parameter, a measure of how a small change would raise or lower the loss. An optimizer such as AdamW maintains running statistics and uses that signal to apply a small update. Data-parallel and tensor-parallel systems distribute the work across many accelerators.</p>
-        <div class="formula-block compact">
+        <details class="formula-block compact">
+          <summary>Show the optimizer step</summary>
           <span class="formula-label">Optimizer step, schematic</span>
           <div class="formula">θ<sub>k+1</sub> = AdamW(θ<sub>k</sub>, ∇<sub>θ</sub>L, η)</div>
           <p class="formula-explain">θ contains embeddings, attention projections, MLP weights, normalization scales, and the output projection. η is the learning rate. This schematic omits AdamW's moment estimates and weight decay.</p>
-        </div>
+        </details>
         <p>The <a class="paper-link" href="https://arxiv.org/abs/2005.14165">GPT-3 paper</a> is a concrete decoder-only training reference. <a class="paper-link" href="https://arxiv.org/abs/2203.15556">Chinchilla</a> showed that, within its studied compute regime, better results came from balancing parameter count with more training tokens. That scaling result is an empirical recipe, not a law that fixes every model or dataset.</p>
         <p class="technical-note"><strong>After base training.</strong> Instruction tuning and preference optimization adjust the checkpoint again using curated examples and preference signals. They shape behavior, but generation still uses the same autoregressive forward pass. See <a href="https://arxiv.org/abs/2203.02155">InstructGPT</a> for an influential pipeline.</p>
       </div>
@@ -1254,6 +1373,7 @@ input[type="range"] {
           <span class="stage-title">Score every position in parallel, then walk the error back</span>
           <span class="stage-status" id="training-status">Packing a token batch</span>
         </div>
+        <div class="stage-prompt"><strong>Watch for:</strong> the target shifted by one token, many positions scored together, and the coral error signal moving backward.</div>
         <canvas class="scene-canvas" id="training-canvas" role="img" aria-label="Animated pre-training step. A packed token batch with targets shifted one position runs forward, so every position produces logits at once. The scene compares predictions with observed next tokens, and cross-entropy values accumulate into batch loss. A coral gradient signal travels backward through the same blocks. Parameter grids receive small updates that the checkpoint records."></canvas>
         <div class="stage-toolbar">
           <button class="control-button primary" type="button" data-scene-toggle="training">Pause</button>
@@ -1268,13 +1388,15 @@ input[type="range"] {
       <div class="chapter-copy">
         <p class="section-label">Section 7 · Generation</p>
         <h2 id="generation-title">The last hidden state becomes one score per token</h2>
+        <p class="plain-step"><strong>In one sentence:</strong> the model scores possible next tokens, chooses one, adds it to the message, and runs again.</p>
         <p>Sections 4 and 5 assembled the block, and Section 6 set its numbers. At request time, the tokenizer encodes the prompt, and the frozen transformer runs the same forward pass used in training, but with no update afterward. A final normalization and linear output projection map the latest hidden state to one logit, an unnormalized score, for every vocabulary entry. Some models tie this output matrix to the input embedding table.</p>
-        <div class="formula-block">
+        <details class="formula-block">
+          <summary>Show logits and temperature</summary>
           <span class="formula-label">Logits and temperature-scaled probabilities</span>
           <div class="formula">z = W<sub>U</sub>h<sub>T</sub> + b</div>
           <div class="formula">p<sub>i</sub> = exp(z<sub>i</sub>/τ) / Σ<sub>j</sub> exp(z<sub>j</sub>/τ)</div>
           <p class="formula-explain">W<sub>U</sub> is the output, or unembedding, matrix; some architectures omit the bias b. Lower positive temperature τ concentrates mass on larger logits. Higher τ flattens the distribution. Greedy decoding chooses the largest logit; top-k and top-p sampling first restrict the candidate set.</p>
-        </div>
+        </details>
         <p>The loop appends the chosen token, and decoding repeats. During the first prompt pass, called prefill, the model computes keys and values for every prompt token. A KV cache keeps those tensors, so later decode steps compute the new position and attend over cached keys and values. Systems such as <a class="paper-link" href="https://arxiv.org/abs/2309.06180">PagedAttention</a> focus on managing that cache efficiently.</p>
         <p class="technical-note"><strong>What remains fixed.</strong> The checkpoint does not learn from the request. The KV cache is temporary sequence state, not durable memory. Randomness enters through the decoding rule; the forward pass for fixed token IDs and weights is deterministic up to numerical implementation details.</p>
       </div>
@@ -1285,6 +1407,7 @@ input[type="range"] {
           <span class="stage-title">Score the whole vocabulary, choose one tile, append it</span>
           <span class="stage-status" id="generation-status">Scoring the vocabulary</span>
         </div>
+        <div class="stage-prompt"><strong>Try this:</strong> generate one token, choose Top-k, then raise temperature. Compare how widely the candidate scores spread.</div>
         <canvas class="scene-canvas" id="generation-canvas" role="img" aria-label="Animated inference scene. The final hidden state enters an output matrix, and a dense skyline of vocabulary logits rises. A small set of candidates expands for inspection under the chosen decoding rule and temperature. The selected token appends to the sequence, and per-layer KV cache columns grow by one column per decode step."></canvas>
         <div class="stage-toolbar">
           <button class="control-button primary" type="button" id="generate-next">Generate next token</button>
@@ -1315,6 +1438,7 @@ input[type="range"] {
     <div class="replay-heading">
       <p class="section-label">Section 8 · Complete pass</p>
       <h2 id="replay-title">Put the data, weights, and token loop on one timeline</h2>
+      <p class="plain-step"><strong>In one sentence:</strong> the top lane builds reusable artifacts; the bottom lane reads them once per generated token.</p>
       <p>The upper lane builds the artifacts: a corpus supports tokenizer construction and pre-training, then training saves a checkpoint. The lower lane uses the frozen tokenizer and checkpoint to map a prompt to one selected token. That token extends the context for the next decode step.</p>
     </div>
 
@@ -1324,6 +1448,7 @@ input[type="range"] {
         <span class="stage-title">Corpus to checkpoint, prompt to next token</span>
         <span class="stage-status" id="system-status">Training text enters the pipeline</span>
       </div>
+      <div class="stage-prompt"><strong>Try this:</strong> drag the scrubber from start to finish. Stop where the selected token loops back into the message.</div>
       <div class="canvas-wrap">
         <canvas class="scene-canvas" id="system-canvas" role="img" aria-label="Controllable overview with a build lane from corpus through tokenizer and pre-training to a saved checkpoint, and a run lane from prompt through the frozen tokenizer and checkpoint to logits and a selected token that loops back into the sequence"></canvas>
         <div class="scene-copy">
@@ -1348,6 +1473,16 @@ input[type="range"] {
         </div>
       </div>
     </figure>
+    <div class="chapter-copy">
+      <div class="final-takeaway">
+        <span class="label">Leave with this</span>
+        <ul>
+          <li>Training changes the weights; a request reads them.</li>
+          <li>The transformer updates token states, then the output layer scores the next token.</li>
+          <li>Generation appends one chosen token and repeats the run path.</li>
+        </ul>
+      </div>
+    </div>
   </section>
 
   <section class="sources" id="sources" aria-labelledby="sources-title">
@@ -1386,11 +1521,11 @@ input[type="range"] {
 <script>
 /* ===== inlined from articles/.build/engine.js ===== */
 /* ============================================================================
-   Model Mechanics — pixel/voxel scene engine ("MM")
+   Model Mechanics - pixel/voxel scene engine ("MM")
    Two-pass rendering on one canvas:
-     1. WORLD pass — blocky geometry snapped to a 4px grid, flat fills,
+     1. WORLD pass - blocky geometry snapped to a 4px grid, flat fills,
         voxel/iso forms, pixel particles. No gradients, no blur, no glow.
-     2. ANNOTATION pass — Geist Mono text, thin connectors, formulas at
+     2. ANNOTATION pass - Geist Mono text, thin connectors, formulas at
         native resolution so labels stay crisp.
    Motion runs at full frame rate with cubic easing. Never quantize time.
    Scenes are finite timelines: autoplay once when meaningfully visible,
@@ -1770,7 +1905,7 @@ window.MM = (() => {
   })();
 
   /* ==========================================================================
-     WORLD-PASS PRIMITIVES — snapped geometry, flat fills
+     WORLD-PASS PRIMITIVES - snapped geometry, flat fills
      ========================================================================== */
 
   /* flat stage background + faint blueprint lattice */
@@ -1935,7 +2070,7 @@ window.MM = (() => {
   }
 
   /* ==========================================================================
-     ANNOTATION-PASS PRIMITIVES — native resolution, unsnapped
+     ANNOTATION-PASS PRIMITIVES - native resolution, unsnapped
      ========================================================================== */
 
   function label(g, text, x, y, opts) {
@@ -2106,7 +2241,7 @@ window.MM = (() => {
 
 
 /* ===== inlined from articles/.build/scene-journey.js ===== */
-/* Scene: journey — Figure 1, the two-lane pixel machine.
+/* Scene: journey - Figure 1, the two-lane pixel machine.
    BUILD lane: corpus → tokenizer → training → checkpoint.
    RUN lane: prompt → frozen tokenizer → frozen stack → skyline → loop.
    Six named steps; stations stay lit once built; holds the full route. */
@@ -2609,7 +2744,7 @@ window.MM = (() => {
 
 
 /* ===== inlined from articles/.build/scene-corpus.js ===== */
-/* Scene: corpus — Figure 2, the selection pipeline.
+/* Scene: corpus - Figure 2, the selection pipeline.
    Document sheets leave four source silos, pass STRIP / DEDUP / QUALITY /
    LANGUAGE gates (rejects fall gray into a bin), survivors shuffle and pack
    into a fixed-length token-batch crate; one sheet branches to the
@@ -2963,7 +3098,7 @@ window.MM = (() => {
 
 
 /* ===== inlined from articles/.build/scene-token.js ===== */
-/* Scene: token — tokenization as a mechanical typesetter.
+/* Scene: token - tokenization as a mechanical typesetter.
    A text strip enters a scanner, boundaries snap down, pieces become
    discrete tiles, each receives an integer ID, tiles slot into a
    vocabulary wall. The wall is an indexed archive: slot position is
@@ -3375,13 +3510,13 @@ window.MM = (() => {
 
 
 /* ===== inlined from articles/.build/scene-embedding.js ===== */
-/* Scene: embedding — Figure 4, three switchable views of the same stage.
+/* Scene: embedding - Figure 4, three switchable views of the same stage.
    Lookup: a token tile leaves a wall excerpt, points into a slatted
    embedding table; its row slides out and unfolds cell-by-cell into a
    vertical voxel vector (the initial hidden state).
    Lattice: five labeled voxel columns stand in a rotatable iso box, a
    3D projection of a much higher-dimensional space (drag / arrow keys;
-   NO auto-rotation — it holds still).
+   NO auto-rotation - it holds still).
    RoPE: q/k coordinate pairs ROTATE by position-dependent angles i·θ,
    leaving fading ghosts; a side panel shows q·k decaying with |i − j|.
    View switches tween geometry with an own-clock 0.45s transition. */
@@ -3497,7 +3632,7 @@ window.MM = (() => {
   });
 
   /* ==========================================================================
-     VIEW 1 — LOOKUP
+     VIEW 1 - LOOKUP
      ========================================================================== */
   function lookupLayout(W, H) {
     const wide = W >= 640;
@@ -3709,7 +3844,7 @@ window.MM = (() => {
   }
 
   /* ==========================================================================
-     VIEW 2 — LATTICE (rotatable iso projection; no auto-rotation)
+     VIEW 2 - LATTICE (rotatable iso projection; no auto-rotation)
      ========================================================================== */
   function latticeLayout(W, H) {
     const wide = W >= 640;
@@ -3853,7 +3988,7 @@ window.MM = (() => {
   }
 
   /* ==========================================================================
-     VIEW 3 — ROPE (position ROTATES q/k coordinate pairs)
+     VIEW 3 - ROPE (position ROTATES q/k coordinate pairs)
      ========================================================================== */
   function ropeLayout(W, H) {
     const wide = W >= 640;
@@ -3934,7 +4069,7 @@ window.MM = (() => {
     });
 
     /* accuracy note */
-    chip(g, L.note.x, L.note.y, "rotation only — position is never added to the embedding", {
+    chip(g, L.note.x, L.note.y, "rotation only: position is never added to the embedding", {
       fg: C.soft,
       size: 10
     });
@@ -4037,7 +4172,7 @@ window.MM = (() => {
 
 
 /* ===== inlined from articles/.build/scene-transformer.js ===== */
-/* Scene: transformer — Figure 5, one decoder block exploded for inspection.
+/* Scene: transformer - Figure 5, one decoder block exploded for inspection.
    Stable bottom→top order: input voxel columns → RMSNorm → Q/K/V fans →
    4 causal attention boards (GQA: 4 query lanes share 2 KV lanes) → output
    projection → residual merge → RMSNorm → per-position SwiGLU MLP → second
@@ -4078,9 +4213,9 @@ window.MM = (() => {
     residual: { att: 0, mlp: 0, rail: 1 }
   };
   const MODE_STATUS = {
-    overview: "Full block — data flows bottom to top",
-    attention: "Attention — 4 query heads share 2 KV heads (GQA)",
-    mlp: "MLP — expand ×3, SwiGLU gate, project back",
+    overview: "Full block: data flows bottom to top",
+    attention: "Attention: 4 query heads share 2 KV heads (GQA)",
+    mlp: "MLP: expand ×3, SwiGLU gate, project back",
     residual: "Residual rails carry x around each sublayer"
   };
   const FOCUS_POS = 1; /* the position isolated in MLP mode */
@@ -4145,7 +4280,7 @@ window.MM = (() => {
       if (sc.playing) setStatusFor(sc, t);
     },
     onEnd(sc) {
-      sc.setStatus("Block held — inspect a mode below");
+      sc.setStatus("Block held: inspect a mode below");
     },
     onReplay(sc) {
       sc.data.anim = { p: 1, from: "overview", to: "overview", t0: 0 };
@@ -4238,7 +4373,7 @@ window.MM = (() => {
     g.globalAlpha = 1;
     /* MLP accuracy note */
     g.globalAlpha = clamp01(a.mlp) * 0.9;
-    label(g, "per position —", 20, Y(20, L.yMlpBase - L.expandH / 2 + 14) + 3, { size: 8.5, color: C.faint });
+    label(g, "per position:", 20, Y(20, L.yMlpBase - L.expandH / 2 + 14) + 3, { size: 8.5, color: C.faint });
     label(g, "no cross-token links", 20, Y(20, L.yMlpBase - L.expandH / 2 + 26) + 3, { size: 8.5, color: C.faint });
     g.globalAlpha = 1;
   }
@@ -4753,11 +4888,11 @@ window.MM = (() => {
     if (t < B.input[1]) s = "Hidden states enter · 4 positions";
     else if (t < B.qkv[0]) s = "RMSNorm scales each position";
     else if (t < B.attn[0]) s = "Q, K, V projections, per position";
-    else if (t < B.outproj[0]) s = "4 heads attend — the future slams closed";
+    else if (t < B.outproj[0]) s = "4 heads attend; the future closes";
     else if (t < B.merge1[0]) s = "Heads merge through W_O";
     else if (t < B.norm2[0]) s = "Residual: x + Attention(RMSNorm(x))";
     else if (t < B.mlp[0]) s = "RMSNorm before the MLP";
-    else if (t < B.merge2[0]) s = "MLP expands ×3, gates, projects — per position";
+    else if (t < B.merge2[0]) s = "MLP expands ×3, gates, and projects per position";
     else if (t < B.ghost[0]) s = "Residual: x + MLP(RMSNorm(x))";
     else s = "The next block stacks above (ghost)";
     if (sc._st !== s) {
@@ -4797,7 +4932,7 @@ window.MM = (() => {
 
 
 /* ===== inlined from articles/.build/scene-training.js ===== */
-/* Scene: training — Figure 6, one optimizer step.
+/* Scene: training - Figure 6, one optimizer step.
    Packed batch + gold targets shifted one position; forward scores EVERY
    position in parallel under the causal mask; per-position cross-entropy
    accumulates into batch loss; coral gradients sweep backward; weight grids
@@ -5066,7 +5201,7 @@ window.MM = (() => {
 
 
 /* ===== inlined from articles/.build/scene-generation.js ===== */
-/* Scene: generation — Figure 7, inference.
+/* Scene: generation - Figure 7, inference.
    Prefill fills the KV cache; each decode scores the full vocabulary as a
    dense skyline, expands a candidate magnifier, applies the decoding rule
    (greedy / top-k / top-p) under the current temperature, appends the gold
@@ -5397,7 +5532,7 @@ window.MM = (() => {
     sc.data.decodeCount += 1;
     renderChips(sc, tok);
     if (sc.data.decodeCount >= MAX_DECODE) {
-      sc.setStatus(`Idle · "${tok.trim()}" appended · toy context full — Reset to continue`);
+      sc.setStatus(`Idle · "${tok.trim()}" appended · toy context full; reset to continue`);
     } else {
       sc.setStatus(`Idle · "${tok.trim()}" appended · cache +1 column`);
     }
@@ -5436,7 +5571,7 @@ window.MM = (() => {
   function startDecode() {
     if (scene.data.mode !== "idle") return;
     if (scene.data.decodeCount >= MAX_DECODE) {
-      scene.setStatus("Toy context full — press Reset");
+      scene.setStatus("Toy context full; press Reset");
       return;
     }
     scene.data.cands = DECODES[Math.min(scene.data.decodeCount, MAX_DECODE - 1)];
@@ -5494,7 +5629,7 @@ window.MM = (() => {
 
 
 /* ===== inlined from articles/.build/scene-system.js ===== */
-/* Scene: system — Figure 8, the complete pass.
+/* Scene: system - Figure 8, the complete pass.
    Twelve named steps over two lanes: build (corpus → checkpoint) and run
    (prompt → append). Every station is a micro-version of its full figure.
    Scrubbable; holds a clean labeled diagram at the end. */

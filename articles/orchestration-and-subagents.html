@@ -164,7 +164,129 @@ h1 {
   line-height: 1.58;
 }
 
-main { padding: 30px 0 0; }
+.decision-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 28px;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.decision-cell {
+  min-width: 0;
+  padding: 12px 14px 13px 0;
+  border-right: 1px solid var(--line);
+}
+
+.decision-cell + .decision-cell { padding-left: 14px; }
+.decision-cell:last-child { border-right: 0; }
+
+.decision-cell .k {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.decision-cell .v {
+  display: block;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.activity-guide {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 12px 16px;
+  align-items: center;
+  margin: 30px 0 16px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  background: var(--surface);
+}
+
+.activity-number {
+  color: var(--accent);
+  font-family: "Geist Mono", monospace;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.activity-guide strong { display: block; color: var(--ink); font-size: 15px; }
+.activity-guide p { margin: 2px 0 0; color: var(--ink-soft); font-size: 15px; line-height: 1.45; }
+.activity-time { color: var(--ink-faint); font-family: "Geist Mono", monospace; font-size: 10.5px; white-space: nowrap; }
+
+.cost-note,
+.takeaway {
+  margin: 18px 0 30px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+  color: var(--ink-body);
+  font-size: 15.5px;
+  line-height: 1.55;
+}
+
+.takeaway { margin-top: 44px; border-left-color: var(--gold); }
+.takeaway .label { display: block; margin-bottom: 6px; color: var(--ink-faint); font-family: "Geist Mono", monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; }
+.takeaway ul { margin-bottom: 0; }
+
+.choice-exercise {
+  margin: 18px 0 46px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+}
+
+.choice-exercise .exercise-head {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line-strong);
+  background: repeating-linear-gradient(-45deg, transparent 0 4px, var(--hatch) 4px 5px);
+  color: var(--ink-faint);
+  font-family: "Geist Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+}
+
+.choice-exercise .exercise-body { padding: 16px; }
+.choice-exercise .scenario { min-height: 3.1em; margin-bottom: 14px; color: var(--ink); font-size: 17px; line-height: 1.5; }
+.choice-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.choice-answer {
+  min-height: 46px;
+  padding: 9px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  background: var(--page);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: "Geist Mono", monospace;
+  font-size: 11.5px;
+  text-align: left;
+}
+
+.choice-answer:hover { border-color: var(--accent); }
+.choice-answer[aria-pressed="true"] { border: 2px solid var(--accent); padding: 8px 11px; background: var(--accent-soft); }
+.choice-answer:disabled { cursor: default; }
+
+.choice-result {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.choice-result strong { color: var(--ink); }
+.choice-next { margin-top: 12px; }
+
+main { padding: 38px 0 0; }
 
 h2 {
   margin: 52px 0 16px;
@@ -242,7 +364,7 @@ td:first-child { font-family: "Geist Mono", monospace; font-size: 12.5px; color:
 
 figure.instrument {
   width: min(940px, calc(100% - 40px));
-  margin: 30px auto;
+  margin: 38px auto 52px;
   padding: 0;
   background: var(--stage);
   border: 1px solid var(--line-strong);
@@ -254,6 +376,7 @@ figure.instrument {
 
 .instrument-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   min-height: 50px;
@@ -267,14 +390,14 @@ figure.instrument {
 
 .fig-id { color: var(--stage-muted); font-weight: 620; white-space: nowrap; }
 
-.fig-name { color: var(--stage-ink); font-family: "Geist", sans-serif; font-size: 13.5px; font-weight: 560; }
+.fig-name { flex: 1 1 220px; color: var(--stage-ink); font-family: "Geist", sans-serif; font-size: 13.5px; font-weight: 560; }
 
 .fig-note { margin-left: auto; font-size: 10.5px; text-align: right; }
 
 button.fig-btn {
   margin-left: auto;
-  min-height: 30px;
-  padding: 6px 11px;
+  min-height: 36px;
+  padding: 7px 12px;
   font-family: "Geist Mono", monospace;
   font-size: 11px;
   color: var(--stage-muted);
@@ -286,6 +409,7 @@ button.fig-btn {
 }
 
 button.fig-btn:hover { color: var(--page); border-color: var(--ink); background: var(--ink); }
+button.fig-btn + button.fig-btn { margin-left: -5px; }
 
 .instrument-body { padding: 20px 18px; }
 .instrument-body.scrollx { overflow-x: auto; }
@@ -351,8 +475,15 @@ footer.series a { color: var(--ink-soft); }
   .mast-row { margin-bottom: 36px; }
   h1 { font-size: clamp(29px, 8.5vw, 33px); }
   .dek { font-size: 18px; }
-  figure.instrument { width: calc(100% - 16px); border-radius: 7px; }
+  figure.instrument { width: calc(100% - 24px); margin-top: 30px; margin-bottom: 42px; border-radius: 3px; }
   .instrument-body { padding: 14px 13px; }
+  .decision-strip { grid-template-columns: 1fr; }
+  .decision-cell { padding: 10px 0; border-right: 0; border-bottom: 1px solid var(--line); }
+  .decision-cell + .decision-cell { padding-left: 0; }
+  .decision-cell:last-child { border-bottom: 0; }
+  .activity-guide { grid-template-columns: 36px minmax(0, 1fr); }
+  .activity-time { grid-column: 2; }
+  .choice-actions { grid-template-columns: 1fr; }
   #ledger { grid-template-columns: 1fr; gap: 24px; align-items: start; }
 }
 
@@ -372,37 +503,54 @@ footer.series a { color: var(--ink-soft); }
       </button>
     </div>
     <h1>Orchestration and subagents</h1>
-    <p class="dek">One context window is the wrong shape for big work. The fix is delegation with a return contract.</p>
+    <p class="dek">Split work when one context is too crowded, too slow, or too easy to trust without a second view.</p>
+    <div class="decision-strip" role="group" aria-label="Orchestration at a glance">
+      <div class="decision-cell"><span class="k">You split</span><span class="v">Independent parts of a larger job</span></div>
+      <div class="decision-cell"><span class="k">You gain</span><span class="v">Time, context space, or a second opinion</span></div>
+      <div class="decision-cell"><span class="k">You spend</span><span class="v">More total tokens and coordination</span></div>
+    </div>
   </div>
 </header>
 
 <main>
   <div class="col">
-    <p>An agent doing real work accumulates debris. Every file it reads, every search that comes back empty, every test log and dead end lands in the context window and stays there. It all stays because <a href="how-llms-work.html">the context window is the model's only memory</a>. On a large task the debris wins. A context meant for reasoning fills with raw material, and retrieval from the middle of it degrades. Eventually the harness must summarize the history to make room, which throws away detail at exactly the moment detail might matter.</p>
-    <p>A <strong>subagent</strong> is the escape hatch. Spawn a fresh model instance, a worker, with its own empty context window. Hand it one scoped job and take back a distilled result. The worker reads the 50 files and burns its own context. The parent, usually called the <strong>orchestrator</strong>, receives three sentences of conclusion. The parent's window carries the decisions and findings; the process that produced them disappears with the worker.</p>
+    <p>A long task fills the model's context with files, search results, test logs, and dead ends. The useful conclusions compete with all that raw material. When the window gets crowded, the model has less room to reason and may need a summary that drops detail.</p>
+    <p>A <strong>subagent</strong> starts with a fresh context and one scoped job. The parent, called the <strong>orchestrator</strong>, gets back a short result instead of every file and failed search the worker saw.</p>
+    <div class="activity-guide" aria-label="Orchestration animation instructions">
+      <span class="activity-number">1</span>
+      <div><strong>Watch one job split into four.</strong><p>Follow the blue work out and the gold findings back. One finding fails verification before the parent uses it.</p></div>
+      <span class="activity-time">45 seconds</span>
+    </div>
   </div>
 
   <figure class="instrument" id="fig-orch">
     <figcaption class="instrument-head">
       <span class="fig-id">Figure 1</span><span class="fig-name">Fan out, verify, integrate</span>
       <button class="fig-btn" data-ctl aria-label="Pause animation">Pause</button>
+      <button class="fig-btn" data-restart aria-label="Replay animation">Replay</button>
     </figcaption>
     <div class="instrument-body scrollx">
       <svg id="orch-svg" viewBox="0 0 720 364" role="img" aria-label="An orchestrator node dispatches four scoped workers in parallel; their compact results return, verification rejects one finding, and the orchestrator integrates the survivors"></svg>
       <div id="orch-status"></div>
     </div>
-    <figcaption class="below">Each worker fills its own context (blue meters) and returns only a compact result (gold). Verification kills one finding before integration. Wall-clock time is the slowest worker, not the sum.</figcaption>
+    <figcaption class="below">Each worker fills its own context and returns a short result. The verifier rejects one result. Elapsed time follows the slowest worker, while token use includes all four.</figcaption>
   </figure>
 
   <div class="col">
     <h2>The economics</h2>
-    <p>Delegation costs more tokens in total and less of everything that matters. Four workers reading 40,000 tokens each spend four times what one agent would spend to read the same material serially. They finish in roughly the wall-clock time of the slowest worker. Meanwhile the orchestrator's window, the scarce resource on a long-running task, stays almost empty. It holds the plan and four short results instead of 160,000 tokens of raw reading. You trade money for the two things one context cannot buy: parallel wall-clock time and headroom to keep reasoning at full quality.</p>
+    <p>Four workers can finish four independent jobs at the same time, but you still pay for every token all four use. The parent keeps more context space because it stores the plan and four short results instead of the full reading history.</p>
+    <div class="activity-guide" aria-label="Context ledger animation instructions">
+      <span class="activity-number">2</span>
+      <div><strong>Compare the two context meters.</strong><p>Watch where the raw reading lives, then check how much space the decision-maker keeps.</p></div>
+      <span class="activity-time">30 seconds</span>
+    </div>
   </div>
 
   <figure class="instrument" id="fig-ledger">
     <figcaption class="instrument-head">
       <span class="fig-id">Figure 2</span><span class="fig-name">The context ledger</span>
       <button class="fig-btn" data-ctl aria-label="Pause animation">Pause</button>
+      <button class="fig-btn" data-restart aria-label="Replay animation">Replay</button>
     </figcaption>
     <div class="instrument-body">
       <div id="ledger">
@@ -429,38 +577,66 @@ footer.series a { color: var(--ink-soft); }
       </div>
       <div id="ledger-note"></div>
     </div>
-    <figcaption class="below">Gray is raw material: file dumps, search noise, dead ends. Gold is conclusions. Workers are disposable, so their gray never crowds the window that makes the decisions.</figcaption>
+    <figcaption class="below">Gray is raw reading and dead ends. Gold is the result the parent keeps. Worker contexts disappear after they report back.</figcaption>
   </figure>
 
   <div class="col">
-    <p>The consequence is that a subagent's prompt carries unusual weight. A worker wakes up with no conversation history, no idea what you already tried, and no access to the reasoning that scoped its task. The prompt is its entire world. Orchestration failures trace back to underspecified delegation more often than to any model limitation. Say what the worker should return, in what form, and what it should not do. Otherwise, plan to pay for the round trip twice.</p>
+    <div class="cost-note"><strong>Cost link:</strong> orchestration can lower elapsed time and protect the parent's context, but it usually raises total token use. Split work only when one of those gains matters.</div>
+    <p>A worker has no conversation history unless the parent supplies it. A useful assignment names the scope, the expected result, and what the worker must not change. A vague prompt often buys a second round trip.</p>
+
+    <h2>Try the decision</h2>
+    <div class="activity-guide" aria-label="Orchestration choice activity instructions">
+      <span class="activity-number">3</span>
+      <div><strong>Keep one agent or split the work?</strong><p>Choose for each job, then compare your reason with the reveal.</p></div>
+      <span class="activity-time">1 minute</span>
+    </div>
+    <div class="choice-exercise" id="orch-choice" aria-label="Choose when to use subagents">
+      <div class="exercise-head">DECISION 1 OF 3 · ONE AGENT OR SUBAGENTS</div>
+      <div class="exercise-body">
+        <p class="scenario" id="orch-choice-scenario"></p>
+        <div class="choice-actions" role="group" aria-label="Choose an approach">
+          <button class="choice-answer" type="button" data-orch-choice="one" aria-pressed="false">Keep one agent</button>
+          <button class="choice-answer" type="button" data-orch-choice="split" aria-pressed="false">Split across workers</button>
+        </div>
+        <div class="choice-result" id="orch-choice-result" hidden aria-live="polite"></div>
+        <button class="choice-answer choice-next" id="orch-choice-next" type="button" hidden>Next job</button>
+      </div>
+    </div>
 
     <h2>The patterns</h2>
-    <p>A handful of shapes cover nearly everything people build with subagents.</p>
+    <p>Four shapes cover most subagent work.</p>
 
     <h3>Fan-out</h3>
-    <p>Independent shards of the same job run in parallel: one worker per module in an audit, or per search angle in a research sweep. Fan-out is the default and the least fragile, because workers never need to know about each other. The orchestrator's job is to pick shard boundaries that keep workers independent.</p>
+    <p>Independent parts run in parallel, such as one worker per module in an audit. The parent chooses boundaries that keep workers from touching the same files.</p>
 
     <h3>Pipeline</h3>
-    <p>Each item flows through stages: find, then fix, then check, with no barrier between them. Item A can sit in review while item B is still in the find stage. Pipelines beat staged batches on wall-clock time whenever stage durations vary, which is always. The orchestrator forces a barrier only when a stage needs every prior result at once. For example, one stage might deduplicate findings, and another might stop the run early when there is nothing to do.</p>
+    <p>Each item moves through stages such as find, fix, and check. One item can be in review while another is still being found.</p>
 
     <h3>Judge and jury</h3>
-    <p>Verification runs as its own delegation. Each finding from the discovery stage goes to one or more fresh skeptics prompted to refute it. The orchestrator integrates only the claims that survive. Independent contexts are the point: a verifier that watched the discovery happen inherits its blind spots. A fresh one must reconstruct the evidence, and plausible-but-wrong findings die in the reconstruction. For expensive claims, several skeptics vote.</p>
+    <p>A fresh worker tries to disprove each finding. The parent keeps claims that survive an independent check.</p>
 
     <h3>Loop until dry</h3>
-    <p>For discovery jobs with unknown size (bug hunts, dependency audits), dispatch finder waves until two consecutive waves come back empty. A fixed worker count encodes a guess about how much there is to find; the loop replaces the guess with evidence.</p>
+    <p>For a search with unknown size, send new finder waves until repeated waves return nothing new.</p>
 
     <h2>What goes wrong</h2>
     <ul>
-      <li><strong>Workers collide.</strong> Two subagents editing the same file produce garbage merges. Either shard by disjoint scope or give each worker an isolated copy of the workspace and reconcile afterward.</li>
-      <li><strong>You trust findings raw.</strong> A worker's confident summary is a claim, and claims from a context you cannot inspect deserve the judge treatment before they drive decisions.</li>
-      <li><strong>The orchestrator micromanages.</strong> If the parent re-reads everything a worker read to check its work, the ledger collapses. You are back to one fat context that costs four times as much.</li>
-      <li><strong>You orchestrate everything.</strong> A task that fits comfortably in one window with room to think is cheaper, simpler, and easier to debug as one agent. Orchestration pays off past a threshold of scale or required confidence; below that threshold it is pure overhead.</li>
+      <li><strong>Workers collide.</strong> Give them separate files or isolated workspaces.</li>
+      <li><strong>The parent trusts raw claims.</strong> Verify findings before they drive a decision.</li>
+      <li><strong>The parent rereads everything.</strong> That fills the context you were trying to protect.</li>
+      <li><strong>A small task gets split.</strong> Coordination adds cost without a gain.</li>
     </ul>
 
     <h2>When to reach for it</h2>
-    <p>Three signals point to orchestration, and any one of them is enough. The reading exceeds the window, as in audits and codebase-wide questions. The work shards into independent units whose results are easy to state compactly. Or the answer needs confidence that one perspective cannot provide, so you buy independent perspectives and let them disagree. If none of the three applies, stay in one context, which is cheaper and easier to debug.</p>
-    <p>Effort levels compose with all of this: <a href="effort-levels.html">the reasoning effort piece</a> covers how one agent spends serial compute, and orchestration spends compute across agents. Mechanical shards run cheap and low; the judge that decides what ships runs high. The knobs are orthogonal, and mature setups turn both.</p>
+    <p>Use orchestration when the reading will crowd one window, when independent parts can run at the same time, or when a decision needs an independent check. Keep small, sequential work in one context.</p>
+    <p><a href="effort-levels.html">Reasoning effort</a> controls how much one agent thinks. Orchestration controls how work spreads across agents. A mechanical worker can run at low effort while the verifier uses more.</p>
+    <div class="takeaway">
+      <span class="label">Leave with this</span>
+      <ul>
+        <li>Workers protect the parent's context by returning short results.</li>
+        <li>Parallel work can finish sooner while using more total tokens.</li>
+        <li>Split independent work and verify claims before integration.</li>
+      </ul>
+    </div>
   </div>
 </main>
 
@@ -500,7 +676,13 @@ function makeInstrument(figId, api) {
   var fig = document.getElementById(figId);
   if (!fig) return;
   var btn = fig.querySelector('[data-ctl]');
-  if (REDUCED) { api.renderStatic(); if (btn) btn.style.display = 'none'; return; }
+  var replay = fig.querySelector('[data-restart]');
+  if (REDUCED) {
+    api.renderStatic();
+    if (btn) btn.style.display = 'none';
+    if (replay) replay.style.display = 'none';
+    return;
+  }
   var userPaused = false, visible = false, running = false;
   function sync() {
     var want = visible && !userPaused;
@@ -511,6 +693,14 @@ function makeInstrument(figId, api) {
     userPaused = !userPaused;
     btn.textContent = userPaused ? 'Play' : 'Pause';
     sync();
+  });
+  if (replay) replay.addEventListener('click', function () {
+    api.stop();
+    running = false;
+    userPaused = false;
+    if (btn) btn.textContent = 'Pause';
+    api.start();
+    running = true;
   });
   new IntersectionObserver(function (es) {
     visible = es.some(function (e) { return e.isIntersecting; });
@@ -710,6 +900,75 @@ function timerBag() {
     }
   });
 })();
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  var rounds = [
+    {
+      task: 'Rename one button in one file. The test suite checks the result.',
+      answer: 'one',
+      verdict: 'Keep one agent.',
+      reason: 'The job is small, sequential, and cheap to verify. Splitting it only adds coordination.'
+    },
+    {
+      task: 'Review four independent services for the same security mistake, then verify the findings.',
+      answer: 'split',
+      verdict: 'Split across workers.',
+      reason: 'Each service is an independent shard. They can run at the same time, and a fresh verifier can check the claims.'
+    },
+    {
+      task: 'Trace one production failure where each new log result changes the next question.',
+      answer: 'one',
+      verdict: 'Keep one agent.',
+      reason: 'The investigation is one dependent chain. A single context can carry each result into the next step.'
+    }
+  ];
+  var round = 0;
+  var head = document.querySelector('#orch-choice .exercise-head');
+  var scenario = document.getElementById('orch-choice-scenario');
+  var result = document.getElementById('orch-choice-result');
+  var next = document.getElementById('orch-choice-next');
+  var choices = Array.prototype.slice.call(document.querySelectorAll('[data-orch-choice]'));
+
+  function show() {
+    var item = rounds[round];
+    head.textContent = 'DECISION ' + (round + 1) + ' OF ' + rounds.length + ' · ONE AGENT OR SUBAGENTS';
+    scenario.textContent = item.task;
+    result.hidden = true;
+    result.textContent = '';
+    next.hidden = true;
+    choices.forEach(function (button) {
+      button.disabled = false;
+      button.setAttribute('aria-pressed', 'false');
+    });
+  }
+
+  choices.forEach(function (button) {
+    button.addEventListener('click', function () {
+      var item = rounds[round];
+      var picked = button.getAttribute('data-orch-choice');
+      choices.forEach(function (choice) {
+        choice.disabled = true;
+        choice.setAttribute('aria-pressed', String(choice === button));
+      });
+      result.hidden = false;
+      var lead = document.createElement('strong');
+      lead.textContent = (picked === item.answer ? 'Yes. ' : 'A better fit: ') + item.verdict + ' ';
+      result.appendChild(lead);
+      result.appendChild(document.createTextNode(item.reason));
+      next.textContent = round + 1 < rounds.length ? 'Next job' : 'Start again';
+      next.hidden = false;
+    });
+  });
+
+  next.addEventListener('click', function () {
+    round = (round + 1) % rounds.length;
+    show();
+  });
+
+  show();
 })();
 </script>
 </body>

@@ -262,6 +262,7 @@ main { padding: 44px 0 0; }
 }
 
 .toc { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.toc + .section-kicker { margin-top: 40px; }
 
 .toc a.card, .toc .card.pending {
   display: block;
@@ -366,7 +367,7 @@ footer.site a:hover { color: var(--accent); }
 <header class="masthead">
   <div class="col">
     <h1>Model Mechanics</h1>
-    <p class="dek">A field guide to large language models (LLMs), for engineers who use them every day but never look inside. Below is the whole machine. Hover a station to read what it does. Click it to open its explainer. The tokenizer is yours to operate by hand.</p>
+    <p class="dek">A field guide for people who use language models and want a clear picture of what happens inside. Start with token cost, follow one token through the machine, then make three choices about effort, delegation, and repeat work.</p>
 
     <figure class="atlas" role="group" aria-label="Interactive map of a language model">
       <div class="atlas-head"><span>THE MACHINE, MAPPED</span><span class="tag">one prompt, one loop</span></div>
@@ -396,7 +397,7 @@ footer.site a:hover { color: var(--accent); }
 <main>
   <div class="col-narrow">
     <p class="section-kicker">Play first</p>
-    <ol class="toc" style="margin-bottom:40px">
+    <ol class="toc">
       <li>
         <a class="card featured" href="articles/tokenizer.html">
           <span class="card-no">PLAYGROUND</span>
@@ -407,36 +408,48 @@ footer.site a:hover { color: var(--accent); }
       </li>
     </ol>
 
-    <p class="section-kicker">Then go deeper</p>
+    <p class="section-kicker">See the whole machine</p>
     <ol class="toc">
       <li>
         <a class="card" href="articles/how-llms-work.html">
           <span class="card-no">1</span>
           <h2>Inside an LLM: corpus to next token</h2>
-          <p>Follow the full lifecycle: corpus and tokenizer, embeddings and the transformer block, the pre-training that chooses the numbers, and one-token-at-a-time decoding.</p>
+          <p>Follow the build path and the run path. Plain-language summaries lead into the detailed transformer diagrams, then a final replay reconnects the whole system.</p>
+          <span class="go">Open the machine →</span>
         </a>
       </li>
+    </ol>
+
+    <p class="section-kicker">Then make three working choices</p>
+    <ol class="toc">
       <li>
         <a class="card" href="articles/effort-levels.html">
           <span class="card-no">2</span>
           <h2>Reasoning effort</h2>
-          <p>The knob buys serial compute. Its returns are concave and task-dependent. How to set it without superstition.</p>
+          <p>Choose a task, move the thinking budget, and find where extra tokens stop improving the answer.</p>
+          <span class="go">Choose an effort level →</span>
         </a>
       </li>
       <li>
         <a class="card" href="articles/orchestration-and-subagents.html">
           <span class="card-no">3</span>
           <h2>Orchestration and subagents</h2>
-          <p>One context window is the wrong shape for big work. Fan-out, pipelines, and verification with a return contract.</p>
+          <p>Compare one crowded context with scoped workers, then decide which jobs are worth splitting.</p>
+          <span class="go">Make the split →</span>
         </a>
       </li>
       <li>
         <a class="card" href="articles/loops-and-skills.html">
           <span class="card-no">4</span>
           <h2>Loops and skills</h2>
-          <p>The while-loop that turns a next-token predictor into a worker, and procedure packaged as files an agent loads on demand.</p>
+          <p>Watch a tool loop grow its context, then decide which repeated instructions belong in a skill.</p>
+          <span class="go">Run the loop →</span>
         </a>
       </li>
+    </ol>
+
+    <p class="section-kicker">Coming next</p>
+    <ol class="toc">
       <li>
         <div class="card pending">
           <span class="card-no">5</span>
