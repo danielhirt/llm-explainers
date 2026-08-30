@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The token economy</title>
+<title>Tokens are the meter</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%3Crect%20width=%2232%22%20height=%2232%22%20fill=%22%23eae7da%22/%3E%3Crect%20x=%221%22%20y=%221%22%20width=%2230%22%20height=%2230%22%20fill=%22none%22%20stroke=%22%231e1d12%22%20stroke-width=%222%22/%3E%3Crect%20x=%226%22%20y=%2218%22%20width=%228%22%20height=%228%22%20fill=%22%233b55c4%22/%3E%3Crect%20x=%2218%22%20y=%2218%22%20width=%228%22%20height=%228%22%20fill=%22%23a8801c%22/%3E%3Cpath%20d=%22M16%206l5%205-5%205-5-5z%22%20fill=%22%23b23b2b%22/%3E%3C/svg%3E">
-<meta name="description" content="Train a byte-pair tokenizer in your browser, see where it sits inside the model, and put a price on everything it cuts: token counting, cost guessing, next-token prediction, and a bill calculator.">
+<meta name="description" content="See how a language model cuts text into tokens, compare the cost of two messages, and lower a sample monthly bill.">
 <style>
 @font-face { font-family: "Geist"; src: url("../fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
 @font-face { font-family: "Geist"; src: url("../fonts/Geist-VariableItalic.woff2") format("woff2"); font-weight: 100 900; font-style: italic; font-display: swap; }
@@ -249,6 +249,7 @@ code {
   color: var(--ink);
 }
 
+.board-head > span:first-child { flex: 1 1 auto; }
 .board-head .tag { color: var(--ink-faint); }
 
 .board-body { padding: 18px 16px 16px; }
@@ -404,89 +405,11 @@ button.tok:hover, button.tok:focus-visible { border-color: var(--ink); }
 .cost-meter .v.gold { color: var(--gold); }
 .cost-meter .v.blue { color: var(--cobalt); }
 
-/* Probability bars */
-.bars { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-.bar-row { display: grid; grid-template-columns: minmax(70px, 120px) 1fr 52px; gap: 10px; align-items: center; font-family: "Geist Mono", monospace; font-size: 12px; }
-.bar-row .lbl { color: var(--ink); white-space: pre; overflow: hidden; text-overflow: ellipsis; text-align: right; }
-.bar-track { height: 14px; background: var(--code-bg); border: 1px solid var(--line); position: relative; }
-.bar-fill { position: absolute; inset: 0 auto 0 0; background: var(--cobalt); opacity: 0.75; transition: width 260ms ease; }
-.bar-row.win .bar-fill { background: var(--gold); opacity: 0.95; }
-.bar-row .pct { color: var(--ink-soft); font-size: 11px; }
-
-/* Score badges */
-.badge {
-  display: inline-block;
-  font-family: "Geist Mono", monospace;
-  font-size: 11px;
-  letter-spacing: 0.05em;
-  background: var(--ink);
-  color: var(--page);
-  padding: 2px 8px;
-  border-radius: 3px;
-}
-
-.badge.soft { background: transparent; color: var(--ink); border: 1px solid var(--line-strong); }
-
 .game-status { font-family: "Geist Mono", monospace; font-size: 12px; color: var(--ink-soft); margin-top: 12px; min-height: 20px; }
-.game-status b { color: var(--ink); }
-.game-status .money { color: var(--accent); font-weight: 620; }
-
-/* Merge ledger */
-.split-2 { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; }
-.split-2 > div { min-width: 0; }
-@media (max-width: 620px) { .split-2 { grid-template-columns: 1fr; } }
 
 .panel-label { font-family: "Geist Mono", monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 8px; }
 
-.ledger { border: 1px solid var(--line); max-height: 240px; overflow-y: auto; overflow-x: auto; font-family: "Geist Mono", monospace; font-size: 11.5px; }
-.ledger table { width: 100%; border-collapse: collapse; }
-.ledger td { padding: 3px 10px; border-bottom: 1px solid var(--line); color: var(--ink-soft); white-space: pre; }
-.ledger tr:last-child td { border-bottom: 0; }
-.ledger td.n { color: var(--ink-faint); width: 40px; }
-.ledger td.tk { color: var(--ink); }
-.ledger tr.fresh td { background: var(--accent-soft); }
-
-.corpus-view {
-  border: 1px solid var(--line);
-  background: var(--page);
-  padding: 10px 12px;
-  max-height: 240px;
-  overflow-y: auto;
-  font-family: "Geist Mono", monospace;
-  font-size: 12.5px;
-  line-height: 2.05;
-  color: var(--ink-soft);
-}
-
-.corpus-view .w { border: 1px solid var(--cobalt-line); background: var(--cobalt-soft); color: var(--ink); border-radius: 2px; padding: 0 2px; margin: 0 1px; white-space: pre; }
-.corpus-view .w.hot { border-color: var(--accent); background: var(--accent-soft); }
-
-.progress-line { display: flex; align-items: center; gap: 12px; margin: 14px 0 0; font-family: "Geist Mono", monospace; font-size: 11px; color: var(--ink-faint); }
-.progress-track { flex: 1; height: 6px; border: 1px solid var(--line-strong); background: var(--page); position: relative; }
-.progress-fill { position: absolute; inset: 0 auto 0 0; background: var(--accent); }
-
-/* Quiz candidates */
-.quiz-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-
-/* Snippet card for the counting game */
-.snippet {
-  border: 1px solid var(--line-strong);
-  background: var(--page);
-  padding: 14px 16px;
-  font-family: "Geist Mono", monospace;
-  font-size: 14px;
-  color: var(--ink);
-  white-space: pre-wrap;
-  margin: 0 0 14px;
-}
-
 /* The bill machine */
-.calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; margin: 4px 0 0; }
-@media (max-width: 620px) { .calc-grid { grid-template-columns: 1fr; } }
-.calc-row { display: grid; grid-template-columns: minmax(120px, 150px) 1fr 74px; gap: 10px; align-items: center; font-family: "Geist Mono", monospace; font-size: 11px; color: var(--ink-soft); }
-.calc-row .cv { color: var(--ink); text-align: right; font-size: 11.5px; white-space: nowrap; }
-.calc-selects { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
-
 .bill-hero { display: flex; flex-wrap: wrap; align-items: baseline; gap: 14px; margin-top: 18px; font-family: "Geist Mono", monospace; }
 .bill-hero .big { font-size: clamp(30px, 5vw, 40px); font-weight: 640; color: var(--ink); letter-spacing: -0.01em; }
 .bill-hero .per { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.06em; text-transform: uppercase; }
@@ -495,7 +418,6 @@ button.tok:hover, button.tok:focus-visible { border-color: var(--ink); }
 .seg-bar .seg { height: 100%; border-right: 2px solid var(--board); transition: width 260ms ease; min-width: 0; }
 .seg-bar .seg:last-child { border-right: 0; }
 .seg-bar .seg.sys { background: var(--cobalt); }
-.seg-bar .seg.sys.cached { background: repeating-linear-gradient(-45deg, var(--cobalt) 0 4px, var(--board) 4px 6px); }
 .seg-bar .seg.ctx { background: var(--cobalt); opacity: 0.55; }
 .seg-bar .seg.out { background: var(--gold); }
 
@@ -503,16 +425,9 @@ button.tok:hover, button.tok:focus-visible { border-color: var(--ink); }
 .legend-row .li { display: flex; align-items: center; gap: 6px; }
 .legend-row .sw { width: 10px; height: 10px; border: 1px solid var(--line); }
 .legend-row .sw.sys { background: var(--cobalt); }
-.legend-row .sw.sys.cached { background: repeating-linear-gradient(-45deg, var(--cobalt) 0 3px, var(--board) 3px 5px); }
 .legend-row .sw.ctx { background: var(--cobalt); opacity: 0.55; }
 .legend-row .sw.out { background: var(--gold); }
 .legend-row b { color: var(--ink); font-weight: 620; }
-
-/* Comparison table */
-table.compare { width: 100%; border-collapse: collapse; margin: 20px 0 30px; font-size: 15px; }
-table.compare th, table.compare td { text-align: left; padding: 8px 12px; border: 1px solid var(--line); vertical-align: top; }
-table.compare th { font-family: "Geist Mono", monospace; font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); background: repeating-linear-gradient(-45deg, transparent 0 4px, var(--hatch) 4px 5px); }
-table.compare td:first-child { font-family: "Geist Mono", monospace; font-size: 12px; color: var(--ink); white-space: nowrap; }
 
 .note {
   max-width: 66ch;
@@ -522,6 +437,95 @@ table.compare td:first-child { font-family: "Geist Mono", monospace; font-size: 
   color: var(--ink-soft);
   font-size: 15.5px;
 }
+
+/* Audience exercise guides */
+.takeaway {
+  margin: 8px 0 46px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+  color: var(--ink-body);
+  font-size: 16px;
+}
+
+.exercise-guide {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  gap: 12px 16px;
+  align-items: center;
+  margin: 22px 0 14px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  background: var(--surface);
+}
+
+.exercise-number {
+  font-family: "Geist Mono", monospace;
+  font-size: 30px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.exercise-guide strong { display: block; font-size: 15px; }
+.exercise-guide p { margin: 2px 0 0; font-size: 15px; line-height: 1.45; }
+.exercise-time { font-family: "Geist Mono", monospace; font-size: 10.5px; color: var(--ink-faint); white-space: nowrap; }
+
+.choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.choice-card {
+  min-width: 0;
+  min-height: 118px;
+  padding: 14px;
+  text-align: left;
+  color: var(--ink);
+  background: var(--page);
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.choice-card:hover { border-color: var(--accent); }
+.choice-card:disabled { cursor: default; }
+.choice-card[aria-pressed="true"] { border: 2px solid var(--accent); padding: 13px; background: var(--accent-soft); }
+.choice-letter { display: block; margin-bottom: 8px; font-family: "Geist Mono", monospace; font-size: 11px; color: var(--accent); }
+.choice-copy { display: block; font-family: "Geist Mono", monospace; font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
+
+.compare-result { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line-strong); }
+.compare-verdict { margin: 0 0 14px; color: var(--ink); font-weight: 620; }
+.compare-lesson { margin: 12px 0 0; color: var(--ink-soft); font-size: 15px; }
+.compare-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.compare-side { min-width: 0; }
+.compare-side .panel-label { margin-bottom: 6px; }
+.compare-meta { margin-top: 8px; font-family: "Geist Mono", monospace; font-size: 11px; color: var(--ink-soft); }
+
+.scenario-line {
+  margin-bottom: 12px;
+  font-family: "Geist Mono", monospace;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.lever-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.lever {
+  min-height: 96px;
+  padding: 12px;
+  text-align: left;
+  color: var(--ink);
+  background: var(--page);
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.lever:hover { border-color: var(--accent); }
+.lever[aria-pressed="true"] { background: var(--cobalt-soft); border: 2px solid var(--cobalt); padding: 11px; }
+.lever strong { display: block; font-size: 13px; line-height: 1.35; }
+.lever span { display: block; margin-top: 8px; font-family: "Geist Mono", monospace; font-size: 10.5px; line-height: 1.4; color: var(--ink-soft); }
+.challenge-status { margin-top: 14px; padding: 10px 12px; border: 1px solid var(--line); font-family: "Geist Mono", monospace; font-size: 12px; color: var(--ink-soft); }
+.challenge-status.won { color: var(--ink); border-color: var(--gold); background: var(--gold-soft); }
+
+.remember-list { margin: 0 0 28px; padding-left: 22px; }
+.remember-list li { margin: 0 0 12px; padding-left: 4px; }
 
 /* Halftime hinge */
 .hinge {
@@ -533,48 +537,6 @@ table.compare td:first-child { font-family: "Geist Mono", monospace; font-size: 
 .hinge .kicker { margin: 0 0 6px; }
 .hinge h2 { margin-bottom: 10px; }
 .hinge p { font-size: 16.5px; }
-
-/* Scorecard */
-.scorecard {
-  position: fixed;
-  right: 14px;
-  bottom: 14px;
-  z-index: 40;
-  font-family: "Geist Mono", monospace;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.score-toggle {
-  font-family: "Geist Mono", monospace;
-  font-size: 11px;
-  letter-spacing: 0.05em;
-  color: var(--page);
-  background: var(--ink);
-  border: 1px solid var(--ink);
-  border-radius: 3px;
-  padding: 6px 12px;
-  cursor: pointer;
-}
-
-.score-panel {
-  width: 230px;
-  border: 1px solid var(--line-strong);
-  background: var(--surface);
-  padding: 10px 12px 12px;
-  font-size: 11px;
-  color: var(--ink-soft);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
-}
-
-.score-panel .row { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; border-bottom: 1px solid var(--line); }
-.score-panel .row:last-of-type { border-bottom: 0; }
-.score-panel .row b { color: var(--ink); font-weight: 620; }
-.score-panel .row .tick { color: var(--accent); }
-.score-panel .grade { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line-strong); color: var(--ink); }
-.score-panel .reset { margin-top: 10px; }
 
 footer.site {
   margin: 84px 0 0;
@@ -600,44 +562,43 @@ nav.series p { margin: 0 0 6px; }
   .mast-row { margin-bottom: 30px; }
   .dek { font-size: 18px; }
   .board-body { padding: 14px 12px 12px; }
-  .bar-row { grid-template-columns: minmax(56px, 90px) 1fr 48px; }
   canvas.stage { height: 250px; }
   canvas.stage.short { height: 150px; }
   .pin { display: none; }
-  .scorecard { right: 8px; bottom: 8px; }
-  .score-panel { width: 210px; }
+  .board-head { align-items: flex-start; flex-wrap: wrap; }
+  .board-head > span:first-child { flex: 1 1 160px; }
+  .board-head .tag { flex: 0 0 auto; white-space: nowrap; }
   .stat-cell { min-width: 0; flex-basis: 46%; }
   .cost-meter .cell { min-width: 0; flex-basis: 46%; }
   .mini-stats .cell { min-width: 0; flex-basis: 30%; }
-  .calc-row { grid-template-columns: minmax(96px, 120px) 1fr 64px; }
-  table.compare { display: block; overflow-x: auto; }
+  .exercise-guide { grid-template-columns: 36px 1fr; }
+  .exercise-time { grid-column: 2; }
+  .choice-grid, .compare-breakdown, .lever-grid { grid-template-columns: 1fr; }
+  .choice-card, .lever { min-height: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
 </style>
 </head>
 <body>
-</content>
-</invoke>
 
 <header class="masthead">
   <div class="col">
     <div class="mast-row">
       <a class="brand" href="../index.html">Model Mechanics</a>
       <span class="mast-separator">/</span>
-      <span>Playground · Hands on</span>
+      <span>Talk guide · Hands on</span>
       <span class="v-badge">V2</span>
       <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle color theme">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
       </button>
     </div>
-    <h1>The token economy</h1>
-    <p class="dek">A language model never sees words. It sees integer IDs from a learned vocabulary, and every one of those IDs is a line item. This page trains a real tokenizer in your browser, shows you where it sits inside the machine, and puts a price on everything it cuts.</p>
-    <div class="stat-strip" role="group" aria-label="Playground facts">
-      <div class="stat-cell"><span class="k">Tokenizer</span><span class="v" id="stat-merges">— <small>learned merges</small></span></div>
-      <div class="stat-cell"><span class="k">Training text</span><span class="v" id="stat-corpus">— <small>words</small></span></div>
-      <div class="stat-cell"><span class="k">Prices</span><span class="v">3 tiers <small>list, mid-2026</small></span></div>
-      <div class="stat-cell"><span class="k">Runs</span><span class="v">in this tab <small>no network</small></span></div>
+    <h1>Tokens are the meter</h1>
+    <p class="dek">Before a language model can answer, it cuts your message into pieces called tokens. Providers count those pieces on the way in and again as the answer comes out. Try three short activities to see the cut and what it does to cost.</p>
+    <div class="stat-strip" role="group" aria-label="Three parts of a model bill">
+      <div class="stat-cell"><span class="k">Input</span><span class="v">what the model reads</span></div>
+      <div class="stat-cell"><span class="k">Output</span><span class="v">what the model writes</span></div>
+      <div class="stat-cell"><span class="k">Cost</span><span class="v">tokens × repeats × rate</span></div>
     </div>
   </div>
 </header>
@@ -645,10 +606,10 @@ nav.series p { margin: 0 0 6px; }
 <main>
   <div class="col">
 
-    <p class="kicker" style="margin-top:40px">Section 0 · The machine</p>
-    <h2 id="machine">Where the tokenizer sits</h2>
-    <p>Every chat model runs the same loop. Your text goes in, a <strong>tokenizer</strong> cuts it into tokens, and each token becomes an integer ID. Embeddings turn the IDs into vectors, a transformer reads all of them at once, and out comes a probability for every token in the vocabulary. A sampler picks one. That token joins the context, and the whole machine runs again to pick the next one.</p>
-    <p>Watch one full trip below. Two things to hold on to. The tokenizer is the front door: every stage after it works on tokens, never on text. And the loop meters everything twice, because the model reads <strong>input tokens</strong> on every pass and emits <strong>output tokens</strong> one at a time. Both meters are what the invoice counts, which is why this whole page keeps score in tokens and dollars.</p>
+    <p class="kicker" style="margin-top:40px">Start here · The whole machine</p>
+    <h2 id="machine">One answer takes many trips</h2>
+    <p>Your message enters as text. The <strong>tokenizer</strong> cuts it into tokens, then the rest of the model works with those tokens. At the far end, the model picks one new token and adds it to the message.</p>
+    <p>The machine runs again to pick the next token, then again for the token after that. The input meter counts what the model reads. The output meter counts each new token it writes.</p>
 
     <figure class="board" role="group" aria-label="Figure 0, one trip through the machine">
       <div class="board-head"><span>FIGURE 0 · ONE TRIP THROUGH THE MACHINE</span><span class="tag">autoplays</span><span class="pin" data-pin="0,1,2,3,4,5,6" aria-hidden="true"></span></div>
@@ -660,250 +621,132 @@ nav.series p { margin: 0 0 6px; }
           <span class="game-status" id="pipe-status" style="margin-top:0">loading…</span>
         </div>
       </div>
-      <div class="board-foot">PROMPT → TOKENIZER → IDS → EMBEDDINGS → TRANSFORMER → LOGITS → SAMPLER → APPEND, THEN AROUND AGAIN · <b>IN THE REAL SYSTEM</b>: THIS LOOP RUNS ONCE PER GENERATED TOKEN</div>
+      <div class="board-foot">TEXT IN → CUT INTO TOKENS → MODEL → ONE TOKEN OUT → REPEAT · <b>COST LINK</b>: INPUT COUNTS WHAT THE MODEL READS; OUTPUT COUNTS EACH TOKEN IT WRITES</div>
     </figure>
 
-    <p>Each figure on this page is one station of that map. The pin in every figure header shows you where you are standing.</p>
+    <aside class="takeaway"><strong>Keep two ideas:</strong> the model receives tokens, not words, and it makes one trip for every token it adds to the answer.</aside>
 
-    <p class="kicker">Section 1 · The splitter</p>
-    <h2 id="split">The cut you are billed for</h2>
-    <p>The unit of exchange is the <strong>token</strong>: a chunk of text that maps to one integer ID in a fixed vocabulary. A token is usually a word, part of a word, or a piece of punctuation. Whole words would need a vocabulary with millions of entries and would still miss new words. Single characters keep the vocabulary tiny but stretch every sentence into a long, expensive sequence. Tokens sit in between: common strings get their own entry, and rare strings break into smaller pieces.</p>
-    <p>Type below and watch the cut. Each chip is one token; <span class="mark">␣</span> marks a leading space, which belongs to the token. Click any chip to see its ID and how the tokenizer assembled it.</p>
-    <p>The stats under the splitter now come with a price meter. Context windows are measured in tokens, rate limits are measured in tokens, and the invoice at the end of the month is measured in tokens. One request is noise, so the meter also scales your text to a million requests, which is where token counts turn into budget lines.</p>
+    <p class="kicker">Activity 1 · See the meter</p>
+    <h2 id="split">Put a sentence through the tokenizer</h2>
+    <p>A token can be a whole word, part of a word, a number, or punctuation. Common text often fits into larger pieces. Less familiar text often breaks into more pieces. More pieces mean more tokens on the bill.</p>
+
+    <div class="exercise-guide" aria-label="Activity 1 instructions">
+      <span class="exercise-number">1</span>
+      <div><strong>What to do</strong><p>Pick a sample. Look at the blue pieces. Then type your own sentence and watch the token count change.</p></div>
+      <span class="exercise-time">about 1 minute</span>
+    </div>
 
     <figure class="board" role="group" aria-label="Figure 1, the splitter">
-      <div class="board-head"><span>FIGURE 1 · THE SPLITTER</span><span class="tag">live</span><span class="pin" data-pin="1" aria-hidden="true"></span></div>
+      <div class="board-head"><span>ACTIVITY 1 · SEE THE CUT</span><span class="tag">type or pick a sample</span><span class="pin" data-pin="1" aria-hidden="true"></span></div>
       <div class="board-body">
         <div class="preset-row" id="split-presets"></div>
         <textarea class="freetext" id="split-input" rows="2" spellcheck="false" aria-label="Text to tokenize"></textarea>
-        <div class="panel-label" style="margin-top:14px">Tokens</div>
+        <div class="panel-label" style="margin-top:14px">One blue piece = one token</div>
         <div class="chip-strip" id="split-out" aria-live="polite"></div>
-        <div class="tok-detail" id="split-detail">click a token to inspect it</div>
         <div class="mini-stats">
-          <div class="cell"><span class="k">Characters</span><span class="v" id="split-chars">0</span></div>
+          <div class="cell"><span class="k">Words</span><span class="v" id="split-words">0</span></div>
           <div class="cell"><span class="k">Tokens</span><span class="v" id="split-toks">0</span></div>
-          <div class="cell"><span class="k">Chars per token</span><span class="v" id="split-ratio">–</span></div>
+          <div class="cell"><span class="k">Extra pieces</span><span class="v" id="split-extra">0</span></div>
         </div>
         <div class="cost-meter" role="group" aria-label="Cost meter">
           <div class="cm-controls">
-            <span>Price it</span>
-            <select class="sel" id="cost-model" aria-label="Model price tier"></select>
+            <span>Example rate · $5 per million input tokens · $25 per million output tokens</span>
             <select class="sel" id="cost-scale" aria-label="Request volume">
-              <option value="1">× 1 request</option>
-              <option value="1000">× 1,000 requests</option>
-              <option value="1000000" selected>× 1,000,000 requests</option>
+              <option value="1">used once</option>
+              <option value="1000">used 1,000 times</option>
+              <option value="1000000" selected>used 1 million times</option>
             </select>
           </div>
           <div class="cm-cells">
-            <div class="cell"><span class="k">Sent as input</span><span class="v blue" id="cost-in">–</span></div>
-            <div class="cell"><span class="k">Generated as output</span><span class="v gold" id="cost-out">–</span></div>
-            <div class="cell"><span class="k">Rule of thumb</span><span class="v" id="cost-rule">output ≈ 5× input rate</span></div>
+            <div class="cell"><span class="k">To send this text</span><span class="v blue" id="cost-in">$0</span></div>
+            <div class="cell"><span class="k">To write this much</span><span class="v gold" id="cost-out">$0</span></div>
           </div>
         </div>
         <div class="tok-detail" id="split-note" style="min-height:0"></div>
       </div>
-      <div class="board-foot">TOKENIZER LEARNED FROM THE 3 KB CORPUS IN SECTION 2 · IDS ARE REAL BUT LOCAL TO THIS PAGE · <b>IN THE REAL SYSTEM</b>: THIS COUNT, TIMES YOUR TRAFFIC, IS THE INPUT LINE OF YOUR BILL</div>
+      <div class="board-foot">THIS PAGE USES A SMALL ENGLISH-HEAVY TOY TOKENIZER · <b>COST LINK</b>: TOKEN COUNT × NUMBER OF USES × RATE</div>
     </figure>
 
-    <p>Notice two things. Common English words from the corpus come out as single tokens. Anything the tokenizer never saw during training, like German, digits, or code, shatters into small pieces. The same amount of text then costs more tokens, and the meter shows what that does to money. That is not a bug. The cut shows you what the training data looked like, and the bill inherits it.</p>
+    <p class="kicker">Activity 2 · Test your instinct</p>
+    <h2 id="compare">Which message costs more?</h2>
+    <p>You do not need to guess an exact token count. Pick the message that you think will use more tokens. The reveal shows both cuts and the monthly cost if a service sends that message one million times.</p>
 
-    <p class="kicker">Section 2 · The vocabulary</p>
-    <h2 id="train">Where the vocabulary comes from</h2>
-    <p>Nobody sits down and writes a token list. An algorithm called <strong>byte-pair encoding</strong> learns the vocabulary from data. The whole algorithm fits in one sentence: start with single characters, count every adjacent pair in the corpus, glue the most frequent pair into a new token, and repeat. The ordered list of glue operations, called <strong>merges</strong>, is the tokenizer. To split new text later, the tokenizer replays the same merges in the same order.</p>
-    <p>The machine below runs byte-pair encoding for real on a small corpus written for this page. The forge on top shows each round: the three most frequent pairs line up, the winner fuses into a new token, and the new token drops into the vocabulary wall. Step through it and watch character soup turn into words. Turn on <strong>quiz mode</strong> to guess which pair merges next before the machine does.</p>
+    <div class="exercise-guide" aria-label="Activity 2 instructions">
+      <span class="exercise-number">2</span>
+      <div><strong>What to do</strong><p>Read A and B. Pick the one that you think costs more. There are three rounds.</p></div>
+      <span class="exercise-time">about 2 minutes</span>
+    </div>
 
-    <figure class="board" role="group" aria-label="Figure 2, watch it learn">
-      <div class="board-head"><span>FIGURE 2 · WATCH IT LEARN</span><span class="tag">byte-pair encoding, live</span><span class="pin" data-pin="1" aria-hidden="true"></span></div>
-      <div class="stage-wrap"><canvas class="stage short" id="bpe-canvas" aria-label="Animated forge: the winning pair of symbols fuses into a new token and drops into a growing vocabulary wall"></canvas></div>
-      <div class="board-body" style="padding-top:12px">
-        <div class="btn-row">
-          <button class="btn" id="bpe-step" type="button">Step one merge</button>
-          <button class="btn" id="bpe-play" type="button" aria-pressed="false">Play</button>
-          <button class="btn" id="bpe-reset" type="button">Reset</button>
-          <button class="btn" id="bpe-quiz" type="button" aria-pressed="false">Quiz mode</button>
-          <span class="badge soft" id="bpe-streak" hidden>streak 0</span>
-        </div>
-        <div class="quiz-row" id="bpe-quiz-row" hidden></div>
-        <div class="game-status" id="bpe-status">merge 0 of 0 · the corpus is plain characters</div>
-        <div class="split-2" style="margin-top:12px">
-          <div>
-            <div class="panel-label">Corpus sample, segmented with the merges learned so far</div>
-            <div class="corpus-view" id="bpe-corpus" aria-live="off"></div>
-          </div>
-          <div>
-            <div class="panel-label">Merge ledger</div>
-            <div class="ledger" id="bpe-ledger"><table><tbody id="bpe-ledger-body"></tbody></table></div>
-          </div>
-        </div>
-        <div class="progress-line">
-          <span id="bpe-progress-label">0%</span>
-          <div class="progress-track"><div class="progress-fill" id="bpe-progress" style="width:0%"></div></div>
-        </div>
-      </div>
-      <div class="board-foot">MOST FREQUENT ADJACENT PAIR WINS EACH ROUND · MERGES NEVER CROSS A WORD BOUNDARY · <b>IN THE REAL SYSTEM</b>: THE MERGES THAT WIN HERE DECIDE WHAT IS CHEAP FOREVER</div>
-    </figure>
-
-    <p>Every tokenizer you ever used, including the one in front of your favorite chat model, came from exactly this process. The only difference is scale: terabytes of text and a few hundred thousand merges instead of 3&nbsp;KB and a couple hundred. The consequences are identical: whatever was common in the training data becomes cheap, and everything else becomes expensive. Your invoice inherits the training distribution.</p>
-
-    <p class="kicker">Section 3 · The counting game</p>
-    <h2 id="count">Guess the bill</h2>
-    <p>People who work with models daily still guess token counts badly, because the cut follows the training data, not your intuition about words. Now attach money to the miss. Each snippet below is priced as if it sat in the <strong>system prompt</strong> of a service handling two million requests a day, a midsize production assistant. A system prompt rides along on every single request, so at that scale one token costs about <span class="mark">$3,650 a year</span> at frontier input prices. Prompt bloat is not a style problem. It is recurring spend.</p>
-    <p>Five snippets, cut with the vocabulary you watched the machine build. Guess the count, reveal the cut, and watch what your miss would have done to the budget.</p>
-
-    <figure class="board" role="group" aria-label="Figure 3, guess the bill">
-      <div class="board-head"><span>FIGURE 3 · GUESS THE BILL</span><span class="tag">5 rounds</span><span class="pin" data-pin="1" aria-hidden="true"></span></div>
+    <figure class="board" role="group" aria-label="Activity 2, compare two messages">
+      <div class="board-head"><span>ACTIVITY 2 · PICK THE COSTLY ONE</span><span class="tag" id="compare-round">round 1 of 3</span><span class="pin" data-pin="1" aria-hidden="true"></span></div>
       <div class="board-body">
-        <div class="game-status" id="count-round-label">round 1 of 5</div>
-        <div class="snippet" id="count-snippet"></div>
-        <div class="btn-row">
-          <label for="count-guess" style="font-family:'Geist Mono',monospace;font-size:11.5px;color:var(--ink-soft)">your guess</label>
-          <input class="guess-input" id="count-guess" type="number" min="1" max="200" inputmode="numeric">
-          <button class="btn" id="count-reveal" type="button">Reveal</button>
-          <button class="btn" id="count-next" type="button" hidden>Next round</button>
-          <button class="btn" id="count-restart" type="button" hidden>Play again</button>
-          <span class="badge" id="count-score">score 0</span>
+        <div class="panel-label">Which costs more to send?</div>
+        <div class="choice-grid" id="compare-choices"></div>
+        <div class="compare-result" id="compare-result" hidden aria-live="polite"></div>
+        <div class="btn-row" style="margin-top:14px">
+          <button class="btn" id="compare-next" type="button" hidden>Next pair</button>
+          <button class="btn" id="compare-restart" type="button" hidden>Try again</button>
         </div>
-        <div class="panel-label" style="margin-top:16px" id="count-reveal-label" hidden>The actual cut</div>
-        <div class="chip-strip" id="count-chips"></div>
-        <div class="game-status" id="count-verdict"></div>
-        <div class="game-status" id="count-budget"></div>
       </div>
-      <div class="board-foot">SCORING · EXACT 10 PTS · WITHIN 1: 8 · WITHIN 2: 6 · WITHIN 3: 4 · WITHIN 5: 2 · PRICED AT 2M REQUESTS/DAY, FRONTIER INPUT RATE · <b>IN THE REAL SYSTEM</b>: SYSTEM PROMPTS ARE RE-SENT ON EVERY REQUEST</div>
+      <div class="board-foot">NO EXACT GUESS REQUIRED · EXAMPLE USE: 1 MILLION SENDS PER MONTH AT $5 PER MILLION INPUT TOKENS · <b>COST LINK</b>: SMALL DIFFERENCES REPEAT</div>
+    </figure>
+
+    <p class="kicker">Activity 3 · Change the bill</p>
+    <h2 id="bill">Get the monthly bill below $55,000</h2>
+    <p>This help-desk assistant handles 100,000 requests a day. Each request includes repeated instructions, background material, and an answer. Start at $82,500 a month, then choose any two changes.</p>
+
+    <div class="exercise-guide" aria-label="Activity 3 instructions">
+      <span class="exercise-number">3</span>
+      <div><strong>What to do</strong><p>Turn on two changes. Watch which part of the bill shrinks and whether you reach the target.</p></div>
+      <span class="exercise-time">about 2 minutes</span>
+    </div>
+
+    <figure class="board" role="group" aria-label="Activity 3, lower a sample monthly bill">
+      <div class="board-head"><span>ACTIVITY 3 · LOWER THE BILL</span><span class="tag">target: under $55,000</span><span class="pin" data-pin="0,1,2,3,4,5,6" aria-hidden="true"></span></div>
+      <div class="board-body">
+        <div class="scenario-line">100,000 requests a day · $5 per million input tokens · $25 per million output tokens</div>
+        <div class="lever-grid" id="bill-levers">
+          <button class="lever" type="button" data-lever="instructions" aria-pressed="false"><strong>Shorten repeated instructions</strong><span>1,500 → 500 input tokens</span></button>
+          <button class="lever" type="button" data-lever="background" aria-pressed="false"><strong>Send less background</strong><span>2,000 → 1,000 input tokens</span></button>
+          <button class="lever" type="button" data-lever="answer" aria-pressed="false"><strong>Ask for a shorter answer</strong><span>400 → 150 output tokens</span></button>
+        </div>
+        <div class="bill-hero"><span class="big" id="bill-total">$82,500</span><span class="per">per month</span><span class="per" id="bill-saving">· $0 saved</span></div>
+        <div class="seg-bar" id="bill-bar" role="img" aria-label="Monthly cost split across repeated instructions, background material, and answers">
+          <div class="seg sys" id="bill-seg-instructions" title="repeated instructions"></div>
+          <div class="seg ctx" id="bill-seg-background" title="background material"></div>
+          <div class="seg out" id="bill-seg-answer" title="answers"></div>
+        </div>
+        <div class="legend-row" id="bill-legend">
+          <span class="li"><span class="sw sys"></span>repeated instructions <b id="bill-l-instructions">$22,500</b></span>
+          <span class="li"><span class="sw ctx"></span>background <b id="bill-l-background">$30,000</b></span>
+          <span class="li"><span class="sw out"></span>answers <b id="bill-l-answer">$30,000</b></span>
+        </div>
+        <div class="challenge-status" id="bill-verdict" aria-live="polite">Choose two changes to reach the target.</div>
+        <button class="btn" id="bill-reset" type="button" style="margin-top:12px">Reset</button>
+      </div>
+      <div class="board-foot">MONTHLY COST = INPUT COST + OUTPUT COST · <b>COST LINK</b>: OUTPUT TOKENS USE THE HIGHER EXAMPLE RATE, SO SHORTER ANSWERS CAN SAVE MORE THAN EXPECTED</div>
     </figure>
 
     <div class="hinge">
-      <p class="kicker">Halftime · The handoff</p>
-      <h2 id="handoff">You built the input format. Now meet the machine that eats it.</h2>
-      <p>Everything above happens before the model does any thinking, and everything below happens after. The tokenizer hands over a sequence of IDs, and from there the job is one question asked over and over: <strong>given the tokens so far, which token comes next?</strong> The next three figures replace the real transformer with something deliberately primitive, a table of counts, so you can see the shape of the job without billions of weights in the way. The interface is identical: context in, distribution out, one token appended, around again.</p>
+      <p class="kicker">Next · The transformer videos</p>
+      <h2 id="handoff">Follow the middle of the machine</h2>
+      <p>The videos start where Activity 1 ends. Tokens become vectors, the transformer mixes information across the message, and the model produces scores for the next token. When the model picks one, return to the loop above: one output token has been billed, and the machine goes around again.</p>
     </div>
 
-    <p class="kicker">Section 4 · The predictor</p>
-    <h2 id="predict">Predicting the next token</h2>
-    <p>The answer to the question is never a single token. It is a probability for every token in the vocabulary, and something downstream picks one. This page's predictor counts which token followed which pair of tokens in the corpus, and turns the counts into probabilities. A real model replaces the counting with a transformer that holds billions of learned weights and reads the whole context window, not just the last two tokens. The <em>shape</em> of the interface is identical, and that is the point: context in, distribution out.</p>
+    <p class="kicker">Leave with this</p>
+    <h2 id="remember">Three facts explain the token bill</h2>
+    <ul class="remember-list">
+      <li><strong>Tokens are pieces of text.</strong> They do not line up neatly with words.</li>
+      <li><strong>The bill has two meters.</strong> Input is what the model reads; output is what it writes.</li>
+      <li><strong>Small counts become large costs through repetition.</strong> Text sent on every request deserves the closest look.</li>
+    </ul>
 
-    <figure class="board" role="group" aria-label="Figure 4, the probability shelf">
-      <div class="board-head"><span>FIGURE 4 · THE PROBABILITY SHELF</span><span class="tag">trigram counts</span><span class="pin" data-pin="4,5" aria-hidden="true"></span></div>
-      <div class="board-body">
-        <div class="btn-row">
-          <button class="btn" id="shelf-shuffle" type="button">Show another context</button>
-        </div>
-        <div class="panel-label" style="margin-top:14px">Context</div>
-        <div class="chip-strip" id="shelf-ctx"></div>
-        <div class="panel-label" style="margin-top:14px">What the counts say comes next</div>
-        <div class="bars" id="shelf-bars"></div>
-      </div>
-      <div class="board-foot">P(NEXT) BLENDS TRIGRAM, BIGRAM, AND UNIGRAM COUNTS · TOP 5 SHOWN · <b>IN THE REAL SYSTEM</b>: A TRANSFORMER PRODUCES THIS SHELF FROM THE WHOLE CONTEXT</div>
-    </figure>
-
-    <p>Now race it. The sentence below was held out of the corpus. At each position, you and the predictor both pick the next token from four candidates, and then the page reveals the true token plus the shelf the predictor was looking at. The predictor only counts. See if reading the actual context lets you beat it.</p>
-
-    <figure class="board" role="group" aria-label="Figure 5, beat the model">
-      <div class="board-head"><span>FIGURE 5 · BEAT THE MODEL</span><span class="tag">8 rounds</span><span class="pin" data-pin="4,5" aria-hidden="true"></span></div>
-      <div class="board-body">
-        <div class="btn-row">
-          <span class="badge" id="race-you">you 0</span>
-          <span class="badge soft" id="race-model">model 0</span>
-          <button class="btn" id="race-restart" type="button" hidden>Play again</button>
-        </div>
-        <div class="panel-label" style="margin-top:14px">The sentence so far</div>
-        <div class="chip-strip" id="race-ctx"></div>
-        <div class="panel-label" style="margin-top:14px" id="race-q">Which token comes next?</div>
-        <div class="quiz-row" id="race-choices"></div>
-        <div class="game-status" id="race-status"></div>
-        <div id="race-view" hidden>
-          <div class="panel-label" style="margin-top:14px">The predictor's shelf for that position</div>
-          <div class="bars" id="race-bars"></div>
-        </div>
-      </div>
-      <div class="board-foot">HELD-OUT SENTENCE · CANDIDATES ARE THE TRUE TOKEN PLUS THE PREDICTOR'S FAVORITES · <b>IN THE REAL SYSTEM</b>: THE TRANSFORMER EXISTS TO WIN THIS GAME USING THE WHOLE CONTEXT</div>
-    </figure>
-
-    <p class="kicker">Section 5 · The dice</p>
-    <h2 id="sample">Temperature and the dice</h2>
-    <p>The distribution is not the output. Something has to pick one token from it, and how you pick changes everything about how the text feels. <strong>Greedy decoding</strong> always takes the single most likely token. It is safe and repetitive; run it long enough and it walks into loops. Sampling proportionally to the probabilities adds variety and risk. <strong>Temperature</strong> reshapes the distribution before the draw, and <strong>top-k</strong> throws away all but the k most likely tokens. Try the extremes and watch the same machine turn from a stuck record into word salad.</p>
-    <p>The dice are also where the second meter starts running. Every token the sampler emits is an <strong>output token</strong>, and output list prices run about five times input. A model that rambles for 400 tokens where 80 would do is not just slower to read. It is five times the money on the expensive meter, once per request, forever. Verbosity is a cost knob, and this figure is the knob's mechanism.</p>
-
-    <figure class="board" role="group" aria-label="Figure 6, the sampler">
-      <div class="board-head"><span>FIGURE 6 · THE SAMPLER</span><span class="tag">generate for real</span><span class="pin" data-pin="6" aria-hidden="true"></span></div>
-      <div class="board-body">
-        <div class="btn-row">
-          <label for="samp-temp" style="font-family:'Geist Mono',monospace;font-size:11.5px;color:var(--ink-soft)">temperature <b id="samp-temp-val" style="color:var(--ink)">0.8</b></label>
-          <input type="range" id="samp-temp" min="0" max="2" step="0.1" value="0.8" style="flex:1;min-width:120px;max-width:260px">
-          <label for="samp-topk" style="font-family:'Geist Mono',monospace;font-size:11.5px;color:var(--ink-soft)">top-k</label>
-          <select class="sel" id="samp-topk">
-            <option value="1">1 (greedy)</option>
-            <option value="3">3</option>
-            <option value="10" selected>10</option>
-            <option value="0">off</option>
-          </select>
-          <button class="btn" id="samp-go" type="button">Generate 30 tokens</button>
-        </div>
-        <div class="panel-label" style="margin-top:16px">Output · seed context in gold</div>
-        <div class="chip-strip" id="samp-out"></div>
-        <div class="panel-label" style="margin-top:16px">The distribution behind the last emitted token</div>
-        <div class="bars" id="samp-bars"></div>
-        <div class="game-status" id="samp-note"></div>
-      </div>
-      <div class="board-foot">EACH TOKEN IS DRAWN FROM THE TRIGRAM DISTRIBUTION AFTER TOP-K AND TEMPERATURE RESHAPE IT · <b>IN THE REAL SYSTEM</b>: EVERY EMITTED TOKEN BILLS AT THE OUTPUT RATE, ROUGHLY 5× INPUT</div>
-    </figure>
-
-    <p class="kicker">Section 6 · The bill machine</p>
-    <h2 id="bill">Your whole bill, three levers</h2>
-    <p>Put the two meters together and a monthly bill is four numbers multiplied: tokens in, tokens out, requests, and price per token. The machine below is the entire model reduced to the arithmetic a finance team sees. The defaults describe a modest internal assistant: a 1,500 token system prompt, 2,000 tokens of history and retrieval per request, a 400 token answer, 100,000 requests a day.</p>
-    <p>Then pull the three levers engineers actually control. <strong>Trim the prompt</strong>: a token you delete is deleted from every request forever. <strong>Cache the stable prefix</strong>: providers re-read a prefix they have already seen for roughly a tenth of the input rate, and your system prompt is the same bytes every time. <strong>Batch what nobody waits for</strong>: overnight work runs at about half price. None of the three touch model quality. That is why cost reviews start with tokens, not with model choice.</p>
-
-    <figure class="board" role="group" aria-label="Figure 7, the bill machine">
-      <div class="board-head"><span>FIGURE 7 · THE BILL MACHINE</span><span class="tag">interactive</span><span class="pin" data-pin="0,1,2,3,4,5,6" aria-hidden="true"></span></div>
-      <div class="board-body">
-        <div class="calc-grid">
-          <div class="calc-row"><label for="calc-sys">system prompt</label><input type="range" id="calc-sys" min="0" max="4000" step="50" value="1500"><span class="cv" id="calc-sys-v">1,500 tok</span></div>
-          <div class="calc-row"><label for="calc-ctx">context / request</label><input type="range" id="calc-ctx" min="0" max="20000" step="250" value="2000"><span class="cv" id="calc-ctx-v">2,000 tok</span></div>
-          <div class="calc-row"><label for="calc-out">output / request</label><input type="range" id="calc-out" min="25" max="2000" step="25" value="400"><span class="cv" id="calc-out-v">400 tok</span></div>
-          <div class="calc-row"><label for="calc-req">requests / day</label><input type="range" id="calc-req" min="0" max="4" step="1" value="2"><span class="cv" id="calc-req-v">100k</span></div>
-        </div>
-        <div class="calc-selects">
-          <select class="sel" id="calc-model" aria-label="Model price tier"></select>
-          <button class="btn" id="calc-cache" type="button" aria-pressed="false">Cache the system prompt</button>
-          <button class="btn" id="calc-batch" type="button" aria-pressed="false">Batch it, ×0.5</button>
-        </div>
-        <div class="bill-hero"><span class="big" id="calc-total">$0</span><span class="per">per month</span><span class="per" id="calc-perreq">· $0 per request</span></div>
-        <div class="seg-bar" id="calc-bar" role="img" aria-label="Monthly cost split across system prompt, context, and output">
-          <div class="seg sys" id="calc-seg-sys" title="system prompt (input)"></div>
-          <div class="seg ctx" id="calc-seg-ctx" title="context (input)"></div>
-          <div class="seg out" id="calc-seg-out" title="output"></div>
-        </div>
-        <div class="legend-row" id="calc-legend">
-          <span class="li"><span class="sw sys" id="calc-sw-sys"></span>system prompt <b id="calc-l-sys">$0</b></span>
-          <span class="li"><span class="sw ctx"></span>context <b id="calc-l-ctx">$0</b></span>
-          <span class="li"><span class="sw out"></span>output <b id="calc-l-out">$0</b></span>
-        </div>
-        <div class="game-status" id="calc-verdict"></div>
-      </div>
-      <div class="board-foot">LIST PRICES, MID-2026 · CACHED PREFIX ≈ 0.1× INPUT RATE · BATCH ≈ 0.5× EVERYTHING · <b>IN THE REAL SYSTEM</b>: RETRIES, TOOL CALLS, AND REASONING TOKENS COME ON TOP</div>
-    </figure>
-
-    <p class="kicker">Section 7 · The boundary</p>
-    <h2 id="real">What the toy leaves out</h2>
-    <p>Everything on this page is real computation, and all of it is honest about its scale. Here is exactly where the toy stops and production begins.</p>
-
-    <table class="compare">
-      <thead><tr><th scope="col">Piece</th><th scope="col">This page</th><th scope="col">Production models</th></tr></thead>
-      <tbody>
-        <tr><td>vocabulary</td><td id="real-vocab">~— entries: the alphabet plus 220 learned merges</td><td>50,000 to 300,000 entries, learned the same way</td></tr>
-        <tr><td>training text</td><td>about 3 KB, lowercased, written for this page</td><td>trillions of tokens of web text, books, and code</td></tr>
-        <tr><td>base unit</td><td>characters</td><td>bytes, so any string tokenizes with no unknowns</td></tr>
-        <tr><td>predictor</td><td>trigram counts, sees the last 2 tokens</td><td>a transformer that attends over the whole context window</td></tr>
-        <tr><td>sampling</td><td>temperature and top-k, the real thing</td><td>same idea, plus top-p and friends</td></tr>
-        <tr><td>the bill</td><td>pretend traffic at real list prices</td><td>real traffic, plus caching discounts, batch tiers, and reasoning tokens</td></tr>
-      </tbody>
-    </table>
-
-    <p>The predictor fails in an instructive way: it has no idea what the sentence is about, only which token pairs were popular. When you beat it in Figure 5, you win by using context it cannot see. The step from counting to a transformer is precisely the step that closes that gap, and it is the subject of the <a href="how-llms-work.html">deep dive</a>: <a href="how-llms-work.html#geometry">how token IDs become vectors</a>, <a href="how-llms-work.html#transformer">how attention lets every position read the others</a>, and <a href="how-llms-work.html#training">how training picks the weights</a>. And when a bill surprises you, the explanation is almost always upstream in the cut: some text cost more tokens than anyone guessed, multiplied by every request. You now have the tools to check.</p>
+    <p class="note"><strong>About this page:</strong> The tokenizer is a small English-heavy teaching model. Production tokenizers have much larger vocabularies, and each provider uses its own rates. The dollar figures here use one fixed example rate so the exercises stay easy to compare.</p>
 
     <nav class="series" aria-label="Series">
       <p class="kicker" style="margin:0 0 10px">Keep going</p>
       <p>Deep dive: <a href="how-llms-work.html">Inside an LLM: corpus to next token</a></p>
-      <p>The original playground: <a href="tokenizer.html">The tokenizer playground, v1</a></p>
+      <p>Current page: <a href="tokenizer.html">Tokens are the meter</a></p>
       <p>Back to <a href="../index.html">the field guide</a></p>
     </nav>
   </div>
@@ -914,18 +757,6 @@ nav.series p { margin: 0 0 6px; }
     <span>Daniel Hirt · <a href="https://danielhirt.dev">danielhirt.dev</a></span>
   </div>
 </footer>
-
-<div class="scorecard" id="scorecard">
-  <div class="score-panel" id="score-panel" hidden>
-    <div class="row"><span>merge quiz</span><b id="score-r-quiz">not played</b></div>
-    <div class="row"><span>guess the bill</span><b id="score-r-bill">not played</b></div>
-    <div class="row"><span>beat the model</span><b id="score-r-race">not played</b></div>
-    <div class="row"><span>bill machine</span><b id="score-r-calc">not visited</b></div>
-    <div class="grade" id="score-grade">rank: token tourist</div>
-    <button class="btn reset" id="score-reset" type="button">Reset card</button>
-  </div>
-  <button class="score-toggle" id="score-toggle" type="button" aria-expanded="false">SCORE 0 · 0/4 PLAYED</button>
-</div>
 
 <script>
 (function () {
@@ -951,21 +782,11 @@ nav.series p { margin: 0 0 6px; }
 
 var CORPUS = "a language model is a machine that reads tokens and predicts the next token. the model reads the text one token at a time. a token is a small piece of text. some tokens are whole words and some tokens are pieces of a word. the tokenizer cuts the text into tokens. the tokenizer learns its vocabulary from the training text. the vocabulary maps every token to a number. the model never sees words. the model sees numbers. the numbers stand for tokens. common words become single tokens. rare words break into small pieces. the training text decides which words are common. the model learns patterns from the training text. the model counts which token follows which tokens. the counts become probabilities. the probabilities say which token comes next. the model picks the next token from the probabilities. the model appends the token to the context. the context grows one token at a time. the loop repeats until the text is done. the model guesses the next token and the training corrects the guess. training changes the weights. the weights store the patterns. a small model stores few patterns. a large model stores many patterns. the tokenizer stays frozen after training. the model stays frozen after training too. the machine that picks the token is called the sampler. the sampler rolls the dice over the probabilities. a low temperature makes the dice boring. a high temperature makes the dice wild. greedy decoding always picks the top token. greedy decoding repeats itself. the context window holds a fixed number of tokens. a long text costs many tokens. a short text costs few tokens. the price of a text is measured in tokens. the model predicts and the loop appends. the text grows and the machine reads it again. every guess is a probability over the whole vocabulary. the vocabulary holds the alphabet and the learned merges. a merge glues two pieces into one token. the most frequent pair wins the merge. the merges repeat until the vocabulary is full. the tokenizer replays the merges on new text. the new text becomes numbers and the loop begins. people read words but machines read tokens. the model reads the numbers and the story continues.";
 
-var HELDOUT = "the model reads the context and picks the next token and the loop repeats until the text is done.";
-
 var NUM_MERGES = 220;
 
-/* ---------- prices: $ per 1M tokens, published list prices, mid-2026 ---------- */
+/* ---------- fixed example price: $ per 1M tokens ---------- */
 
-var PRICES = [
-  { key: "frontier", label: "frontier · $5 in / $25 out", inp: 5, out: 25 },
-  { key: "mid", label: "mid-tier · $2 in / $10 out", inp: 2, out: 10 },
-  { key: "small", label: "small · $1 in / $5 out", inp: 1, out: 5 }
-];
-var CACHE_FACTOR = 0.1;
-var BATCH_FACTOR = 0.5;
-var BILL_GAME_REQ_PER_DAY = 2000000;
-var BILL_GAME_PER_TOKEN_YEAR = BILL_GAME_REQ_PER_DAY * 365 / 1000000 * PRICES[0].inp;
+var EXAMPLE_PRICE = { inp: 5, out: 25 };
 
 function money(x) {
   if (x >= 1000) return "$" + Math.round(x).toLocaleString("en-US");
@@ -975,7 +796,6 @@ function money(x) {
   if (x <= 0) return "$0";
   return "<$0.01";
 }
-function fmtInt(n) { return Math.round(n).toLocaleString("en-US"); }
 
 /* ---------- helpers ---------- */
 
@@ -989,14 +809,6 @@ function el(tag, cls, text) {
   return node;
 }
 function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
-function shuffle(arr) {
-  var a = arr.slice();
-  for (var i = a.length - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1));
-    var t = a[i]; a[i] = a[j]; a[j] = t;
-  }
-  return a;
-}
 function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
 function lerp(a, b, t) { return a + (b - a) * t; }
 function easeInOut(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
@@ -1021,8 +833,6 @@ baseList.forEach(function (c, i) { idMap[c] = i; });
 
 var merges = [];
 var ranks = Object.create(null);
-var origin = Object.create(null);
-var trace = [];
 
 (function train() {
   for (var m = 0; m < NUM_MERGES; m++) {
@@ -1043,10 +853,8 @@ var trace = [];
     });
     var top = entries[0];
     var tok = top.a + top.b;
-    trace.push({ a: top.a, b: top.b, count: top.count, tok: tok, top3: entries.slice(0, 3) });
     ranks[top.a + "\x00" + top.b] = m;
     merges.push([top.a, top.b]);
-    if (!(tok in origin)) origin[tok] = { a: top.a, b: top.b, rank: m };
     if (!(tok in idMap)) idMap[tok] = baseList.length + m;
     wordList.forEach(function (w) {
       for (var i = 0; i < w.syms.length - 1; i++) {
@@ -1075,78 +883,9 @@ function encode(text) {
   pieces(text).forEach(function (w) { encodeWord(w).forEach(function (s) { out.push(s); }); });
   return out;
 }
-function charsOf(tok) {
-  if (!origin[tok]) return [tok];
-  return charsOf(origin[tok].a).concat(charsOf(origin[tok].b));
-}
 function tokKnown(tok) { return idMap[tok] !== undefined; }
 
-/* ---------- trigram model ---------- */
-
-var toks = encode(CORPUS);
-var uni = Object.create(null), uniTot = 0;
-var bi = Object.create(null);
-var tri = Object.create(null);
-toks.forEach(function (t, i) {
-  uni[t] = (uni[t] || 0) + 1; uniTot += 1;
-  if (i >= 1) {
-    var b = bi[toks[i - 1]] || (bi[toks[i - 1]] = { tot: 0, m: Object.create(null) });
-    b.m[t] = (b.m[t] || 0) + 1; b.tot += 1;
-  }
-  if (i >= 2) {
-    var key = toks[i - 2] + "\x00" + toks[i - 1];
-    var tr = tri[key] || (tri[key] = { tot: 0, m: Object.create(null) });
-    tr.m[t] = (tr.m[t] || 0) + 1; tr.tot += 1;
-  }
-});
-var vocabToks = Object.keys(uni);
-
-function predict(t1, t2) {
-  var comps = [];
-  var tr = tri[t1 + "\x00" + t2];
-  if (tr) comps.push({ m: tr.m, tot: tr.tot, w: 0.6 });
-  var b = bi[t2];
-  if (b) comps.push({ m: b.m, tot: b.tot, w: 0.3 });
-  comps.push({ m: uni, tot: uniTot, w: 0.1 });
-  var wsum = 0;
-  comps.forEach(function (c) { wsum += c.w; });
-  var dist = [];
-  vocabToks.forEach(function (t) {
-    var p = 0;
-    comps.forEach(function (c) { p += c.w * ((c.m[t] || 0) / c.tot); });
-    p /= wsum;
-    if (p > 0) dist.push({ t: t, p: p });
-  });
-  dist.sort(function (x, y) { return y.p - x.p || (x.t < y.t ? -1 : 1); });
-  return dist;
-}
-
-function applyTempTopK(dist, temp, topk) {
-  var d = topk > 0 ? dist.slice(0, topk) : dist.slice();
-  if (temp === 0) {
-    return d.map(function (e, i) { return { t: e.t, p: i === 0 ? 1 : 0 }; });
-  }
-  var sum = 0;
-  var out = d.map(function (e) {
-    var v = Math.pow(e.p, 1 / temp);
-    sum += v;
-    return { t: e.t, p: v };
-  });
-  out.forEach(function (e) { e.p = e.p / sum; });
-  out.sort(function (x, y) { return y.p - x.p; });
-  return out;
-}
-
-function draw(dist) {
-  var r = Math.random(), acc = 0;
-  for (var i = 0; i < dist.length; i++) {
-    acc += dist[i].p;
-    if (r <= acc) return dist[i];
-  }
-  return dist[dist.length - 1];
-}
-
-/* ---------- shared chip and bar builders ---------- */
+/* ---------- shared token chip ---------- */
 
 function makeTok(text, cls, button) {
   var node = el(button ? "button" : "span", "tok" + (cls ? " " + cls : ""));
@@ -1160,34 +899,6 @@ function makeTok(text, cls, button) {
   return node;
 }
 
-function renderBars(box, dist, winner, topN) {
-  clear(box);
-  dist.slice(0, topN || 5).forEach(function (e) {
-    var row = el("div", "bar-row" + (winner !== undefined && e.t === winner ? " win" : ""));
-    row.appendChild(el("span", "lbl", JSON.stringify(showSym(e.t))));
-    var track = el("div", "bar-track");
-    var fill = el("div", "bar-fill");
-    fill.style.width = Math.max(1, Math.round(e.p * 100)) + "%";
-    track.appendChild(fill);
-    row.appendChild(track);
-    row.appendChild(el("span", "pct", (e.p * 100).toFixed(1) + "%"));
-    box.appendChild(row);
-  });
-}
-
-/* ---------- stat strip ---------- */
-
-var corpusWords = norm(CORPUS).split(" ").length;
-var statMerges = document.getElementById("stat-merges");
-clear(statMerges);
-statMerges.appendChild(document.createTextNode(merges.length + " "));
-statMerges.appendChild(el("small", null, "learned merges"));
-var statCorpus = document.getElementById("stat-corpus");
-clear(statCorpus);
-statCorpus.appendChild(document.createTextNode(corpusWords + " "));
-statCorpus.appendChild(el("small", null, "words"));
-document.getElementById("real-vocab").textContent = (baseList.length + merges.length) + " entries: " + baseList.length + " characters plus " + merges.length + " learned merges";
-
 /* ---------- pipeline pins ---------- */
 
 var STAGE_NAMES = ["prompt", "tokenizer", "ids", "embeddings", "transformer", "logits", "sampler"];
@@ -1199,74 +910,6 @@ Array.prototype.forEach.call(document.querySelectorAll(".pin"), function (pin) {
     pin.appendChild(el("i", on.indexOf(i) >= 0 ? "on" : ""));
   }
 });
-
-/* ---------- scorecard ---------- */
-
-var SCORE = (function () {
-  var KEY = "mm-tok2-score";
-  var st = { quizBest: 0, quizPlayed: false, billPts: null, billDone: false, raceYou: null, raceModel: null, raceDone: false, calcDone: false };
-  try {
-    var raw = localStorage.getItem(KEY);
-    if (raw) {
-      var parsed = JSON.parse(raw);
-      Object.keys(st).forEach(function (k) { if (parsed && parsed[k] !== undefined) st[k] = parsed[k]; });
-    }
-  } catch (error) {}
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (error) {} }
-
-  var toggleBtn = document.getElementById("score-toggle");
-  var panel = document.getElementById("score-panel");
-  var rQuiz = document.getElementById("score-r-quiz");
-  var rBill = document.getElementById("score-r-bill");
-  var rRace = document.getElementById("score-r-race");
-  var rCalc = document.getElementById("score-r-calc");
-  var gradeEl = document.getElementById("score-grade");
-
-  function playedCount() {
-    return (st.quizPlayed ? 1 : 0) + (st.billDone ? 1 : 0) + (st.raceDone ? 1 : 0) + (st.calcDone ? 1 : 0);
-  }
-  function points() {
-    var p = 0;
-    p += st.quizBest * 4;
-    if (st.billPts !== null) p += st.billPts;
-    if (st.raceYou !== null) p += st.raceYou * 5;
-    if (st.calcDone) p += 5;
-    return p;
-  }
-  function grade() {
-    var n = playedCount();
-    if (n <= 1) return "token tourist";
-    if (n === 2) return "meter reader";
-    if (n === 3) return "token accountant";
-    var strong = (st.billPts || 0) >= 30 && (st.raceYou || 0) >= (st.raceModel || 0);
-    return strong ? "token economist" : "senior token accountant";
-  }
-  function render() {
-    rQuiz.textContent = st.quizPlayed ? "best streak " + st.quizBest : "not played";
-    rBill.textContent = st.billDone ? "score " + st.billPts + "/50" : "not played";
-    rRace.textContent = st.raceDone ? "you " + st.raceYou + " · model " + st.raceModel : "not played";
-    rCalc.textContent = st.calcDone ? "explored" : "not visited";
-    rCalc.className = st.calcDone ? "tick" : "";
-    gradeEl.textContent = "rank: " + grade();
-    toggleBtn.textContent = "SCORE " + points() + " · " + playedCount() + "/4 PLAYED";
-  }
-  toggleBtn.addEventListener("click", function () {
-    var open = panel.hidden;
-    panel.hidden = !open;
-    toggleBtn.setAttribute("aria-expanded", String(open));
-  });
-  document.getElementById("score-reset").addEventListener("click", function () {
-    st = { quizBest: 0, quizPlayed: false, billPts: null, billDone: false, raceYou: null, raceModel: null, raceDone: false, calcDone: false };
-    save(); render();
-  });
-  render();
-  return {
-    quiz: function (best) { st.quizPlayed = true; st.quizBest = Math.max(st.quizBest, best); save(); render(); },
-    bill: function (pts) { st.billDone = true; st.billPts = Math.max(st.billPts || 0, pts); save(); render(); },
-    race: function (you, model) { st.raceDone = true; st.raceYou = you; st.raceModel = model; save(); render(); },
-    calc: function () { if (!st.calcDone) { st.calcDone = true; save(); render(); } }
-  };
-})();
 
 /* ---------- canvas scene engine ---------- */
 
@@ -1763,171 +1406,22 @@ function cLabel(g, text, x, y, opts) {
   if (REDUCED) pauseBtn.disabled = true;
 })();
 
-/* ---------- figure 2 stage: the merge forge ---------- */
-
-var bpeForge = (function () {
-  if (!document.getElementById("bpe-canvas")) return { onMerge: function () {}, sync: function () {} };
-  var state = { step: 0, anim: null };
-
-  function tileW(g, text, size) {
-    g.font = "500 " + size + "px \"Geist Mono\", monospace";
-    return Math.max(22, g.measureText(text).width + 14);
-  }
-
-  function drawTokTile(g, pal, text, cx, cy, size, fill, stroke, inkColor) {
-    var w = tileW(g, text, size), h = size + 10;
-    g.fillStyle = fill;
-    g.fillRect(Math.round(cx - w / 2), Math.round(cy - h / 2), Math.round(w), h);
-    g.strokeStyle = stroke;
-    g.lineWidth = 1;
-    g.strokeRect(Math.round(cx - w / 2) + 0.5, Math.round(cy - h / 2) + 0.5, Math.round(w) - 1, h - 1);
-    cLabel(g, text, cx, cy + size * 0.36, { size: size, color: inkColor, align: "center" });
-    return w;
-  }
-
-  var scene = Scenes.define({
-    canvas: "bpe-canvas",
-    duration: 0,
-    continuous: true,
-    draw: function (g, sc, pal) {
-      var W = sc.W, H = sc.H;
-      var narrow = W < 560;
-      var now = performance.now();
-      var anim = state.anim;
-      var p = anim ? clamp01((now - anim.start) / 700) : 1;
-      var entry = anim ? anim.entry : null;
-      var fuseX = W * 0.40, fuseY = H * 0.46;
-
-      cLabel(g, "MERGE FORGE", 14, 20, { size: 9, color: pal.faint });
-      cLabel(g, "round " + state.step + " of " + trace.length, 92, 20, { size: 9, color: pal.soft });
-
-      /* bench: candidates for the coming round (no counts, alphabetical, so quiz mode stays fair) */
-      var benchY0 = 40, benchGap = (H - benchY0 - 16) / 3;
-      if (anim && p < 1 && entry) {
-        cLabel(g, "THIS ROUND, BY COUNT", 14, benchY0 - 6, { size: 8, color: pal.faint });
-        entry.top3.forEach(function (c, i) {
-          var by = benchY0 + 10 + i * benchGap;
-          var isWin = c.a === entry.a && c.b === entry.b;
-          var text = showSym(c.a) + " + " + showSym(c.b);
-          if (!isWin) {
-            drawTokTile(g, pal, text, 60, by, 10, pal.board, pal.lineSoft, pal.soft);
-            cLabel(g, "×" + c.count, 118, by + 3, { size: 8.5, color: pal.faint });
-          } else if (p < 0.45) {
-            var pm = easeInOut(p / 0.45);
-            var ax = lerp(46, fuseX - 20, pm), bx = lerp(84, fuseX + 20, pm);
-            var ay = lerp(by, fuseY, pm), byy = lerp(by, fuseY, pm);
-            drawTokTile(g, pal, showSym(entry.a), ax, ay, 11, pal.board, pal.accent, pal.ink);
-            drawTokTile(g, pal, showSym(entry.b), bx, byy, 11, pal.board, pal.accent, pal.ink);
-            cLabel(g, "×" + entry.count, fuseX, fuseY - 24, { size: 9, color: pal.accent, align: "center" });
-          }
-        });
-        if (p >= 0.45) {
-          /* fuse flash, then the new token flies to the wall */
-          var wall = wallSlot(W, H, baseList.length + state.step - 1);
-          if (p < 0.62) {
-            var pf = (p - 0.45) / 0.17;
-            g.strokeStyle = pal.gold;
-            g.globalAlpha = 1 - pf;
-            g.lineWidth = 2;
-            g.beginPath();
-            g.arc(fuseX, fuseY, 14 + pf * 16, 0, 2 * Math.PI);
-            g.stroke();
-            g.globalAlpha = 1;
-            drawTokTile(g, pal, showSym(entry.tok), fuseX, fuseY, 12, pal.board, pal.gold, pal.ink);
-            cLabel(g, "×" + entry.count, fuseX, fuseY - 24, { size: 9, color: pal.accent, align: "center" });
-          } else {
-            var pf2 = easeInOut((p - 0.62) / 0.38);
-            var fx = lerp(fuseX, wall.x, pf2), fy = lerp(fuseY, wall.y, pf2);
-            var size = lerp(12, 6, pf2);
-            drawTokTile(g, pal, showSym(entry.tok), fx, fy, Math.max(6, size), pal.board, pal.gold, pal.ink);
-          }
-        }
-      } else {
-        cLabel(g, "ON THE BENCH, NEXT ROUND", 14, benchY0 - 6, { size: 8, color: pal.faint });
-        if (state.step < trace.length) {
-          var next = trace[state.step].top3.slice().sort(function (a, b) { return (a.a + a.b) < (b.a + b.b) ? -1 : 1; });
-          next.forEach(function (c, i) {
-            var by = benchY0 + 10 + i * benchGap;
-            drawTokTile(g, pal, showSym(c.a) + " + " + showSym(c.b), 60, by, 10, pal.board, pal.lineSoft, pal.soft);
-          });
-          cLabel(g, state.step === 0 ? "step, play, or quiz to fire the forge" : "counts hidden until the round fires", fuseX, fuseY + 4, { size: 8.5, color: pal.faint, align: narrow ? "center" : "center" });
-        } else {
-          cLabel(g, "vocabulary full · forge cold", 60, fuseY, { size: 9, color: pal.faint });
-        }
-      }
-
-      /* vocabulary wall */
-      var pitch = narrow ? 6 : 8;
-      var wallX0 = Math.round(W * 0.55), wallW = W - wallX0 - 14;
-      var cols = Math.max(4, Math.floor(wallW / pitch));
-      var total = baseList.length + state.step - (anim && p < 1 ? 1 : 0);
-      cLabel(g, "VOCABULARY · " + (baseList.length + state.step) + " TOKENS", wallX0, 20, { size: 8, color: pal.faint });
-      for (var i2 = 0; i2 < total; i2++) {
-        var col = i2 % cols, row = Math.floor(i2 / cols);
-        var tx = wallX0 + col * pitch, ty = 30 + row * pitch;
-        if (ty > H - 12) break;
-        if (i2 < baseList.length) {
-          g.fillStyle = pal.lineSoft;
-        } else if (i2 === total - 1 && !anim) {
-          g.fillStyle = pal.accent;
-        } else {
-          g.fillStyle = pal.cobalt;
-          g.globalAlpha = 0.55;
-        }
-        g.fillRect(tx, ty, pitch - 2, pitch - 2);
-        g.globalAlpha = 1;
-      }
-    }
-  });
-
-  function wallSlot(W, H, index) {
-    var narrow = W < 560;
-    var pitch = narrow ? 6 : 8;
-    var wallX0 = Math.round(W * 0.55), wallW = W - wallX0 - 14;
-    var cols = Math.max(4, Math.floor(wallW / pitch));
-    return { x: wallX0 + (index % cols) * pitch + 3, y: 30 + Math.floor(index / cols) * pitch + 3 };
-  }
-
-  return {
-    onMerge: function (step) {
-      state.step = step;
-      state.anim = REDUCED ? null : { entry: trace[step - 1], start: performance.now() };
-      if (scene) scene.dirty = true;
-    },
-    sync: function (step) {
-      state.step = step;
-      state.anim = null;
-      if (scene) scene.dirty = true;
-    }
-  };
-})();
-
 /* ---------- figure 1: the splitter and the cost meter ---------- */
 
 (function splitter() {
   var input = document.getElementById("split-input");
   var out = document.getElementById("split-out");
-  var detail = document.getElementById("split-detail");
   var note = document.getElementById("split-note");
-  var costModel = document.getElementById("cost-model");
   var costScale = document.getElementById("cost-scale");
   var costIn = document.getElementById("cost-in");
   var costOut = document.getElementById("cost-out");
   var lastCount = 0;
 
-  PRICES.forEach(function (p, i) {
-    var opt = el("option", null, p.label);
-    opt.value = String(i);
-    costModel.appendChild(opt);
-  });
-
   var presets = [
-    { label: "plain english", text: "the model predicts the next token from the tokens before it", note: "in-domain text: most words are one token, because the corpus is full of them." },
-    { label: "rare word", text: "the anthropologist reads antidisestablishmentarianism", note: "words the corpus never saw break into smaller pieces. the meaning is intact, but the cost is higher." },
-    { label: "numbers", text: "pi is 3.14159 and e is 2.71828", note: "training never merged digits, so every digit is its own token. this is one reason models are shaky at arithmetic." },
-    { label: "json config", text: "{\"temperature\": 0.7, \"max_tokens\": 512}", note: "structure is expensive: braces, quotes, and digits all cut fine. config blobs and logs cost more than prose." },
-    { label: "code", text: "for (let i = 0; i < tokens.length; i++)", note: "a prose-trained tokenizer shatters code. production tokenizers train on code too, which makes it far cheaper." },
-    { label: "german", text: "das modell liest den text", note: "another language means other common substrings. the cut gets choppier and some characters may be missing entirely." }
+    { label: "everyday sentence", text: "the model reads the text and predicts the next token", note: "Most common words fit into one piece in this teaching tokenizer." },
+    { label: "long word", text: "the anthropologist studies antidisestablishmentarianism", note: "An unfamiliar word breaks into several pieces, so one word can add many tokens." },
+    { label: "numbers", text: "the order number is 314159", note: "The toy tokenizer splits each digit. A production tokenizer may cut this differently." },
+    { label: "code", text: "for (let i = 0; i < tokens.length; i++)", note: "Code has many marks and short pieces. A tokenizer trained on code usually handles it better." }
   ];
   var row = document.getElementById("split-presets");
   presets.forEach(function (p) {
@@ -1940,31 +1434,11 @@ var bpeForge = (function () {
     row.appendChild(b);
   });
 
-  function describe(tok) {
-    clear(detail);
-    detail.appendChild(el("b", null, JSON.stringify(showSym(tok))));
-    if (!tokKnown(tok)) {
-      detail.appendChild(document.createTextNode(" · not in the vocabulary. a production tokenizer works on bytes, so nothing is ever unknown."));
-      return;
-    }
-    detail.appendChild(document.createTextNode(" · id " + idMap[tok]));
-    if (origin[tok]) {
-      detail.appendChild(document.createTextNode(" · merge #" + (origin[tok].rank + 1) + ": "));
-      detail.appendChild(el("b", null, showSym(origin[tok].a)));
-      detail.appendChild(document.createTextNode(" + "));
-      detail.appendChild(el("b", null, showSym(origin[tok].b)));
-      detail.appendChild(document.createTextNode(" · characters: " + charsOf(tok).map(showSym).join(" ")));
-    } else {
-      detail.appendChild(document.createTextNode(" · base character, never merged"));
-    }
-  }
-
   function costRender() {
-    var price = PRICES[parseInt(costModel.value, 10) || 0];
     var scale = parseInt(costScale.value, 10) || 1;
     var mtok = lastCount * scale / 1000000;
-    costIn.textContent = lastCount ? money(mtok * price.inp) : "–";
-    costOut.textContent = lastCount ? money(mtok * price.out) : "–";
+    costIn.textContent = lastCount ? money(mtok * EXAMPLE_PRICE.inp) : "$0";
+    costOut.textContent = lastCount ? money(mtok * EXAMPLE_PRICE.out) : "$0";
   }
 
   function render(presetNote) {
@@ -1973,508 +1447,189 @@ var bpeForge = (function () {
     lastCount = tokens.length;
     clear(out);
     tokens.forEach(function (t) {
-      var chip = makeTok(t, tokKnown(t) ? "" : "ghost", true);
-      chip.addEventListener("click", function () { describe(t); });
-      out.appendChild(chip);
+      out.appendChild(makeTok(t, tokKnown(t) ? "" : "ghost"));
     });
-    var chars = norm(text).length;
-    document.getElementById("split-chars").textContent = String(chars);
+    var wordsInText = norm(text) ? norm(text).split(" ").length : 0;
+    document.getElementById("split-words").textContent = String(wordsInText);
     document.getElementById("split-toks").textContent = String(tokens.length);
-    document.getElementById("split-ratio").textContent = tokens.length ? (chars / tokens.length).toFixed(2) : "–";
-    detail.textContent = "click a token to inspect it";
+    document.getElementById("split-extra").textContent = String(Math.max(0, tokens.length - wordsInText));
     note.textContent = presetNote || "";
     costRender();
   }
 
-  costModel.addEventListener("change", costRender);
   costScale.addEventListener("change", costRender);
   input.addEventListener("input", function () { render(""); });
   input.value = presets[0].text;
   render(presets[0].note);
 })();
 
-/* ---------- figure 2: watch it learn ---------- */
+/* ---------- activity 2: compare two messages ---------- */
 
-(function learner() {
-  var step = 0;
-  var playing = null;
-  var quiz = false;
-  var streak = 0, best = 0;
-  var stepBtn = document.getElementById("bpe-step");
-  var playBtn = document.getElementById("bpe-play");
-  var resetBtn = document.getElementById("bpe-reset");
-  var quizBtn = document.getElementById("bpe-quiz");
-  var streakBadge = document.getElementById("bpe-streak");
-  var quizRow = document.getElementById("bpe-quiz-row");
-  var status = document.getElementById("bpe-status");
-  var corpusView = document.getElementById("bpe-corpus");
-  var ledgerBody = document.getElementById("bpe-ledger-body");
-  var displayPieces = pieces(CORPUS).slice(0, 64);
-
-  function renderCorpus(hotTok) {
-    clear(corpusView);
-    displayPieces.forEach(function (w) {
-      var syms = encodeWordCapped(w, step);
-      var span = el("span", "w" + (hotTok && syms.indexOf(hotTok) >= 0 ? " hot" : ""), syms.map(showSym).join("·"));
-      corpusView.appendChild(span);
-      corpusView.appendChild(document.createTextNode(" "));
-    });
-  }
-
-  function renderLedger() {
-    clear(ledgerBody);
-    var start = Math.max(0, step - 60);
-    for (var i = start; i < step; i++) {
-      var t = trace[i];
-      var tr = el("tr", i === step - 1 ? "fresh" : "");
-      tr.appendChild(el("td", "n", "#" + (i + 1)));
-      tr.appendChild(el("td", "tk", showSym(t.a) + " + " + showSym(t.b) + " → " + showSym(t.tok)));
-      tr.appendChild(el("td", null, "×" + t.count));
-      ledgerBody.appendChild(tr);
-    }
-    ledgerBody.parentNode.parentNode.scrollTop = ledgerBody.parentNode.parentNode.scrollHeight;
-  }
-
-  function renderStatus(extra) {
-    var pct = Math.round(100 * step / trace.length);
-    document.getElementById("bpe-progress").style.width = pct + "%";
-    document.getElementById("bpe-progress-label").textContent = pct + "%";
-    var msg;
-    if (step === 0) msg = "merge 0 of " + trace.length + " · the corpus is plain characters";
-    else {
-      var t = trace[step - 1];
-      msg = "merge " + step + " of " + trace.length + " · glued " + JSON.stringify(showSym(t.a)) + " + " + JSON.stringify(showSym(t.b)) + " into " + JSON.stringify(showSym(t.tok)) + ", seen ×" + t.count;
-    }
-    clear(status);
-    status.appendChild(document.createTextNode(msg));
-    if (extra) {
-      status.appendChild(document.createTextNode(" · "));
-      status.appendChild(el("b", null, extra));
-    }
-  }
-
-  function renderQuiz() {
-    clear(quizRow);
-    if (!quiz || step >= trace.length) { quizRow.hidden = true; return; }
-    quizRow.hidden = false;
-    quizRow.appendChild(el("span", "panel-label", "which pair merges next?"));
-    var cands = shuffle(trace[step].top3);
-    cands.forEach(function (c) {
-      var b = el("button", "btn", showSym(c.a) + " + " + showSym(c.b));
-      b.type = "button";
-      b.addEventListener("click", function () {
-        var right = c.a === trace[step].a && c.b === trace[step].b;
-        if (right) { streak += 1; best = Math.max(best, streak); }
-        else streak = 0;
-        streakBadge.textContent = "streak " + streak + " · best " + best;
-        SCORE.quiz(best);
-        advance(right ? "correct" : "no: " + JSON.stringify(showSym(trace[step].tok)) + " was more frequent");
-      });
-      quizRow.appendChild(b);
-    });
-  }
-
-  function advance(extra) {
-    if (step >= trace.length) return;
-    step += 1;
-    renderCorpus(trace[step - 1].tok);
-    renderLedger();
-    renderStatus(extra);
-    renderQuiz();
-    bpeForge.onMerge(step);
-    if (step >= trace.length) stopPlay();
-  }
-
-  function stopPlay() {
-    if (playing) { clearInterval(playing); playing = null; }
-    playBtn.setAttribute("aria-pressed", "false");
-    playBtn.textContent = "Play";
-  }
-
-  stepBtn.addEventListener("click", function () { stopPlay(); advance(); });
-  playBtn.addEventListener("click", function () {
-    if (playing) { stopPlay(); return; }
-    if (quiz) return;
-    if (step >= trace.length) return;
-    playBtn.setAttribute("aria-pressed", "true");
-    playBtn.textContent = "Pause";
-    playing = setInterval(function () { advance(); }, REDUCED ? 400 : 90);
-  });
-  resetBtn.addEventListener("click", function () {
-    stopPlay();
-    step = 0; streak = 0;
-    renderCorpus(null); renderLedger(); renderStatus(); renderQuiz();
-    bpeForge.sync(0);
-  });
-  quizBtn.addEventListener("click", function () {
-    quiz = !quiz;
-    quizBtn.setAttribute("aria-pressed", String(quiz));
-    streakBadge.hidden = !quiz;
-    stepBtn.disabled = quiz;
-    playBtn.disabled = quiz;
-    if (quiz) { stopPlay(); streak = 0; streakBadge.textContent = "streak 0 · best " + best; }
-    renderQuiz();
-  });
-
-  renderCorpus(null); renderLedger(); renderStatus(); renderQuiz();
-})();
-
-/* ---------- figure 3: guess the bill ---------- */
-
-(function billGame() {
+(function compareMessages() {
   var rounds = [
-    { text: "the model reads the text and predicts the next token", lesson: "terse in-domain english: ten words, about one token per word. the cheapest text there is." },
-    { text: "{\"role\": \"system\", \"temperature\": 0.7, \"max_tokens\": 512}", lesson: "structure shatters: every brace, quote, and digit cuts separately. config blobs are expensive riders." },
-    { text: "das modell liest den text und rät das nächste wort", lesson: "the merges came from english, so german pays a surcharge. multilingual products pay it on every request." },
-    { text: "the model picks the next token from the probabilities and appends the token to the context", lesson: "every extra clause is a recurring line item. half the words would carry the same instruction." },
-    { text: "for (let i = 0; i < tokens.length; i++)", lesson: "a prose tokenizer shatters code. code-trained tokenizers exist precisely because of this line item." }
+    {
+      a: "summarize this note in three bullets",
+      b: "{\"task\":\"summarize\",\"format\":\"bullets\",\"count\":3}",
+      lesson: "Braces, quotation marks, and digits create their own pieces in this tokenizer. Structured text can use more tokens than a plain instruction."
+    },
+    {
+      a: "answer in one sentence",
+      b: "please provide your answer using no more than a single sentence",
+      lesson: "These messages ask for the same result. The extra words in B repeat on every request."
+    },
+    {
+      a: "the model reads the text",
+      b: "das modell liest den text",
+      lesson: "This teaching tokenizer learned from English text. German breaks into smaller pieces, which raises its token count here."
+    }
   ];
-  var round = 0, score = 0, revealed = false, missTotal = 0;
-  var snippet = document.getElementById("count-snippet");
-  var guess = document.getElementById("count-guess");
-  var revealBtn = document.getElementById("count-reveal");
-  var nextBtn = document.getElementById("count-next");
-  var restartBtn = document.getElementById("count-restart");
-  var scoreBadge = document.getElementById("count-score");
-  var chips = document.getElementById("count-chips");
-  var verdict = document.getElementById("count-verdict");
-  var budget = document.getElementById("count-budget");
-  var revealLabel = document.getElementById("count-reveal-label");
-  var roundLabel = document.getElementById("count-round-label");
+  var round = 0;
+  var choices = document.getElementById("compare-choices");
+  var result = document.getElementById("compare-result");
+  var roundLabel = document.getElementById("compare-round");
+  var next = document.getElementById("compare-next");
+  var restart = document.getElementById("compare-restart");
 
-  function points(diff) {
-    if (diff === 0) return 10;
-    if (diff === 1) return 8;
-    if (diff === 2) return 6;
-    if (diff === 3) return 4;
-    if (diff <= 5) return 2;
-    return 0;
+  function renderTokens(box, tokens) {
+    var strip = el("div", "chip-strip");
+    tokens.forEach(function (t) { strip.appendChild(makeTok(t, tokKnown(t) ? "" : "ghost")); });
+    box.appendChild(strip);
   }
 
-  function show() {
-    revealed = false;
+  function reveal(chosenIndex, buttons) {
+    var item = rounds[round];
+    var counts = [encode(item.a), encode(item.b)];
+    var correctIndex = counts[0].length === counts[1].length ? -1 : (counts[0].length > counts[1].length ? 0 : 1);
+    buttons.forEach(function (button, i) {
+      button.disabled = true;
+      button.setAttribute("aria-pressed", String(i === chosenIndex));
+    });
+
+    clear(result);
+    result.hidden = false;
+    var verdict;
+    if (correctIndex < 0) verdict = "They tie at " + counts[0].length + " tokens.";
+    else if (chosenIndex === correctIndex) verdict = "Yes. " + (correctIndex === 0 ? "A" : "B") + " uses more tokens.";
+    else verdict = "The other one costs more. " + (correctIndex === 0 ? "A" : "B") + " uses more tokens.";
+    result.appendChild(el("p", "compare-verdict", verdict));
+
+    var breakdown = el("div", "compare-breakdown");
+    [item.a, item.b].forEach(function (text, i) {
+      var side = el("div", "compare-side");
+      side.appendChild(el("div", "panel-label", (i === 0 ? "A" : "B") + " · " + counts[i].length + " tokens"));
+      renderTokens(side, counts[i]);
+      side.appendChild(el("div", "compare-meta", money(counts[i].length * EXAMPLE_PRICE.inp) + " per month at 1 million sends"));
+      breakdown.appendChild(side);
+    });
+    result.appendChild(breakdown);
+    result.appendChild(el("p", "compare-lesson", item.lesson));
+
+    if (round + 1 < rounds.length) next.hidden = false;
+    else restart.hidden = false;
+  }
+
+  function showRound() {
+    var item = rounds[round];
     roundLabel.textContent = "round " + (round + 1) + " of " + rounds.length;
-    snippet.textContent = rounds[round].text;
-    guess.value = "";
-    guess.disabled = false;
-    revealBtn.hidden = false;
-    nextBtn.hidden = true;
-    restartBtn.hidden = true;
-    revealLabel.hidden = true;
-    clear(chips);
-    verdict.textContent = "";
-    budget.textContent = "";
-  }
-
-  revealBtn.addEventListener("click", function () {
-    if (revealed) return;
-    var g = parseInt(guess.value, 10);
-    if (isNaN(g) || g < 1) { verdict.textContent = "enter a guess first"; return; }
-    revealed = true;
-    var tokens = encode(rounds[round].text);
-    var diff = Math.abs(g - tokens.length);
-    var pts = points(diff);
-    score += pts;
-    scoreBadge.textContent = "score " + score;
-    revealLabel.hidden = false;
-    clear(chips);
-    tokens.forEach(function (t) { chips.appendChild(makeTok(t, tokKnown(t) ? "" : "ghost")); });
-    clear(verdict);
-    verdict.appendChild(el("b", null, tokens.length + " tokens"));
-    verdict.appendChild(document.createTextNode(" · you said " + g + " · +" + pts + " pts · " + rounds[round].lesson));
-    var actualYr = tokens.length * BILL_GAME_PER_TOKEN_YEAR;
-    var missYr = diff * BILL_GAME_PER_TOKEN_YEAR;
-    missTotal += missYr;
-    clear(budget);
-    budget.appendChild(document.createTextNode("as an always-on system prompt: "));
-    budget.appendChild(el("span", "money", money(actualYr) + "/year"));
-    budget.appendChild(document.createTextNode(" at 2M requests a day · your guess budgeted " + money(g * BILL_GAME_PER_TOKEN_YEAR) + " · off by " + money(missYr)));
-    guess.disabled = true;
-    revealBtn.hidden = true;
-    if (round + 1 < rounds.length) nextBtn.hidden = false;
-    else {
-      restartBtn.hidden = false;
-      verdict.appendChild(document.createTextNode(" · final score " + score + " / " + rounds.length * 10));
-      budget.appendChild(document.createTextNode(" · total budget miss across 5 rounds: "));
-      budget.appendChild(el("span", "money", money(missTotal) + "/year"));
-      SCORE.bill(score);
-    }
-  });
-  guess.addEventListener("keydown", function (e) { if (e.key === "Enter") revealBtn.click(); });
-  nextBtn.addEventListener("click", function () { round += 1; show(); });
-  restartBtn.addEventListener("click", function () { round = 0; score = 0; missTotal = 0; scoreBadge.textContent = "score 0"; show(); });
-  show();
-})();
-
-/* ---------- figure 4: the probability shelf ---------- */
-
-(function shelf() {
-  var ctxBox = document.getElementById("shelf-ctx");
-  var barsBox = document.getElementById("shelf-bars");
-  var actual = el("div", "game-status");
-  barsBox.parentNode.appendChild(actual);
-
-  function pick() {
-    var i = 2 + Math.floor(Math.random() * (toks.length - 3));
-    clear(ctxBox);
-    for (var j = Math.max(0, i - 7); j < i; j++) {
-      ctxBox.appendChild(makeTok(toks[j], j >= i - 2 ? "" : "plain"));
-    }
-    var dist = predict(toks[i - 2], toks[i - 1]);
-    renderBars(barsBox, dist, toks[i]);
-    clear(actual);
-    actual.appendChild(document.createTextNode("only the last two tokens (in blue) feed the counts · in the corpus, the token that actually came next was "));
-    actual.appendChild(el("b", null, JSON.stringify(showSym(toks[i]))));
-  }
-
-  document.getElementById("shelf-shuffle").addEventListener("click", pick);
-  pick();
-})();
-
-/* ---------- figure 5: beat the model ---------- */
-
-(function race() {
-  var raceToks = encode(HELDOUT);
-  var ROUNDS = Math.min(8, raceToks.length - 2);
-  var pos, you, model, done;
-  var ctxBox = document.getElementById("race-ctx");
-  var choices = document.getElementById("race-choices");
-  var status = document.getElementById("race-status");
-  var youBadge = document.getElementById("race-you");
-  var modelBadge = document.getElementById("race-model");
-  var restartBtn = document.getElementById("race-restart");
-  var view = document.getElementById("race-view");
-  var viewBars = document.getElementById("race-bars");
-  var q = document.getElementById("race-q");
-
-  function renderCtx() {
-    clear(ctxBox);
-    for (var j = 0; j < pos; j++) ctxBox.appendChild(makeTok(raceToks[j], j >= pos - 2 ? "" : "plain"));
-  }
-
-  function ask() {
-    renderCtx();
-    if (pos - 2 >= ROUNDS || pos >= raceToks.length) { finish(); return; }
-    q.textContent = "which token comes next? (round " + (pos - 1) + " of " + ROUNDS + ")";
-    var truth = raceToks[pos];
-    var dist = predict(raceToks[pos - 2], raceToks[pos - 1]);
-    var modelPick = dist[0].t;
-    var cands = [truth];
-    for (var i = 0; i < dist.length && cands.length < 4; i++) {
-      if (cands.indexOf(dist[i].t) < 0) cands.push(dist[i].t);
-    }
     clear(choices);
-    shuffle(cands).forEach(function (c) {
-      var b = makeTok(c, "", true);
-      b.addEventListener("click", function () { resolve(c, truth, modelPick, dist); });
-      choices.appendChild(b);
+    clear(result);
+    result.hidden = true;
+    next.hidden = true;
+    restart.hidden = true;
+    var buttons = [];
+    [item.a, item.b].forEach(function (text, i) {
+      var button = el("button", "choice-card");
+      button.type = "button";
+      button.setAttribute("aria-pressed", "false");
+      button.appendChild(el("span", "choice-letter", i === 0 ? "A" : "B"));
+      button.appendChild(el("span", "choice-copy", text));
+      button.addEventListener("click", function () { reveal(i, buttons); });
+      buttons.push(button);
+      choices.appendChild(button);
     });
-    status.textContent = "";
   }
 
-  function resolve(yours, truth, modelPick, dist) {
-    if (yours === truth) you += 1;
-    if (modelPick === truth) model += 1;
-    youBadge.textContent = "you " + you;
-    modelBadge.textContent = "model " + model;
-    Array.prototype.forEach.call(choices.children, function (chip) {
-      var t = chip.textContent.replace(/␣/g, " ");
-      chip.disabled = true;
-      if (t === truth) chip.classList.add("gold");
-      else if (t === yours) chip.classList.add("red");
-    });
-    view.hidden = false;
-    renderBars(viewBars, dist, truth, 4);
-    clear(status);
-    status.appendChild(document.createTextNode("you picked " + JSON.stringify(showSym(yours)) + " · the model picked " + JSON.stringify(showSym(modelPick)) + " · truth: "));
-    status.appendChild(el("b", null, JSON.stringify(showSym(truth))));
-    pos += 1;
-    setTimeout(ask, REDUCED ? 2100 : 1500);
-  }
-
-  function finish() {
-    done = true;
-    q.textContent = "final score";
-    clear(choices);
-    restartBtn.hidden = false;
-    var line;
-    if (you > model) line = "you beat the counts. you used the meaning of the sentence, which the predictor cannot see.";
-    else if (you === model) line = "a tie with a pile of counts. the transformer in a real model exists to break exactly this tie.";
-    else line = "the counts won this time. frequency is a stronger baseline than it looks, which is why models start from it.";
-    clear(status);
-    status.appendChild(el("b", null, "you " + you + " · model " + model));
-    status.appendChild(document.createTextNode(" · " + line));
-    SCORE.race(you, model);
-  }
-
-  function start() {
-    pos = 2; you = 0; model = 0; done = false;
-    youBadge.textContent = "you 0";
-    modelBadge.textContent = "model 0";
-    restartBtn.hidden = true;
-    view.hidden = true;
-    ask();
-  }
-
-  restartBtn.addEventListener("click", start);
-  start();
+  next.addEventListener("click", function () { round += 1; showRound(); });
+  restart.addEventListener("click", function () { round = 0; showRound(); });
+  showRound();
 })();
 
-/* ---------- figure 6: the sampler ---------- */
+/* ---------- activity 3: lower the bill ---------- */
 
-(function sampler() {
-  var tempSlider = document.getElementById("samp-temp");
-  var tempVal = document.getElementById("samp-temp-val");
-  var topkSel = document.getElementById("samp-topk");
-  var goBtn = document.getElementById("samp-go");
-  var outBox = document.getElementById("samp-out");
-  var barsBox = document.getElementById("samp-bars");
-  var note = document.getElementById("samp-note");
-  var timer = [];
+(function lowerBill() {
+  var REQUESTS_PER_MONTH = 100000 * 30;
+  var TARGET = 55000;
+  var base = { instructions: 1500, background: 2000, answer: 400 };
+  var reduced = { instructions: 500, background: 1000, answer: 150 };
+  var active = { instructions: false, background: false, answer: false };
+  var buttons = Array.prototype.slice.call(document.querySelectorAll("#bill-levers .lever"));
+  var totalEl = document.getElementById("bill-total");
+  var savingEl = document.getElementById("bill-saving");
+  var verdict = document.getElementById("bill-verdict");
+  var reset = document.getElementById("bill-reset");
+  var seg = {
+    instructions: document.getElementById("bill-seg-instructions"),
+    background: document.getElementById("bill-seg-background"),
+    answer: document.getElementById("bill-seg-answer")
+  };
+  var labels = {
+    instructions: document.getElementById("bill-l-instructions"),
+    background: document.getElementById("bill-l-background"),
+    answer: document.getElementById("bill-l-answer")
+  };
 
-  var seedStart = toks.indexOf(".") + 1;
-  var seed = [toks[seedStart], toks[seedStart + 1]];
-
-  tempSlider.addEventListener("input", function () { tempVal.textContent = tempSlider.value; });
-
-  function caption(temp, topk) {
-    if (temp <= 0.15 || topk === 1) return "near-greedy: the most likely token wins every time. watch it fall into a loop.";
-    if (temp >= 1.5 && topk === 0) return "hot and unfiltered: the counts barely matter anymore. this is where word salad comes from.";
-    if (temp >= 1.5) return "high temperature: rare continuations get real odds.";
-    return "moderate settings: mostly likely tokens, with occasional surprises.";
+  function partCost(key, tokens) {
+    var rate = key === "answer" ? EXAMPLE_PRICE.out : EXAMPLE_PRICE.inp;
+    return tokens * REQUESTS_PER_MONTH / 1000000 * rate;
   }
 
-  function generate() {
-    timer.forEach(clearTimeout); timer = [];
-    var temp = parseFloat(tempSlider.value);
-    var topk = parseInt(topkSel.value, 10);
-    var seq = seed.slice();
-    var emitted = [];
-    var lastDist = null;
-    for (var i = 0; i < 30; i++) {
-      var dist = predict(seq[seq.length - 2], seq[seq.length - 1]);
-      var adj = applyTempTopK(dist, temp, topk);
-      var chosen = temp === 0 ? adj[0] : draw(adj);
-      emitted.push({ t: chosen.t, p: chosen.p });
-      lastDist = adj;
-      seq.push(chosen.t);
-    }
-    clear(outBox);
-    seed.forEach(function (t) { outBox.appendChild(makeTok(t, "gold")); });
-    emitted.forEach(function (e, i) {
-      var chip = makeTok(e.t, "");
-      chip.title = "draw probability " + (e.p * 100).toFixed(1) + "%";
-      if (REDUCED) outBox.appendChild(chip);
-      else timer.push(setTimeout(function () { outBox.appendChild(chip); }, 55 * i));
+  var baseTotal = partCost("instructions", base.instructions) + partCost("background", base.background) + partCost("answer", base.answer);
+
+  function render() {
+    var costs = {};
+    var count = 0;
+    ["instructions", "background", "answer"].forEach(function (key) {
+      if (active[key]) count += 1;
+      costs[key] = partCost(key, active[key] ? reduced[key] : base[key]);
     });
-    renderBars(barsBox, lastDist, emitted[emitted.length - 1].t);
-    var outAtScale = 30 * PRICES[0].out;
-    note.textContent = caption(temp, topk) + " · these 30 output tokens, over 1M requests: " + money(outAtScale) + " at frontier output rate";
-  }
-
-  goBtn.addEventListener("click", generate);
-  generate();
-})();
-
-/* ---------- figure 7: the bill machine ---------- */
-
-(function billMachine() {
-  var REQ_STEPS = [1000, 10000, 100000, 1000000, 10000000];
-  var REQ_LABELS = ["1k", "10k", "100k", "1M", "10M"];
-  var sys = document.getElementById("calc-sys");
-  var ctx = document.getElementById("calc-ctx");
-  var out = document.getElementById("calc-out");
-  var req = document.getElementById("calc-req");
-  var modelSel = document.getElementById("calc-model");
-  var cacheBtn = document.getElementById("calc-cache");
-  var batchBtn = document.getElementById("calc-batch");
-  var totalEl = document.getElementById("calc-total");
-  var perreqEl = document.getElementById("calc-perreq");
-  var segSys = document.getElementById("calc-seg-sys");
-  var segCtx = document.getElementById("calc-seg-ctx");
-  var segOut = document.getElementById("calc-seg-out");
-  var lSys = document.getElementById("calc-l-sys");
-  var lCtx = document.getElementById("calc-l-ctx");
-  var lOut = document.getElementById("calc-l-out");
-  var swSys = document.getElementById("calc-sw-sys");
-  var verdict = document.getElementById("calc-verdict");
-  var cache = false, batch = false;
-
-  PRICES.forEach(function (p, i) {
-    var opt = el("option", null, p.label);
-    opt.value = String(i);
-    modelSel.appendChild(opt);
-  });
-
-  function recalc() {
-    var sysT = parseInt(sys.value, 10);
-    var ctxT = parseInt(ctx.value, 10);
-    var outT = parseInt(out.value, 10);
-    var reqDay = REQ_STEPS[parseInt(req.value, 10)];
-    var price = PRICES[parseInt(modelSel.value, 10) || 0];
-
-    document.getElementById("calc-sys-v").textContent = fmtInt(sysT) + " tok";
-    document.getElementById("calc-ctx-v").textContent = fmtInt(ctxT) + " tok";
-    document.getElementById("calc-out-v").textContent = fmtInt(outT) + " tok";
-    document.getElementById("calc-req-v").textContent = REQ_LABELS[parseInt(req.value, 10)];
-
-    var reqMonth = reqDay * 30;
-    var f = batch ? BATCH_FACTOR : 1;
-    var sysM = sysT * reqMonth / 1000000;
-    var ctxM = ctxT * reqMonth / 1000000;
-    var outM = outT * reqMonth / 1000000;
-    var sysCost = sysM * price.inp * (cache ? CACHE_FACTOR : 1) * f;
-    var sysCostFull = sysM * price.inp * f;
-    var ctxCost = ctxM * price.inp * f;
-    var outCost = outM * price.out * f;
-    var total = sysCost + ctxCost + outCost;
-
+    var total = costs.instructions + costs.background + costs.answer;
+    var saved = baseTotal - total;
     totalEl.textContent = money(total);
-    perreqEl.textContent = "· " + money(total / reqMonth) + " per request · " + money(total / 30) + " per day";
+    savingEl.textContent = "· " + money(saved) + " saved";
 
-    var safe = total > 0 ? total : 1;
-    segSys.style.width = (sysCost / safe * 100).toFixed(2) + "%";
-    segCtx.style.width = (ctxCost / safe * 100).toFixed(2) + "%";
-    segOut.style.width = (outCost / safe * 100).toFixed(2) + "%";
-    segSys.title = "system prompt (input) · " + money(sysCost) + "/mo";
-    segCtx.title = "context (input) · " + money(ctxCost) + "/mo";
-    segOut.title = "output · " + money(outCost) + "/mo";
-    segSys.className = "seg sys" + (cache ? " cached" : "");
-    swSys.className = "sw sys" + (cache ? " cached" : "");
-    lSys.textContent = money(sysCost) + (cache ? " cached" : "");
-    lCtx.textContent = money(ctxCost);
-    lOut.textContent = money(outCost);
+    ["instructions", "background", "answer"].forEach(function (key) {
+      seg[key].style.width = (costs[key] / total * 100).toFixed(2) + "%";
+      seg[key].title = key + " · " + money(costs[key]) + " per month";
+      labels[key].textContent = money(costs[key]);
+    });
 
-    var saving = sysCostFull - sysM * price.inp * CACHE_FACTOR * f;
-    clear(verdict);
-    if (!cache && sysT > 0) {
-      verdict.appendChild(document.createTextNode("the system prompt is the same bytes on every request. caching it would save "));
-      verdict.appendChild(el("b", null, money(saving) + " a month"));
-      verdict.appendChild(document.createTextNode(" with zero quality change."));
-    } else if (cache && sysT > 0) {
-      verdict.appendChild(document.createTextNode("caching the stable prefix is saving "));
-      verdict.appendChild(el("b", null, money(saving) + " a month"));
-      verdict.appendChild(document.createTextNode(" versus re-reading it cold."));
+    verdict.className = "challenge-status" + (total < TARGET ? " won" : "");
+    if (total < TARGET) {
+      verdict.textContent = "Target reached at " + money(total) + " a month. You saved " + money(saved) + ".";
+      if (active.answer) verdict.textContent += " The shorter answer saves more than either input change because output uses the higher rate.";
+    } else if (count === 0) {
+      verdict.textContent = "Choose two changes to reach the target.";
+    } else {
+      verdict.textContent = money(total) + " a month. Choose one more change to get below " + money(TARGET) + ".";
     }
-    if (batch) verdict.appendChild(document.createTextNode(" batch pricing is halving everything nobody waits for."));
-    if (outCost > sysCost + ctxCost && outT > 0) verdict.appendChild(document.createTextNode(" output now outweighs input: verbosity is your biggest lever."));
   }
 
-  function touched() { SCORE.calc(); recalc(); }
-  [sys, ctx, out, req].forEach(function (r) { r.addEventListener("input", touched); });
-  modelSel.addEventListener("change", touched);
-  cacheBtn.addEventListener("click", function () {
-    cache = !cache;
-    cacheBtn.setAttribute("aria-pressed", String(cache));
-    touched();
-  });
-  batchBtn.addEventListener("click", function () {
-    batch = !batch;
-    batchBtn.setAttribute("aria-pressed", String(batch));
-    touched();
+  buttons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      var key = button.getAttribute("data-lever");
+      active[key] = !active[key];
+      button.setAttribute("aria-pressed", String(active[key]));
+      render();
+    });
   });
 
-  recalc();
+  reset.addEventListener("click", function () {
+    Object.keys(active).forEach(function (key) { active[key] = false; });
+    buttons.forEach(function (button) { button.setAttribute("aria-pressed", "false"); });
+    render();
+  });
+
+  render();
 })();
 
 })();
