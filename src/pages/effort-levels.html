@@ -1,0 +1,60 @@
+<header class="intro">
+  <p class="kicker">3 of 5 · A working choice</p>
+  <h1>Reasoning effort</h1>
+  <p class="standfirst">Give the model enough room to work through a problem. Stop paying before it circles an answer it already has.</p>
+  <dl class="spec">
+    <div><dt>You choose</dt><dd>How much thinking a task gets</dd></div>
+    <div><dt>You spend</dt><dd>Output tokens and waiting time</dd></div>
+    <div><dt>Good default</dt><dd>Start at medium, then adjust</dd></div>
+  </dl>
+</header>
+
+<p>Reasoning effort controls how many tokens a model spends on a problem before it answers. Most of that spending is <strong>thinking tokens</strong>: scratch work that the model writes before the answer you see. Each thinking token is one more pass through the same model. The weights do not change, so the model knows nothing new. It only takes more steps.</p>
+<p>Providers expose this control in different ways. Some offer effort levels such as low, medium, and high. Others take a budget of thinking tokens. This page uses a token budget, because the budget shows the cost directly.</p>
+<p>More effort helps when a task has dependent steps, such as tracing a race condition or planning a migration. It adds little to a rename or a format change. Cost and waiting time rise with every thinking token, also after the answer stops improving.</p>
+
+<h2 id="stopping-point">Find the useful stopping point</h2>
+<p>In Figure 1, the top edge of each template is the quality curve for one kind of task. The gantry moves along a scale of thinking tokens, and its roller follows the curve. Quality rises while the model has useful steps left. Then the curve levels off, at a point that depends on the task.</p>
+<div class="try"><span class="label">Try it · 1 min</span><p>Choose a task, then drag the <strong>Budget</strong> slider. Stop where the gauge barely moves. Then switch tasks and compare where that happens.</p></div>
+<!-- figure:effort-cam -->
+<div class="note"><span class="label">Cost</span><p>Thinking tokens bill as output tokens, and most providers charge more for output than for input. A larger budget raises the bill and the response time together.</p></div>
+<p>The three tasks lead to three choices:</p>
+<ul>
+  <li><strong>Mechanical work levels off early.</strong> A rename, a format change, or boilerplate needs little scratch work.</li>
+  <li><strong>Ordinary features need a middle budget.</strong> The model has room to plan the change and check the interfaces that it touches.</li>
+  <li><strong>Hard bugs keep paying for longer.</strong> A concurrency bug or a security review can need a long chain of checks.</li>
+</ul>
+<p>Effort cannot supply missing facts. If the model does not know your internal framework, give it that context or use a different model. Raise effort when the model knows the pieces but skips steps between them.</p>
+
+<h2 id="pick-a-level">Pick a level</h2>
+<p>Estimate two things: the number of dependent steps in the task, and the cost of a wrong answer after tests and review. Use a low level for short tasks that are easy to check. Use a high level for long chains of reasoning or expensive mistakes. Use the middle for normal work.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>Level</th><th>Use it when</th><th>Examples</th></tr></thead>
+  <tbody>
+    <tr><td>low</td><td>The task is mechanical and easy to undo, and tooling checks the output.</td><td>Renames, formatting, boilerplate, config edits, a summary of a diff</td></tr>
+    <tr><td>medium</td><td>The task is normal engineering work with a few parts that interact. This is the daily default.</td><td>A scoped feature, a clear bug, new tests, a review of a small change</td></tr>
+    <tr><td>high</td><td>The answer depends on several deductions in a row, or the task spans systems.</td><td>Intermittent bugs, API design, performance work, a security review</td></tr>
+    <tr><td>max</td><td>You get one attempt at an answer that must be correct, and a check is expensive.</td><td>Migration plans, concurrency rules, the root cause of a live incident</td></tr>
+  </tbody>
+</table></div>
+<p>Use each result to tune the next run. If the thinking repeats the same ideas, the budget is too large. If a fast answer rests on an assumption that nobody checked, the budget is too small.</p>
+
+<h2 id="model-choice">Effort and model choice solve different problems</h2>
+<p>Effort gives the same model more steps. A stronger model brings better judgment to every step. A smaller model can spend a large budget on a bad path. A stronger model can still miss an interaction if it answers too fast.</p>
+<p>A third option spreads the spending across runs. When answers are cheap to check, several low-effort attempts and one verifier can do better than one long attempt. That is where <a href="orchestration-and-subagents.html">orchestration</a> starts.</p>
+
+<h2 id="defaults">Defaults that hold up</h2>
+<ul>
+  <li>Start at medium. Change the level only when the task gives you a reason.</li>
+  <li>Use less effort when tests catch mistakes quickly.</li>
+  <li>If high effort still misses, add context or change the model.</li>
+</ul>
+
+<aside class="recall">
+  <span class="label">Leave with this</span>
+  <ul>
+    <li>Effort buys more thinking tokens, not new knowledge.</li>
+    <li>Quality levels off while cost and waiting time keep rising.</li>
+    <li>The right level depends on the number of dependent steps and the cost of a mistake.</li>
+  </ul>
+</aside>

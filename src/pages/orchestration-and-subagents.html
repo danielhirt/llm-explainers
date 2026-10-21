@@ -1,0 +1,66 @@
+<header class="intro">
+  <p class="kicker">4 of 5 · A working choice</p>
+  <h1>Orchestration and subagents</h1>
+  <p class="standfirst">Split work when one context is too crowded, too slow, or too easy to trust without a second check.</p>
+  <dl class="spec">
+    <div><dt>You split</dt><dd>Independent parts of a larger job</dd></div>
+    <div><dt>You gain</dt><dd>Time, free context, or an independent check</dd></div>
+    <div><dt>You spend</dt><dd>More total tokens and coordination</dd></div>
+  </dl>
+</header>
+
+<p>A long task fills a model's context with files, search results, test logs, and dead ends. The useful conclusions compete with all that raw material for space. When the context window fills up, the model has less room to reason, and the harness may replace old material with a summary that drops detail.</p>
+<p>A <strong>subagent</strong> starts with a fresh context and one scoped job. The agent that hands out the jobs, the <strong>orchestrator</strong>, gets back a short result instead of every file and failed search that the worker read.</p>
+
+<h2 id="split">One agent or four workers</h2>
+<p>Figure 1 runs the same four jobs both ways. On the left, one agent does them one after another, and everything it reads stays in its context. On the right, four workers run at the same time. Each worker fills its own context, sends back a short result, and then discards its context. A verifier checks each result before the orchestrator uses it.</p>
+<div class="try"><span class="label">Watch · 45 s</span><p>Compare the two stacks, the two clocks, and the two token counters. Find the result that the verifier rejects.</p></div>
+<!-- figure:context-trays -->
+<p>The figure shows the trade:</p>
+<ul>
+  <li><strong>Time.</strong> Parallel workers finish when the slowest one finishes. One agent finishes after the sum of all four jobs.</li>
+  <li><strong>Context.</strong> The orchestrator keeps the plan and the short results that pass the check. One agent keeps the full reading history of all four jobs.</li>
+  <li><strong>Tokens.</strong> You pay for every token that every worker reads and writes, plus the orchestrator's own. The orchestrated run usually costs more.</li>
+</ul>
+<div class="note"><span class="label">Cost</span><p>Orchestration can cut elapsed time and protect the orchestrator's context, but it usually raises total token use. Split work only when one of those gains matters.</p></div>
+<p>A worker has no conversation history unless the orchestrator supplies it. A good assignment names the scope, the expected result, and what the worker must not change. A vague assignment often costs a second round trip.</p>
+
+<h2 id="decide">Try the decision</h2>
+<div class="try"><span class="label">Decide · 1 min</span><p>For each job, choose one agent or several workers. Then compare your reason with the answer.</p></div>
+<!-- figure:rounds variant=orchestration -->
+
+<h2 id="patterns">Four patterns</h2>
+<p>Most work with subagents takes one of four shapes.</p>
+<div class="grid-2">
+  <div><h3>Fan-out</h3><p>Independent parts run in parallel, for example one worker per module in an audit. The orchestrator draws boundaries so that no two workers touch the same files.</p></div>
+  <div><h3>Pipeline</h3><p>Each item moves through stages such as find, fix, and check. One item can be in review while the next is still in the find stage.</p></div>
+  <div><h3>Judge and jury</h3><p>A fresh worker tries to disprove each finding. The orchestrator keeps only the claims that survive an independent check.</p></div>
+  <div><h3>Loop until dry</h3><p>For a search of unknown size, the orchestrator sends new waves of finders until a wave returns nothing new.</p></div>
+</div>
+
+<h2 id="failures">What goes wrong</h2>
+<ul>
+  <li><strong>Workers collide.</strong> Give them separate files or isolated workspaces.</li>
+  <li><strong>The orchestrator trusts raw claims.</strong> Verify findings before they drive a decision.</li>
+  <li><strong>The orchestrator rereads everything.</strong> That fills the context that the split was meant to protect.</li>
+  <li><strong>A small task gets split.</strong> The coordination costs more than it saves.</li>
+</ul>
+
+<h2 id="when">When to use it</h2>
+<p>Use orchestration in three cases:</p>
+<ul>
+  <li>The reading will crowd one context window.</li>
+  <li>Independent parts can run at the same time.</li>
+  <li>A decision needs an independent check.</li>
+</ul>
+<p>Keep small, sequential work in one context.</p>
+<p><a href="effort-levels.html">Reasoning effort</a> controls how much one agent thinks. Orchestration controls how work spreads across agents. The two combine: a mechanical worker can run at low effort while the verifier runs at high effort.</p>
+
+<aside class="recall">
+  <span class="label">Leave with this</span>
+  <ul>
+    <li>Workers protect the orchestrator's context by returning short results.</li>
+    <li>Parallel work can finish sooner, but it uses more total tokens.</li>
+    <li>Split independent work, and verify claims before you use them.</li>
+  </ul>
+</aside>

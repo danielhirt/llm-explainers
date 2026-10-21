@@ -1,0 +1,180 @@
+<header class="intro">
+  <p class="kicker">2 of 5 · The machine</p>
+  <h1>How a language model turns text into the next token</h1>
+  <p class="standfirst">A large language model (LLM) reads tokens and predicts one token that can come next. It adds that token to the text and runs again. Everything else in the machine exists to make that one prediction useful.</p>
+  <ol class="steps" aria-label="The run path in four steps">
+    <li><a href="#tokens"><b>1 · Cut</b>Text becomes tokens</a></li>
+    <li><a href="#geometry"><b>2 · Look up</b>Tokens become vectors</a></li>
+    <li><a href="#transformer"><b>3 · Mix</b>Context changes each vector</a></li>
+    <li><a href="#generation"><b>4 · Choose</b>One token joins the text</a></li>
+  </ol>
+  <p class="fine">About 18 minutes to read. Every figure responds to its controls. The formulas sit in sections that you can open.</p>
+  <details class="more">
+    <summary>Technical scope</summary>
+    <div class="more-body">
+      <p>The figures show a modern decoder-only transformer, the family that GPT-style models use. The original 2017 transformer had an encoder and a decoder. Model widths, layer counts, token IDs, probabilities, and positions on this page are teaching examples. The text gives the real tensor shapes and the order of operations where they matter.</p>
+    </div>
+  </details>
+</header>
+
+<p class="label section-label">Section 1 · Lifecycle</p>
+<h2 id="overview">A model is built once, then used many times</h2>
+<p class="one-line"><span class="label">In one sentence</span>Training sets the model's numbers. A request reads those frozen numbers to produce one token at a time.</p>
+<p>The build path collects text, creates a tokenizer, and adjusts billions of learned numbers called <strong>weights</strong>. Training saves the finished weights in a <strong>checkpoint</strong>.</p>
+<p>The run path cuts a prompt into tokens, reads the frozen checkpoint, chooses one next token, and repeats. A normal request does not change the checkpoint.</p>
+<div class="try"><span class="label">Try it · 2 min</span><p>Press <strong>Next</strong> to follow the build path, then the run path. Note where the tokenizer and the checkpoint appear in both.</p></div>
+<!-- figure:machine variant=tour -->
+
+<p class="label section-label">Section 2 · Corpus</p>
+<h2 id="corpus">The model learns from a selected dataset</h2>
+<p class="one-line"><span class="label">In one sentence</span>A model can learn only the patterns that its training data contains.</p>
+<p>The build path starts with text: web crawls, books, code, and papers. None of it is ready to use. Data pipelines extract the usable text, remove boilerplate and near-duplicates, apply quality and safety filters, and choose a mix of languages and domains. Then they split the documents into training examples. These choices decide which patterns the model can see, and how often.</p>
+<p>Engineers usually train the tokenizer (Section 3) on a representative sample of the corpus. Then they use that frozen tokenizer to encode the much larger training set. The <a href="https://arxiv.org/abs/2406.17557">FineWeb paper</a> publishes concrete filtering and deduplication experiments. Reports on proprietary models often disclose only part of the data recipe.</p>
+<div class="note"><span class="label">Accuracy check</span><p>Documents do not flow straight into a transformer. They become packed arrays of token IDs, usually with a boundary token where one document ends and the next begins. Figure 2 shows storage, shuffling, packing, and distributed loading as one line.</p></div>
+<!-- figure:corpus -->
+
+<p class="label section-label">Section 3 · Tokenization</p>
+<h2 id="tokens">Text becomes a sequence of vocabulary addresses</h2>
+<p class="one-line"><span class="label">In one sentence</span>The tokenizer cuts text into pieces and gives each piece a number.</p>
+<p>A neural network computes with numbers, so text must become numbers first. A <strong>tokenizer</strong> cuts a string into pieces from a fixed vocabulary and returns their integer <strong>token IDs</strong>. A common word can be one token. A rare name can split into several pieces or single bytes. Spaces, punctuation, and fragments of code can be tokens too. To try it yourself, open <a href="tokenizer.html">Tokens are the meter</a>.</p>
+<details class="more">
+  <summary>Show the tokenizer notation</summary>
+  <div class="more-body">
+    <div class="formula"><span class="label">Tokenizer output</span>t<sub>1</sub>, …, t<sub>T</sub> = Tokenize(s), &nbsp; t<sub>i</sub> ∈ {0, …, |V| − 1}</div>
+    <p><strong>s</strong> is the input string, <strong>T</strong> is its token count, and <strong>|V|</strong> is the vocabulary size. A token ID is an address. Its numeric value carries no distance or meaning.</p>
+  </div>
+</details>
+<p>Byte-pair encoding (BPE) and Unigram tokenization choose the vocabulary with different algorithms. <a href="https://arxiv.org/abs/1808.06226">SentencePiece</a> describes both in a language-independent system that trains from raw sentences. Production tokenizers often add byte fallback, so any character can be encoded, and special control tokens.</p>
+<div class="note"><span class="label">Keep the artifacts separate</span><p>Tokenizer training chooses a fixed vocabulary. Pre-training later learns the embedding vectors and the transformer weights. After pre-training starts, a change to the token-to-ID map breaks the embedding rows that belong to those IDs.</p></div>
+<div class="try"><span class="label">Try it · 1 min</span><p>Compare <strong>Sentence</strong> with <strong>Rare word</strong> and <strong>Emoji</strong>. Find the example that needs the most pieces.</p></div>
+<!-- figure:typecase variant=ids -->
+
+<p class="label section-label">Section 4 · Embeddings and position</p>
+<h2 id="geometry">Each token ID selects a learned vector</h2>
+<p class="one-line"><span class="label">In one sentence</span>Each token ID picks one row of numbers that the model can compare and change.</p>
+<p>A token ID is only a catalog number. The <strong>embedding table</strong> gives it content: one learned row per vocabulary entry. A lookup of token t<sub>i</sub> returns that row, a vector of d<sub>model</sub> numbers. You can picture a vector as a point in space. During training, tokens that appear in similar contexts move toward nearby points. The vector from the lookup is the model's starting working state, its <strong>hidden state</strong>, at position i.</p>
+<details class="more">
+  <summary>Show the embedding lookup</summary>
+  <div class="more-body">
+    <div class="formula"><span class="label">Embedding lookup</span>x<sup>(0)</sup><sub>i</sub> = E[t<sub>i</sub>], &nbsp; E ∈ ℝ<sup>|V| × d<sub>model</sub></sup></div>
+    <p>The bracket is a row lookup, not a search by meaning. Pre-training adjusts every row that the training text uses, through gradient descent.</p>
+  </div>
+</details>
+<!-- figure:embedding -->
+<p>The network also needs word order: "dog bites man" and "man bites dog" contain the same tokens. Many current models use <strong>rotary position embeddings</strong> (RoPE). In each attention layer, RoPE rotates pairs of coordinates in every query and key by an angle that grows with the token's position. After the rotation, the attention score between two tokens depends on the distance between their positions, not on where they sit in the text. RoPE does not add a vector to the embedding.</p>
+<details class="more">
+  <summary>Show the RoPE notation</summary>
+  <div class="more-body">
+    <div class="formula"><span class="label">RoPE, simplified</span>q′<sub>i</sub> = R(i)q<sub>i</sub>, &nbsp; k′<sub>j</sub> = R(j)k<sub>j</sub></div>
+    <p>R(i) rotates each pair of coordinates by the angle i·θ, where each pair has its own frequency θ. The dot product q′<sub>i</sub> · k′<sub>j</sub> then depends on the offset i − j. See <a href="https://arxiv.org/abs/2104.09864">RoFormer</a>.</p>
+  </div>
+</details>
+<p class="fine">A real hidden state can have thousands of coordinates. Nearby vectors suggest similar use, but the values in Figure 4 are examples, not measurements from a trained model. After the first layer, a hidden state also carries context, so it is not a fixed word meaning.</p>
+
+<p class="label section-label">Section 5 · Transformer block</p>
+<h2 id="transformer">Attention mixes positions; the MLP transforms each one</h2>
+<p class="one-line"><span class="label">In one sentence</span>Attention pulls useful context from earlier tokens, then the MLP updates each token's working state.</p>
+<p>A transformer is a stack of nearly identical blocks. Each block makes two moves. <strong>Attention</strong> lets every position read from earlier positions, so the state for "bank" in "the river bank" can take in "river". The <strong>MLP</strong>, a small feed-forward network, then reworks each position on its own. The rest of this section states both moves exactly.</p>
+<p>Let X hold the hidden states of a sequence. One attention head makes three linear projections. <strong>Queries</strong> describe what each position looks for. <strong>Keys</strong> describe what each position offers for matching. <strong>Values</strong> carry the information that attention mixes.</p>
+<details class="more">
+  <summary>Show the attention math</summary>
+  <div class="more-body">
+    <div class="formula"><span class="label">One causal attention head</span>Q = XW<sub>Q</sub>, &nbsp; K = XW<sub>K</sub>, &nbsp; V = XW<sub>V</sub><br>A = softmax(QK<sup>T</sup> / √d<sub>head</sub> + M<sub>causal</sub>)<br>Attention(X) = AV</div>
+    <p>Row i of A holds the weights that update token i, and they sum to 1. M<sub>causal</sub>[i, j] is −∞ when j &gt; i, so softmax gives later positions a weight of zero. The division by √d<sub>head</sub> keeps the dot products in a stable range.</p>
+  </div>
+</details>
+<p>Several heads run in parallel. The block combines their results, and an output projection returns them to the model width. Grouped-query attention lets heads share keys and values to reduce memory traffic. Each query still obeys the causal mask.</p>
+<p>A modern block normalizes before each sublayer and adds the result back to a residual path:</p>
+<details class="more">
+  <summary>Show the block equations</summary>
+  <div class="more-body">
+    <div class="formula"><span class="label">One decoder block, schematic</span>x ← x + Attention(RMSNorm(x))<br>x ← x + MLP(RMSNorm(x))</div>
+    <p>The residual path keeps the current state while each sublayer writes an update. A SwiGLU-style MLP expands each position, gates it, then projects it back to d<sub>model</sub>. Models differ in their exact normalization, gating, and bias choices.</p>
+  </div>
+</details>
+<p><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a> introduced the encoder-decoder transformer, with normalization after each sublayer. Modern decoder-only models often use RMSNorm, RoPE, gated MLPs, and grouped-query attention. <a href="https://arxiv.org/abs/2404.14619">OpenELM</a> documents one compact example.</p>
+<div class="table-wrap"><table>
+  <caption>Tensor shapes in one forward pass</caption>
+  <thead><tr><th>Object</th><th>Typical shape</th><th>What it holds</th></tr></thead>
+  <tbody>
+    <tr><td>Token IDs</td><td><code>[T]</code></td><td>One ID per position; T is the sequence length</td></tr>
+    <tr><td>Hidden states</td><td><code>[T, d_model]</code></td><td>One vector per position</td></tr>
+    <tr><td>Attention scores</td><td><code>[heads, T, T]</code></td><td>One causal matrix per query head</td></tr>
+    <tr><td>Output logits</td><td><code>[T, |V|]</code></td><td>One score per vocabulary entry, per position</td></tr>
+  </tbody>
+</table></div>
+<div class="try"><span class="label">Try it · 1 min</span><p>Start with <strong>Full block</strong>, then pick <strong>Attention</strong> and <strong>MLP</strong>. <strong>Residual</strong> shows what each part adds to the running state.</p></div>
+<!-- figure:block -->
+
+<p class="label section-label">Section 6 · Pre-training</p>
+<h2 id="training">Every position supplies a training target</h2>
+<p class="one-line"><span class="label">In one sentence</span>The model guesses each next token, measures each error, and adjusts its weights.</p>
+<p>Pre-training sets the numbers in the block. It is a guessing game, graded at every position. The model reads corpus text, and at each position it must give a high probability to the token that comes next. The causal mask stops it from reading later tokens, so training can grade all positions of a sequence at the same time. This setup is called <strong>teacher forcing</strong>.</p>
+<details class="more">
+  <summary>Show the training loss</summary>
+  <div class="more-body">
+    <div class="formula"><span class="label">Next-token model and cross-entropy loss</span>p<sub>θ</sub>(t<sub>1:T</sub>) = ∏<sub>i=1</sub><sup>T</sup> p<sub>θ</sub>(t<sub>i</sub> | t<sub>&lt;i</sub>)<br>L(θ) = −(1/N) Σ<sub>i</sub> log p<sub>θ</sub>(t<sub>i</sub> | t<sub>&lt;i</sub>)</div>
+    <p>If the model gives the actual next token a probability of 0.80, that position adds −log(0.80) ≈ 0.223 to the loss. A probability of 0.05 adds about 2.996. A confident mistake costs more.</p>
+  </div>
+</details>
+<p><strong>Backpropagation</strong> computes the gradient of the batch loss: for each weight, how a small change raises or lowers the loss. An optimizer such as AdamW keeps running statistics of these gradients and uses them to make a small update. Large runs spread this work across many accelerators.</p>
+<details class="more">
+  <summary>Show the optimizer step</summary>
+  <div class="more-body">
+    <div class="formula"><span class="label">Optimizer step, schematic</span>θ<sub>k+1</sub> = AdamW(θ<sub>k</sub>, ∇<sub>θ</sub>L, η)</div>
+    <p>θ holds the embeddings, the attention projections, the MLP weights, the normalization scales, and the output projection. η is the learning rate. This schematic leaves out AdamW's moment estimates and weight decay.</p>
+  </div>
+</details>
+<p>The <a href="https://arxiv.org/abs/2005.14165">GPT-3 paper</a> is a concrete reference for decoder-only training. <a href="https://arxiv.org/abs/2203.15556">Chinchilla</a> found that, for a fixed compute budget, models did better when parameter count and training tokens grew together. That result is an empirical recipe for the regime it studied, not a law for every model or dataset.</p>
+<div class="note"><span class="label">After pre-training</span><p>Instruction tuning and preference training adjust the checkpoint again with curated examples and human or AI preferences. They shape behavior. Generation still uses the same forward pass, one token at a time. See <a href="https://arxiv.org/abs/2203.02155">InstructGPT</a> for an influential example.</p></div>
+<div class="try"><span class="label">Watch · 1 min</span><p>Press <strong>Step</strong>. Find the targets shifted by one token, the losses at every position, and the error that walks back to the weights.</p></div>
+<!-- figure:pretrain -->
+
+<p class="label section-label">Section 7 · Generation</p>
+<h2 id="generation">The last hidden state becomes one score per token</h2>
+<p class="one-line"><span class="label">In one sentence</span>The model scores every possible next token, picks one, adds it to the text, and runs again.</p>
+<p>At request time, the frozen tokenizer encodes the prompt. The frozen transformer runs the same forward pass as in training, with no update afterward. A final normalization and an output projection turn the last hidden state into one <strong>logit</strong>, an unnormalized score, for every vocabulary entry. Some models reuse the embedding table as this output matrix.</p>
+<details class="more">
+  <summary>Show logits and temperature</summary>
+  <div class="more-body">
+    <div class="formula"><span class="label">Logits and temperature-scaled probabilities</span>z = W<sub>U</sub>h<sub>T</sub> + b<br>p<sub>i</sub> = exp(z<sub>i</sub>/τ) / Σ<sub>j</sub> exp(z<sub>j</sub>/τ)</div>
+    <p>W<sub>U</sub> is the output (unembedding) matrix; many models have no bias b. A lower temperature τ moves probability toward the largest logits. A higher τ flattens the distribution. Greedy decoding takes the largest logit. Top-k and top-p sampling first cut the candidate list, then sample from what remains.</p>
+  </div>
+</details>
+<p>The loop appends the chosen token, and decoding repeats. In the first pass over the prompt, called <strong>prefill</strong>, the model computes keys and values for every prompt token. A <strong>KV cache</strong> keeps them. Each later step then computes only the new position and attends over the cached keys and values. Systems such as <a href="https://arxiv.org/abs/2309.06180">PagedAttention</a> manage that cache efficiently.</p>
+<div class="note"><span class="label">What stays fixed</span><p>The checkpoint does not learn from a request. The KV cache is temporary state for one sequence, not memory. Randomness enters only through the decoding rule. With fixed token IDs and weights the forward pass is deterministic in principle; in practice, batching and floating-point order can change results slightly.</p></div>
+<div class="try"><span class="label">Try it · 1 min</span><p>Generate one token. Then choose <strong>Top-k</strong> and raise the temperature. Compare how the probabilities spread.</p></div>
+<!-- figure:sampler -->
+
+<p class="label section-label">Section 8 · Complete pass</p>
+<h2 id="replay">Put the whole machine back together</h2>
+<p class="one-line"><span class="label">In one sentence</span>The build path makes reusable artifacts once; the run path reads them once per generated token.</p>
+<p>The build path turns a corpus into a tokenizer and, through pre-training, into a checkpoint. The run path uses that frozen tokenizer and checkpoint to turn a prompt into one selected token. The token extends the context, and the next step reads it too.</p>
+<p>Go back to <a href="#overview">Figure 1</a> and step through all 12 stages again. Each station now matches a section of this page.</p>
+
+<aside class="recall">
+  <span class="label">Leave with this</span>
+  <ul>
+    <li>Training changes the weights. A request only reads them.</li>
+    <li>The transformer updates each token's state, then the output layer scores the next token.</li>
+    <li>Generation appends one chosen token and runs the path again.</li>
+  </ul>
+</aside>
+
+<p class="label section-label">References</p>
+<h2 id="sources">Papers and visual references</h2>
+<p>Links appear next to the claims that they support. This list collects the main technical papers and the visual work that shaped this page.</p>
+<ul class="refs">
+  <li><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a><span>Vaswani et al., 2017. Scaled dot-product attention and the original encoder-decoder transformer.</span></li>
+  <li><a href="https://arxiv.org/abs/1808.06226">SentencePiece</a><span>Kudo and Richardson, 2018. BPE and Unigram tokenization trained directly from raw sentences.</span></li>
+  <li><a href="https://arxiv.org/abs/2406.17557">The FineWeb Datasets</a><span>Penedo et al., 2024. A documented web corpus with filtering and deduplication experiments.</span></li>
+  <li><a href="https://arxiv.org/abs/2104.09864">RoFormer</a><span>Su et al., 2021. Rotary position embeddings applied to attention queries and keys.</span></li>
+  <li><a href="https://arxiv.org/abs/2005.14165">Language Models are Few-Shot Learners</a><span>Brown et al., 2020. Decoder-only pre-training at GPT-3 scale.</span></li>
+  <li><a href="https://arxiv.org/abs/2203.15556">Training Compute-Optimal Large Language Models</a><span>Hoffmann et al., 2022. Scaling of parameters and training tokens under a fixed compute budget.</span></li>
+  <li><a href="https://arxiv.org/abs/2404.14619">OpenELM</a><span>Mehta et al., 2024. A documented modern decoder with RMSNorm, RoPE, grouped-query attention, and SwiGLU.</span></li>
+  <li><a href="https://arxiv.org/abs/2203.02155">InstructGPT</a><span>Ouyang et al., 2022. Instruction tuning and training from human preferences.</span></li>
+  <li><a href="https://arxiv.org/abs/2309.06180">PagedAttention</a><span>Kwon et al., 2023. Efficient serving through paged management of the KV cache.</span></li>
+  <li><a href="https://jalammar.github.io/illustrated-transformer/">The Illustrated Transformer</a><span>Jay Alammar. A step-by-step visual explanation of the original transformer.</span></li>
+  <li><a href="https://arxiv.org/abs/2408.04619">Transformer Explainer</a><span>Cho et al., 2024. Interactive moves between whole-system and single-operation views of a transformer.</span></li>
+  <li><a href="https://bbycroft.net/llm">LLM Visualization</a><span>Brendan Bycroft. A detailed 3D walk through the forward pass of a small GPT.</span></li>
+</ul>

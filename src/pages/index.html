@@ -1,0 +1,20 @@
+<header class="intro">
+  <p class="kicker">A field guide to language models</p>
+  <h1>Model Mechanics</h1>
+  <p class="standfirst">How a language model turns text into the next token, and how to work with one: what tokens cost, how much thinking to buy, when to split work across agents, and how agent loops and skills run.</p>
+</header>
+
+<p class="label section-label">The machine, mapped</p>
+<p>Figure 1 shows the whole lifecycle of a model. The back deck builds the model once. The front deck runs it once for every token it writes. Hover over a station to read what it does, and open its explainer from there.</p>
+<!-- figure:machine variant=map -->
+
+<p class="label section-label">The route</p>
+<h2 id="route">Five pieces, in order</h2>
+<p>Start with tokens if you are new. Each piece stands on its own, and each ends with a short summary.</p>
+<ol class="route-list">
+  <li><a href="articles/tokenizer.html"><b>1 · Start · 10 min</b><strong>Tokens are the meter</strong><span>See how a model cuts text into tokens. Compare the cost of two messages, then lower a sample monthly bill.</span></a></li>
+  <li><a href="articles/how-llms-work.html"><b>2 · The machine · 18 min</b><strong>Inside a language model</strong><span>Follow one model from its training corpus to the next token: tokenizer, embeddings, transformer blocks, pre-training, and sampling.</span></a></li>
+  <li><a href="articles/effort-levels.html"><b>3 · Choice · 6 min</b><strong>Reasoning effort</strong><span>Move a thinking budget and find where more tokens stop improving the answer.</span></a></li>
+  <li><a href="articles/orchestration-and-subagents.html"><b>4 · Choice · 7 min</b><strong>Orchestration and subagents</strong><span>Compare one crowded context with four scoped workers, then decide which jobs to split.</span></a></li>
+  <li><a href="articles/loops-and-skills.html"><b>5 · Choice · 7 min</b><strong>Loops and skills</strong><span>Follow an agent's tool loop as its context grows, and see why a skill loads only when a task needs it.</span></a></li>
+</ol>

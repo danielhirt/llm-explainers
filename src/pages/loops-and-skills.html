@@ -1,0 +1,77 @@
+<header class="intro">
+  <p class="kicker">5 of 5 · A working choice</p>
+  <h1>Loops and skills</h1>
+  <p class="standfirst">A harness lets a model act one step at a time. Skills give that loop the right procedure only when a task needs it.</p>
+  <dl class="spec">
+    <div><dt>A loop does</dt><dd>Model, tool, result, repeat</dd></div>
+    <div><dt>Each lap costs</dt><dd>New tokens, plus the whole context sent again</dd></div>
+    <div><dt>A skill saves</dt><dd>Context space and repeated instructions</dd></div>
+  </dl>
+</header>
+
+<p>A <a href="how-llms-work.html">language model</a> reads tokens and writes tokens. It cannot run a test or edit a file by itself. Software around the model, called the <strong>harness</strong>, reads the tool call that the model writes, runs the tool, and gives the result back to the model.</p>
+<p>That cycle turns one prediction into a worker: ask, act, inspect the result, and decide what to do next. The context grows on every lap, because the tool call and its result both become more tokens.</p>
+<details class="more">
+  <summary>See the loop as code</summary>
+  <div class="more-body">
+<pre class="code"><code>context = [system_prompt, tool_definitions, user_request]
+while True:
+    output = model(context)               <span class="c"># writes tokens until a tool call or an answer</span>
+    if output.is_answer:
+        return output                     <span class="c"># the model chose to stop</span>
+    result = run_tool(output.tool_call)   <span class="c"># the harness runs the tool</span>
+    context += [output, result]           <span class="c"># both become tokens</span></code></pre>
+  </div>
+</details>
+
+<h2 id="loop">Follow one loop</h2>
+<div class="try"><span class="label">Watch · 45 s</span><p>Follow three tool laps. Each time, the call and its result join the row of cards that is the context. Watch the row grow until the model writes an answer.</p></div>
+<!-- figure:card-loop -->
+<div class="note"><span class="label">Cost</span><p>Each lap sends the whole, growing context to the model again, and the provider bills it as input. Prompt caching can discount the repeated part, but it still fills the context window. A short tool result and an early test save tokens on every lap that follows.</p></div>
+<p>Put verification inside the loop. An agent that runs the tests after each edit gets useful feedback on the next lap. An agent that waits until five files have changed must sort through several guesses at once.</p>
+<p>Give every loop a stop condition and a budget. Without them, a model can keep finding one more check to run.</p>
+
+<h2 id="recurring">Loops that outlive the session</h2>
+<p>A scheduled loop starts with a fresh context on each run. It remembers the last run only if it wrote useful state to a file and reads that file when it starts. The harness owns the schedule. The file carries the history.</p>
+<p>Match the check rate to the signal. If a loop checks every minute for a change that happens once a day, it pays for many "nothing changed" results. Use an event trigger when the system can send one.</p>
+
+<h2 id="skills">Skills: procedures stored as files</h2>
+<p>Teams repeat procedures: how to deploy, how to run a difficult test suite, how to handle an incident. If every prompt carries every procedure, most of that text is useless for the task at hand.</p>
+<p>A <strong>skill</strong> stores one procedure in a named file. The model always sees a short description of each skill. The harness loads the full instructions only when a task matches a description. In the example below, four descriptions cost about 80 tokens on every request, and one full procedure loads only for the task that needs it.</p>
+<div class="table-wrap"><table>
+  <caption>What sits in the context: an example with four skills</caption>
+  <thead><tr><th>Skill</th><th>Always in context: the description</th><th>Loaded on a match</th></tr></thead>
+  <tbody>
+    <tr><td>deploy-checklist</td><td>Ship a service to production: gates, canary, rollback</td><td>about 1,500 tokens</td></tr>
+    <tr><td>incident-triage</td><td>Production incident: stabilize, diagnose, escalate, write up</td><td>about 1,800 tokens</td></tr>
+    <tr><td>db-migration</td><td>Schema changes: expand, backfill, contract, verify</td><td>about 1,400 tokens</td></tr>
+    <tr><td>sprite-pipeline</td><td>Make pixel-art sprite sheets with consistent frames</td><td>about 1,200 tokens</td></tr>
+  </tbody>
+</table></div>
+<p>A task such as "API errors are spiking in production" matches <code>incident-triage</code>. The context then holds about 80 tokens of descriptions plus 1,800 tokens of one procedure: about 1,880 tokens. With all four procedures in every prompt, it would hold about 5,900 tokens on every request. The numbers are examples.</p>
+<p>A skill lives in a repository, so a team can review it, version it, and change it without retraining the model. The next run that matches reads the new file.</p>
+<p>Keep each instruction in the right place. The request states today's job. Memory stores lasting facts. A skill stores a procedure that you reuse.</p>
+
+<h2 id="decide">Try the decision</h2>
+<div class="try"><span class="label">Decide · 1 min</span><p>Choose where each instruction belongs. Then compare your reason with the answer.</p></div>
+<!-- figure:rounds variant=loops -->
+
+<h2 id="compose">Loops and skills work together</h2>
+<p>A recurring agent combines a schedule with a skill. The schedule says when to run. The skill says which files to check, what counts as urgent, and what state to save for the next run.</p>
+
+<h2 id="defaults">Working defaults</h2>
+<ul>
+  <li>Write a skill when the same procedure appears a second time.</li>
+  <li>Write a clear description, so the model knows when to load the skill.</li>
+  <li>Give every loop a budget, a stop condition, and a check inside the lap.</li>
+  <li>For recurring work, decide what the loop must save for its next run.</li>
+</ul>
+
+<aside class="recall">
+  <span class="label">Leave with this</span>
+  <ul>
+    <li>The harness runs the tools; the model writes the next token or tool call.</li>
+    <li>Each lap grows the context, so checks inside the loop and stop rules control cost.</li>
+    <li>Skills keep reusable procedures out of requests that do not need them.</li>
+  </ul>
+</aside>
